@@ -5,6 +5,27 @@ const BACKEND_URL = process.env.MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
 const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
 
+// Имитация региона России для локального использования
+const RUSSIA_REGION: HttpTypes.StoreRegion = {
+  id: "default",
+  name: "Россия",
+  countries: [
+    {
+      id: "ru",
+      name: "Россия",
+      display_name: "Россия",
+      iso_2: "ru",
+      iso_3: "rus",
+      num_code: 643,
+    }
+  ],
+  currency_code: "RUB",
+  tax_rate: 20,
+  tax_code: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+}
+
 const regionMapCache = {
   regionMap: new Map<string, HttpTypes.StoreRegion>(),
   regionMapUpdated: Date.now(),
@@ -23,38 +44,44 @@ async function getRegionMap(cacheId: string) {
     !regionMap.keys().next().value ||
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
-    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
-    const { regions } = await fetch(`${BACKEND_URL}/store/regions`, {
-      headers: {
-        "x-publishable-api-key": PUBLISHABLE_API_KEY!,
-      },
-      next: {
-        revalidate: 3600,
-        tags: [`regions-${cacheId}`],
-      },
-      cache: "force-cache",
-    }).then(async (response) => {
-      const json = await response.json()
-
+    try {
+      // Fetch regions from Medusa
+      const response = await fetch(`${BACKEND_URL}/store/regions`, {
+        headers: {
+          "x-publishable-api-key": PUBLISHABLE_API_KEY!,
+        },
+        next: {
+          revalidate: 3600,
+          tags: [`regions-${cacheId}`],
+        },
+        cache: "force-cache",
+      });
+      
       if (!response.ok) {
-        throw new Error(json.message)
+        // Если не удалось получить регионы, добавляем российский регион
+        regionMapCache.regionMap.set("ru", RUSSIA_REGION);
+      } else {
+        const { regions } = await response.json();
+        
+        if (!regions?.length) {
+          // Если нет регионов, добавляем российский регион
+          regionMapCache.regionMap.set("ru", RUSSIA_REGION);
+        } else {
+          // Создаем карту кодов стран в регионы
+          regions.forEach((region: HttpTypes.StoreRegion) => {
+            region.countries?.forEach((c) => {
+              regionMapCache.regionMap.set(c.iso_2 ?? "", region)
+            })
+          });
+          
+          // Для России всегда используем наш российский регион
+          regionMapCache.regionMap.set("ru", RUSSIA_REGION);
+        }
       }
-
-      return json
-    })
-
-    if (!regions?.length) {
-      throw new Error(
-        "No regions found. Please set up regions in your Medusa Admin."
-      )
+    } catch (error) {
+      // В случае ошибки используем российский регион
+      regionMapCache.regionMap.set("ru", RUSSIA_REGION);
     }
-
-    // Create a map of country codes to regions.
-    regions.forEach((region: HttpTypes.StoreRegion) => {
-      region.countries?.forEach((c) => {
-        regionMapCache.regionMap.set(c.iso_2 ?? "", region)
-      })
-    })
 
     regionMapCache.regionMapUpdated = Date.now()
   }
@@ -63,16 +90,14 @@ async function getRegionMap(cacheId: string) {
 }
 
 /**
- * Fetches regions from Medusa and sets the region cookie.
- * @param request
- * @param response
+ * Получает код страны из запроса или использует "ru" если не найден
  */
 async function getCountryCode(
   request: NextRequest,
   regionMap: Map<string, HttpTypes.StoreRegion | number>
 ) {
   try {
-    let countryCode
+    let countryCode = "ru";
 
     const vercelCountryCode = request.headers
       .get("x-vercel-ip-country")
@@ -84,24 +109,16 @@ async function getCountryCode(
       countryCode = urlCountryCode
     } else if (vercelCountryCode && regionMap.has(vercelCountryCode)) {
       countryCode = vercelCountryCode
-    } else if (regionMap.has(DEFAULT_REGION)) {
-      countryCode = DEFAULT_REGION
-    } else if (regionMap.keys().next().value) {
-      countryCode = regionMap.keys().next().value
     }
 
     return countryCode
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error(
-        "Middleware.ts: Error getting the country code. Did you set up regions in your Medusa Admin and define a MEDUSA_BACKEND_URL environment variable? Note that the variable is no longer named NEXT_PUBLIC_MEDUSA_BACKEND_URL."
-      )
-    }
+    return "ru"
   }
 }
 
 /**
- * Middleware to handle region selection and onboarding status.
+ * Middleware для обработки регионов и статуса адаптации.
  */
 export async function middleware(request: NextRequest) {
   let redirectUrl = request.nextUrl.href
@@ -114,7 +131,7 @@ export async function middleware(request: NextRequest) {
 
   const regionMap = await getRegionMap(cacheId)
 
-  const countryCode = regionMap && (await getCountryCode(request, regionMap))
+  const countryCode = await getCountryCode(request, regionMap)
 
   const urlHasCountryCode =
     countryCode && request.nextUrl.pathname.split("/")[1].includes(countryCode)
