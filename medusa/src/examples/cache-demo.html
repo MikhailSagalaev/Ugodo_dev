@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Демонстрация кеширования в Medusa</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button.clear {
+      background-color: #f44336;
+    }
+    button.clear:hover {
+      background-color: #d32f2f;
+    }
+    .controls {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #e0f7fa;
+    }
+    .result {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #f1f8e9;
+      white-space: pre-wrap;
+    }
+    .from-cache {
+      background-color: #fff9c4;
+    }
+    label {
+      margin-right: 10px;
+    }
+    input {
+      padding: 8px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .timing {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Демонстрация кеширования в Medusa</h1>
+  
+  <div class="controls">
+    <h2>Настройки</h2>
+    <div>
+      <label for="key">Ключ кеша:</label>
+      <input type="text" id="key" value="test" placeholder="Введите ключ кеша">
+    </div>
+    <div>
+      <label for="ttl">Время жизни (секунды):</label>
+      <input type="number" id="ttl" value="30" min="1" max="3600">
+    </div>
+    
+    <button id="fetchData">Получить данные</button>
+    <button id="clearCache" class="clear">Очистить кеш</button>
+    <button id="clearAll" class="clear">Очистить все</button>
+  </div>
+  
+  <div class="status" id="status">
+    Готов к получению данных...
+  </div>
+  
+  <div class="result" id="result">
+    Результат будет отображен здесь...
+  </div>
+
+  <script>
+    // Базовый URL API
+    const API_BASE_URL = 'http://localhost:9000';
+
+    // DOM-элементы
+    const fetchDataBtn = document.getElementById('fetchData');
+    const clearCacheBtn = document.getElementById('clearCache');
+    const clearAllBtn = document.getElementById('clearAll');
+    const keyInput = document.getElementById('key');
+    const ttlInput = document.getElementById('ttl');
+    const statusDiv = document.getElementById('status');
+    const resultDiv = document.getElementById('result');
+
+    // Функция форматирования времени выполнения
+    function formatExecutionTime(startTime) {
+      const endTime = performance.now();
+      const executionTime = endTime - startTime;
+      return executionTime.toFixed(2) + ' мс';
+    }
+
+    // Получение данных
+    fetchDataBtn.addEventListener('click', async () => {
+      const key = keyInput.value.trim() || 'test';
+      const ttl = ttlInput.value || '30';
+      
+      statusDiv.textContent = 'Загрузка данных...';
+      resultDiv.textContent = '';
+      resultDiv.classList.remove('from-cache');
+      
+      const startTime = performance.now();
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/cache-demo?key=${key}&ttl=${ttl}`);
+        
+        if (!response.ok) {
+          throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const executionTime = formatExecutionTime(startTime);
+        
+        if (data.fromCache) {
+          statusDiv.textContent = `Данные получены из кеша за ${executionTime}`;
+          resultDiv.classList.add('from-cache');
+        } else {
+          statusDiv.textContent = `Данные сгенерированы за ${executionTime}`;
+          resultDiv.classList.remove('from-cache');
+        }
+        
+        resultDiv.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        statusDiv.textContent = `Ошибка: ${error.message}`;
+        resultDiv.textContent = 'Произошла ошибка при получении данных';
+      }
+    });
+
+    // Очистка кеша для конкретного ключа
+    clearCacheBtn.addEventListener('click', async () => {
+      const key = keyInput.value.trim() || 'test';
+      
+      statusDiv.textContent = 'Очистка кеша для ключа...';
+      resultDiv.textContent = '';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/cache-demo?key=${key}&clear=true`);
+        
+        if (!response.ok) {
+          throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+        
+        statusDiv.textContent = `Кеш для ключа "${key}" успешно очищен`;
+      } catch (error) {
+        statusDiv.textContent = `Ошибка при очистке кеша: ${error.message}`;
+      }
+    });
+
+    // Очистка всего кеша
+    clearAllBtn.addEventListener('click', async () => {
+      statusDiv.textContent = 'Очистка всего кеша...';
+      resultDiv.textContent = '';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/cache-demo`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        statusDiv.textContent = data.message || 'Кеш успешно очищен';
+      } catch (error) {
+        statusDiv.textContent = `Ошибка при очистке всего кеша: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html> 
