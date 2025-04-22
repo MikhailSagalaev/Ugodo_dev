@@ -134,3 +134,30 @@ export const listProductsWithSort = async ({
     queryParams,
   }
 }
+
+// Добавьте функцию для получения отзывов о товарах
+export async function getProductReviews({
+  productId,
+  limit = 10,
+  offset = 0,
+}: {
+  productId: string
+  limit?: number
+  offset?: number
+}) {
+  const reviews = await sdk.client.request("GET", `/store/products/${productId}/reviews`, {
+    searchParams: {
+      limit,
+      offset
+    }
+  });
+
+  const stats = await sdk.client.request("GET", `/store/products/${productId}/reviews/stats`);
+
+  return {
+    reviews: reviews.body.reviews,
+    count: reviews.body.count || 0,
+    limit,
+    average_rating: stats.body.average_rating || 0
+  };
+}

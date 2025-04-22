@@ -13,12 +13,31 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
+  modules: [
+    {
+      resolve: "./src/modules/review",
+    },
+  ],
   plugins: [
     {
-      resolve: "medusa-plugin-reviews",
+      resolve: `medusa-plugin-twilio-sms`,
       options: {
-        enableUI: true
-      }
-    }
+        account_sid: process.env.TWILIO_SMS_ACCOUNT_SID,
+        auth_token: process.env.TWILIO_SMS_AUTH_TOKEN,
+        from_number: process.env.TWILIO_SMS_FROM_NUMBER,
+      },
+    },
+    {
+      resolve: `medusa-plugin-wishlist`,
+      options: {
+        enabled: true,
+      },
+    },
+    {
+      resolve: `medusa-plugin-custom-dashboard`,
+      options: {
+        enabled: true,
+      },
+    },
   ]
-})
+}) 
