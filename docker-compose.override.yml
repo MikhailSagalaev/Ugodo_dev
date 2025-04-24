@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  medusa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./medusa/src:/app/src
+      - ./medusa/medusa-config.ts:/app/medusa-config.ts
+    command: npm run dev 

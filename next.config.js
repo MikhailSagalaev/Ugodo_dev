@@ -18,6 +18,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    turbo: {
+      // настройки turbo здесь
+    },
+    optimizeCss: true,
+    scrollRestoration: true,
+  },
   images: {
     remotePatterns: [
       {

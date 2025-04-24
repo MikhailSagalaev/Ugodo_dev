@@ -13,6 +13,9 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
+  admin: {
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+  },
   plugins: [
     {
       resolve: `medusa-plugin-twilio-sms`,
@@ -34,11 +37,5 @@ module.exports = defineConfig({
         enabled: true,
       },
     },
-    {
-      resolve: `medusa-plugin-reviews`,
-      options: {
-        enabled: true,
-      },
-    },
-  ]
+  ],
 })
