@@ -5,34 +5,34 @@ import Image from "next/image"
 import { X } from "lucide-react"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
-// Данные для stories категорий
+// Обновленные данные для stories категорий
 const stories = [
   {
     id: "bathroom",
     title: "Ванная",
     color: "#07c4f5", // голубой
     bgColor: "bg-[#07c4f5]",
-    textColor: "text-white",
+    textColor: "text-white", // Оставляем для цвета рамки/кнопки, но текст будет белым
     handle: "/collections/bathroom",
-    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1598618443855-232ee0f819f6?q=80&w=1887&auto=format&fit=crop"
   },
   {
     id: "spring",
     title: "Весна 2024",
     color: "#cbf401", // салатовый
     bgColor: "bg-[#cbf401]",
-    textColor: "text-black",
+    textColor: "text-black", // Текст будет белым
     handle: "/collections/spring",
-    image: "https://images.unsplash.com/photo-1487139975590-b4f1dce9b035?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=1770&auto=format&fit=crop"
   },
   {
     id: "new",
     title: "Новинки",
     color: "#ffffff", // белый
     bgColor: "bg-white",
-    textColor: "text-black",
+    textColor: "text-black", // Текст будет белым
     handle: "/collections/new",
-    image: "https://images.unsplash.com/photo-1538584588675-cbf272fe53af?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1770&auto=format&fit=crop"
   },
   {
     id: "kitchen",
@@ -41,7 +41,7 @@ const stories = [
     bgColor: "bg-[#ff6b6b]",
     textColor: "text-white",
     handle: "/collections/kitchen",
-    image: "https://images.unsplash.com/photo-1556912173-3bb406ef7e77?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1556911220-e1af6782960d?q=80&w=1770&auto=format&fit=crop"
   },
   {
     id: "eco",
@@ -50,7 +50,7 @@ const stories = [
     bgColor: "bg-[#50d890]",
     textColor: "text-white",
     handle: "/collections/eco",
-    image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1466637574441-749b8f19452f?q=80&w=1772&auto=format&fit=crop"
   },
   {
     id: "sale",
@@ -59,7 +59,7 @@ const stories = [
     bgColor: "bg-[#ff9f43]",
     textColor: "text-white",
     handle: "/collections/sale",
-    image: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1579547945413-49751891515a?q=80&w=1770&auto=format&fit=crop"
   },
   {
     id: "decor",
@@ -68,7 +68,7 @@ const stories = [
     bgColor: "bg-[#a55eea]",
     textColor: "text-white",
     handle: "/collections/decor",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1558&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?q=80&w=1770&auto=format&fit=crop"
   }
 ]
 
@@ -381,17 +381,22 @@ const CategoryStories = () => {
               />
               
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent">
-                <h3 className={`text-2xl font-bold ${activeStory.textColor}`}>{activeStory.title}</h3>
-                <LocalizedClientLink 
-                  href={activeStory.handle}
-                  className={`inline-block mt-4 px-6 py-2 rounded-full ${activeStory.bgColor} ${activeStory.textColor} font-medium`}
-                  onClick={(e) => {
+                {/* Устанавливаем цвет текста заголовка всегда белым */}
+                <h3 className="text-2xl font-bold text-white">{activeStory.title}</h3>
+                <div 
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation()
                     closeStory()
                   }}
                 >
-                  Смотреть
-                </LocalizedClientLink>
+                  <LocalizedClientLink 
+                    href={activeStory.handle}
+                    /* Устанавливаем цвет текста кнопки всегда белым, сохраняем фон */
+                    className={`inline-block mt-4 px-6 py-2 rounded-full ${activeStory.bgColor} text-white font-medium`}
+                  >
+                    Смотреть
+                  </LocalizedClientLink>
+                </div>
               </div>
             </div>
           </div>

@@ -1,10 +1,8 @@
-'use client';
-
-import { Text } from "@medusajs/ui";
+"use client";
+import * as React from "react";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import Thumbnail from "../thumbnail";
-import { ShoppingBag, Heart, Play } from "lucide-react";
-import { useEffect } from "react";
+import { Heart, Play, ShoppingBag } from "lucide-react";
 
 // Типы для пропсов компонента
 type Badge = {
@@ -16,7 +14,7 @@ type Badge = {
 type CheapestPrice = {
   calculated_price: string;
   original_price?: string;
-  price_type: string;
+  price_type: "sale" | "default";
   calculated_price_number: number;
   original_price_number?: number;
 };
@@ -35,129 +33,116 @@ type ProductData = {
   cheapestPrice: CheapestPrice | null;
 };
 
-type ProductPreviewClientProps = {
+type ProductPreviewCardProps = {
   product: ProductData;
   isFeatured?: boolean;
 };
 
-export default function ProductPreviewClient({ 
-  product, 
-  isFeatured 
-}: ProductPreviewClientProps) {
-  // Добавляем логирование для отладки
-  useEffect(() => {
-    console.log("Client | ProductPreviewClient | Product:", product.id, product.title);
-    console.log("Client | ProductPreviewClient | Badges:", product.badges);
-    console.log("Client | ProductPreviewClient | CheapestPrice:", product.cheapestPrice);
-  }, [product]);
+function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
+  const discountBadge = product.badges.find(b => b.id === 'discount');
+  const price = product.cheapestPrice;
 
   return (
-    <div className="flex flex-col rounded-[4px] overflow-hidden border border-gray-200">
+    <div className="self-stretch flex flex-col border border-gray-200 rounded-[4px] overflow-hidden group">
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative h-[360px]">
+        <div className="relative w-full aspect-square overflow-hidden">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
             size="full"
             isFeatured={isFeatured}
+            className="object-cover absolute inset-0 size-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
           
-          {/* Бейджи и кнопки */}
-          <div className="absolute top-0 left-0 flex justify-between w-full">
-            {/* Левый верхний угол - скидки или бейджи */}
-            <div className="flex">
-              {product.badges.map((badge) => (
-                <div 
-                  key={badge.id}
-                  className={`${badge.color} h-10 w-[60px] text-xl font-semibold flex items-center justify-center`}
-                >
-                  {badge.text}%
-                </div>
-              ))}
-            </div>
-            
-            {/* Правый верхний угол - кнопка избранного */}
-            <button className="bg-[#07C4F5] h-10 w-10 flex items-center justify-center">
+          <div className="absolute top-0 left-0 p-2 w-full flex justify-between items-start z-10">
+            {discountBadge && (
+              <div className={`flex items-center justify-center text-xl font-semibold rounded-md px-2.5 py-1 min-h-[30px] ${discountBadge.color}`}>
+                %
+              </div>
+            )}
+            {!discountBadge && <div className="h-[30px]"/>}
+
+            <button className="bg-[#07C4F5] hover:bg-cyan-500 transition-colors h-10 w-10 rounded-md flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </button>
           </div>
-          
-          {/* Информация о доставке/наличии */}
-          <div className="absolute bottom-0 right-0">
-            <div className={`${product.isInStock ? 'bg-[rgba(0,0,0,0.6)]' : 'bg-[rgba(0,0,0,0.6)]'} backdrop-blur-sm px-3 py-1 text-xs text-white`}>
+
+          <div className="absolute bottom-0 left-0 p-2 w-full flex justify-between items-end z-10">
+            {product.hasVideo && (
+              <div className="bg-black/60 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center">
+                <Play className="w-5 h-5 text-white" fill="white" />
+              </div>
+            )}
+            {!product.hasVideo && <div className="h-10"/>}
+
+            <div className="bg-black/60 backdrop-blur-sm text-white text-xs text-right px-2.5 py-1 rounded-md">
               {product.deliveryInfo}
             </div>
           </div>
-          
-          {/* Индикатор видео */}
-          {product.hasVideo && (
-            <div className="absolute bottom-3 left-3">
-              <div className="bg-white/80 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center">
-                <Play className="w-5 h-5 text-black" fill="black" />
-              </div>
-            </div>
-          )}
-          
-          {/* Указатель "Нет в наличии" поверх изображения */}
+
           {!product.isInStock && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
               <div className="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-md">
-                <Text className="text-white font-medium text-xl">Нет в наличии</Text>
+                <span className="text-white font-medium text-xl">Нет в наличии</span>
               </div>
             </div>
           )}
         </div>
         
-        {/* Контентная часть */}
-        <div className="p-4 flex flex-col gap-4">
-          {/* Категория и название */}
-          <div className="space-y-2">
-            <Text className="text-[#333333] opacity-60 text-base">
-              {product.category}
-            </Text>
-            <Text className="font-medium text-[#333333] opacity-80 uppercase line-clamp-2 text-lg">
-              {product.title}
-            </Text>
+        <div className="p-4 flex flex-col gap-2">
+          <div className="text-gray-600 text-base line-clamp-1">
+            {product.category}
+          </div>
+          <div className="text-zinc-800 text-lg font-medium uppercase line-clamp-2 h-[3em] leading-tight">
+            {product.title}
           </div>
         </div>
       </LocalizedClientLink>
       
-      {/* Блок цены и кнопки добавления в корзину */}
-      <div className="mt-auto p-4 pt-0 flex justify-between items-center">
-        {/* Кнопка корзины (слева) */}
-        <button 
-          className={`flex items-center justify-center w-10 h-10 rounded-md ${product.isInStock ? 'bg-black' : 'bg-gray-400 cursor-not-allowed'}`}
+      <div className="mt-auto p-4 flex justify-between items-center">
+        <button
+          className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${product.isInStock ? 'bg-black hover:bg-gray-700' : 'bg-gray-300 cursor-not-allowed'}`}
           aria-label="Добавить в корзину"
           disabled={!product.isInStock}
+          onClick={(e) => {
+            e.preventDefault();
+            console.log("Add to cart clicked for:", product.id);
+          }}
         >
           <ShoppingBag className="w-5 h-5 text-white" />
         </button>
         
-        {/* Блок цены (справа) */}
-        <div className="flex flex-col items-end relative">
-          {product.cheapestPrice && (
-            <>
-              {product.cheapestPrice.price_type === "sale" && product.cheapestPrice.original_price && (
-                <>
-                  <Text className="text-ui-fg-muted line-through opacity-50 text-sm">
-                    {product.cheapestPrice.original_price}
-                  </Text>
-                  <Text className="text-ui-fg-base font-semibold text-base">
-                    {product.cheapestPrice.calculated_price}
-                  </Text>
-                  {/* Линия перечеркивания */}
-                  <div className="absolute top-[10px] h-[1px] w-full bg-[#07C4F5] -rotate-6"></div>
-                </>
+        <div className="flex flex-col items-end text-black">
+          {price ? (
+            <div className="relative h-[2.5em]">
+              {price.price_type === 'sale' && price.original_price && (
+                <div className="absolute right-0 bottom-0 flex flex-col items-end">
+                  <div className="text-sm text-gray-500 line-through">
+                    {price.original_price}
+                  </div>
+                  <div className="text-lg font-semibold">
+                    {price.calculated_price}
+                  </div>
+                  <div
+                    className="absolute top-[calc(50%-8px)] right-0 h-[1px] w-[calc(100%+4px)] bg-[#07C4F5] transform -rotate-6 origin-right"
+                  />
+                </div>
               )}
-              {product.cheapestPrice.price_type !== "sale" && (
-                <Text className="text-ui-fg-base font-semibold text-base">
-                  {product.cheapestPrice.calculated_price}
-                </Text>
+              {price.price_type !== 'sale' && (
+                <div className="absolute right-0 bottom-0">
+                  <div className="text-lg font-semibold">
+                    {price.calculated_price}
+                  </div>
+                </div>
               )}
-            </>
+            </div>
+          ) : (
+            <div className="h-[2.5em]" />
           )}
         </div>
       </div>
     </div>
   );
-} 
+}
+
+export default ProductPreviewCard; 

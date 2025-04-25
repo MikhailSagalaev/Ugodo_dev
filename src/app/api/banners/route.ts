@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { medusaClient } from "@lib/config"
+import { sdk } from "@lib/config"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
       queryParams.active = active === "true"
     }
     
-    const { data } = await medusaClient.client.request("GET", "/store/banners", {
+    const { banners } = await sdk.client.fetch<{ banners: any[] }>("/store/banners", {
+      method: "GET",
       query: queryParams
     })
     
-    return NextResponse.json(data)
+    return NextResponse.json({ banners })
   } catch (error) {
     console.error("Ошибка при получении баннеров:", error)
     

@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { Container } from "@medusajs/ui"
 
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
@@ -7,7 +8,7 @@ import { listProducts } from "@lib/data/products"
 import Hero from "@modules/home/components/hero"
 import CategoryStories from "@modules/home/components/category-stories"
 import ProductSection from "@modules/home/components/product-section"
-import PromoBanner from "@modules/home/components/promo-banner"
+import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-banner"
 import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
 import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
@@ -17,10 +18,7 @@ export const metadata: Metadata = {
   description: "Все для вашего дома с доставкой на дом.",
 }
 
-export default async function Home(props: {
-  params: Promise<{ countryCode: string }>
-}) {
-  const params = await props.params
+export default async function Home({ params }: { params: { countryCode: string }}) {
   const { countryCode } = params
   const region = await getRegion(countryCode)
 
@@ -51,16 +49,6 @@ export default async function Home(props: {
     return { response: { products: [] } }
   })
 
-  // Фильтруем товары со скидкой на стороне сервера
-  const filteredSaleProducts = saleProducts.filter(product => {
-    const variants = product.variants || []
-    return variants.some(variant => 
-      variant.prices?.some(price => 
-        price.price_type === "sale" && price.calculated_amount < price.original_amount
-      )
-    )
-  })
-
   // Получаем популярные товары
   const { response: { products: popularProducts } } = await listProducts({
     regionId: region.id,
@@ -82,55 +70,60 @@ export default async function Home(props: {
       <Hero />
       
       {/* Блок Stories для категорий */}
-      <CategoryStories />
+      <Container className="py-8 md:py-12">
+        <CategoryStories />
+      </Container>
       
       {/* Секция с новинками */}
-      <ProductSection 
-        title="Новинки" 
-        products={newProducts} 
-        region={region}
-        link={{ href: "/collections/new-arrivals", text: "Все новинки" }}
-      />
+      <Container className="py-8 md:py-12">
+        <ProductSection 
+          title="Новинки" 
+          products={newProducts} 
+          region={region}
+          link={{ href: "/collections/new-arrivals", text: "Все новинки" }}
+        />
+      </Container>
       
       {/* Промо-баннер в середине страницы */}
       <HomeMiddleBanner className="my-8" />
       
-      {/* Промо-баннер */}
-      <PromoBanner 
-        title="Все, что нужно для вашего дома"
-        subtitle="Стильные и функциональные решения для создания уюта"
-        buttonText="Смотреть коллекцию"
-        buttonLink="/collections/home-essentials"
-        imageUrl="/images/banners/placeholder.svg"
-        variant="gradient"
-      />
+      {/* Заменяем старый PromoBanner на новый WishlistDiscountBanner */}
+      <WishlistDiscountBanner />
       
       {/* Секция со скидками */}
-      <ProductSection 
-        title="Специальные предложения" 
-        products={filteredSaleProducts.length > 0 ? filteredSaleProducts : saleProducts.slice(0, 4)} 
-        region={region}
-        link={{ href: "/collections/sale", text: "Все акции" }}
-        variant="colored"
-      />
+      <Container className="py-8 md:py-12">
+        <ProductSection 
+          title="Специальные предложения" 
+          products={saleProducts.slice(0, 4)} 
+          region={region}
+          link={{ href: "/collections/sale", text: "Все акции" }}
+          variant="colored"
+        />
+      </Container>
       
       {/* Информационный баннер о скидках */}
-      <InfoBanner 
-        title="Скидки до 50%"
-        description="Выбирайте из широкого ассортимента товаров по привлекательным ценам"
-        variant="secondary"
-      />
+      <Container className="py-8 md:py-12">
+        <InfoBanner 
+          title="Скидки до 50%"
+          description="Выбирайте из широкого ассортимента товаров по привлекательным ценам"
+          variant="secondary"
+        />
+      </Container>
       
       {/* Секция с популярными товарами */}
-      <ProductSection 
-        title="Популярное" 
-        products={popularProducts} 
-        region={region}
-        link={{ href: "/collections/popular", text: "Смотреть все" }}
-      />
+      <Container className="py-8 md:py-12">
+        <ProductSection 
+          title="Популярное" 
+          products={popularProducts} 
+          region={region}
+          link={{ href: "/collections/popular", text: "Смотреть все" }}
+        />
+      </Container>
       
       {/* Блок с преимуществами магазина */}
-      <DeliveryFeatures />
+      <Container className="py-8 md:py-12">
+        <DeliveryFeatures />
+      </Container>
     </div>
   )
 }
