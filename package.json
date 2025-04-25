@@ -27,6 +27,8 @@
     "@stripe/stripe-js": "^1.29.0",
     "critters": "^0.0.25",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.503.0",
+    "medusa-plugin-meilisearch": "^2.0.11",
     "medusa-plugin-reviews": "^1.0.0",
     "next": "15.0.3",
     "pg": "^8.11.3",

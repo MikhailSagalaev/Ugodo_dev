@@ -24,6 +24,9 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/review",
     },
+    {
+      resolve: "./src/modules/banner",
+    },
     process.env.REDIS_URL ? {
       resolve: "@medusajs/cache-redis",
       options: {

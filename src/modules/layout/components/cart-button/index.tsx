@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import CartDropdown from "../cart-dropdown"
 
 export default function CartButton() {
   const [cart, setCart] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -29,11 +31,26 @@ export default function CartButton() {
   // Получаем общее количество товаров в корзине
   const itemsCount = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0
   
+  // Обработчики наведения мыши для выпадающего меню
+  const handleMouseEnter = () => {
+    setIsOpen(true)
+  }
+  
+  const handleMouseLeave = () => {
+    setIsOpen(false)
+  }
+  
   return (
-    <div className="relative">
+    <div 
+      className="relative" 
+      ref={dropdownRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button 
         className="flex items-center justify-center hover:text-ui-fg-base relative"
         aria-label="Корзина"
+        onClick={() => setIsOpen(!isOpen)}
       >
         <svg 
           className="w-5 h-5" 
@@ -57,7 +74,9 @@ export default function CartButton() {
           </span>
         )}
       </button>
-      <CartDropdown cart={cart} />
+      
+      {/* Выпадающее меню корзины */}
+      <CartDropdown cart={cart} isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   )
 }

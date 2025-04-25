@@ -7,6 +7,7 @@ import ProductTabs from "@modules/products/components/product-tabs"
 import RelatedProducts from "@modules/products/components/related-products"
 import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
+import { ProductRelatedBanner } from "@modules/banner/components"
 import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
@@ -54,6 +55,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </Suspense>
         </div>
       </div>
+      
+      {/* Баннер для связанных продуктов */}
+      <div className="content-container my-8">
+        <ProductRelatedBanner />
+      </div>
+      
       <div
         className="content-container my-16 small:my-32"
         data-testid="related-products-container"

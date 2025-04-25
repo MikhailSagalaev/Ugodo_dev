@@ -2099,6 +2099,11 @@
   resolved "https://registry.npmjs.org/@medusajs/file-local/-/file-local-2.7.0.tgz"
   integrity sha512-t/TqYnDBt80/4wUl46LQW/bK3nw09fi1MPnYcH9P007XkG/JNxS0FlKbi0U/CicL7QmeIsQRbFtdc+ZVu/gaXQ==
 
+"@medusajs/file-local@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@medusajs/file-local/-/file-local-2.7.1.tgz#31b2073bf27e8f9867f885eb1e9c2a207b53e018"
+  integrity sha512-X8bZIH5MpSYtZKXWUtTvl5+ynDkvWc9VvpEqbIeIXKe7hHZ0+rYD4aHjKtzKPH94cpQB9P8cZfmeILSqH+f4Hw==
+
 "@medusajs/file-s3@2.7.0":
   version "2.7.0"
   resolved "https://registry.npmjs.org/@medusajs/file-s3/-/file-s3-2.7.0.tgz"

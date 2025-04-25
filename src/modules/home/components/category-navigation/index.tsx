@@ -15,20 +15,20 @@ const stories = [
     bgColor: "bg-[#07c4f5]",
     textColor: "text-white",
     handle: "bathroom-design",
-    image: "/images/stories/bathroom.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Коллекция для ванной",
         description: "Создайте стильную и функциональную ванную комнату с нашей новой коллекцией",
-        image: "/images/stories/bathroom-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Смотреть", url: "/collections/bathroom" }
       },
       {
         id: "step_2",
         title: "Аксессуары",
         description: "Дополните интерьер стильными аксессуарами для вашей ванной",
-        image: "/images/stories/bathroom-2.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Подробнее", url: "/collections/bathroom-accessories" }
       }
     ]
@@ -40,13 +40,13 @@ const stories = [
     bgColor: "bg-[#cbf401]",
     textColor: "text-black",
     handle: "spring-collection",
-    image: "/images/stories/spring.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Весенняя коллекция",
         description: "Свежие идеи для вашего дома в новом сезоне",
-        image: "/images/stories/spring-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Перейти", url: "/collections/spring-2024" }
       }
     ]
@@ -58,13 +58,13 @@ const stories = [
     bgColor: "bg-white",
     textColor: "text-black",
     handle: "new-arrivals",
-    image: "/images/stories/new.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Новые поступления",
         description: "Только что прибывшие товары в нашем магазине",
-        image: "/images/stories/new-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Смотреть все", url: "/collections/new-arrivals" }
       }
     ]
@@ -76,13 +76,13 @@ const stories = [
     bgColor: "bg-[#ff6b6b]",
     textColor: "text-white",
     handle: "kitchen-essentials",
-    image: "/images/stories/kitchen.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Кухонные принадлежности",
         description: "Все необходимое для комфортного приготовления пищи",
-        image: "/images/stories/kitchen-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Подробнее", url: "/collections/kitchen" }
       }
     ]
@@ -94,13 +94,13 @@ const stories = [
     bgColor: "bg-[#50d890]",
     textColor: "text-white",
     handle: "eco-friendly",
-    image: "/images/stories/eco.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Эко-товары",
         description: "Забота о планете начинается дома",
-        image: "/images/stories/eco-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Смотреть", url: "/collections/eco-friendly" }
       }
     ]
@@ -112,13 +112,13 @@ const stories = [
     bgColor: "bg-[#ff9f43]",
     textColor: "text-white",
     handle: "sales",
-    image: "/images/stories/sales.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Специальные предложения",
         description: "Товары со скидками и акции этой недели",
-        image: "/images/stories/sales-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "К скидкам", url: "/collections/sale" }
       }
     ]
@@ -130,13 +130,13 @@ const stories = [
     bgColor: "bg-[#a55eea]",
     textColor: "text-white",
     handle: "decor",
-    image: "/images/stories/decor.jpg",
+    image: "/images/stories/placeholder.svg",
     content: [
       {
         id: "step_1",
         title: "Декор для дома",
         description: "Стильные аксессуары для создания уютной атмосферы",
-        image: "/images/stories/decor-1.jpg",
+        image: "/images/stories/placeholder.svg",
         cta: { text: "Смотреть", url: "/collections/decor" }
       }
     ]
@@ -385,7 +385,7 @@ const StoriesNavigation = () => {
                 onClick={nextStep}
               />
             </div>
-          </div>
+      </div>
         )}
       </Modal>
     </>

@@ -5,11 +5,12 @@ import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
 import { listProducts } from "@lib/data/products"
 import Hero from "@modules/home/components/hero"
-import CategoryNavigation from "@modules/home/components/category-navigation"
+import CategoryStories from "@modules/home/components/category-stories"
 import ProductSection from "@modules/home/components/product-section"
 import PromoBanner from "@modules/home/components/promo-banner"
 import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
+import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
 
 export const metadata: Metadata = {
   title: "Интернет-магазин Ugodo",
@@ -74,11 +75,14 @@ export default async function Home(props: {
 
   return (
     <div className="flex flex-col gap-0">
+      {/* Главный баннер верхней части страницы */}
+      <HomeTopBanner className="mb-8" />
+      
       {/* Главный слайдер-баннер */}
       <Hero />
       
-      {/* Блок "сторис" */}
-      <CategoryNavigation />
+      {/* Блок Stories для категорий */}
+      <CategoryStories />
       
       {/* Секция с новинками */}
       <ProductSection 
@@ -88,13 +92,16 @@ export default async function Home(props: {
         link={{ href: "/collections/new-arrivals", text: "Все новинки" }}
       />
       
+      {/* Промо-баннер в середине страницы */}
+      <HomeMiddleBanner className="my-8" />
+      
       {/* Промо-баннер */}
       <PromoBanner 
         title="Все, что нужно для вашего дома"
         subtitle="Стильные и функциональные решения для создания уюта"
         buttonText="Смотреть коллекцию"
         buttonLink="/collections/home-essentials"
-        imageUrl="/placeholder.svg"
+        imageUrl="/images/banners/placeholder.svg"
         variant="gradient"
       />
       

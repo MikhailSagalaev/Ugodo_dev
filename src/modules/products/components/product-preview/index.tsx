@@ -1,11 +1,7 @@
 import { Text } from "@medusajs/ui"
-import { listProducts } from "@lib/data/products"
 import { getProductPrice } from "@lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import Thumbnail from "../thumbnail"
-import PreviewPrice from "./price"
-import { Plus } from "@medusajs/icons"
+import ProductPreviewClient from "@modules/products/components/product-preview/product-preview-client"
 
 export default async function ProductPreview({
   product,
@@ -16,80 +12,78 @@ export default async function ProductPreview({
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
 }) {
-  // const pricedProduct = await listProducts({
-  //   regionId: region.id,
-  //   queryParams: { id: [product.id!] },
-  // }).then(({ response }) => response.products[0])
-
-  // if (!pricedProduct) {
-  //   return null
-  // }
-
   const { cheapestPrice } = getProductPrice({
     product,
   })
 
+  // Логирование полученных данных для отладки
+  console.log("Server | ProductPreview | Product:", product.id, product.title);
+  console.log("Server | ProductPreview | CheapestPrice:", cheapestPrice);
+  
+  // Определяем категорию продукта (первый тег или коллекция)
+  const category = product.collection?.title || 
+                  (product.tags && product.tags.length > 0 ? product.tags[0].value : "Товар")
+
   // Определяем бейджи для продукта
   const badges = []
 
-  // Если продукт новый (можно настроить логику)
-  if (product.created_at && new Date(product.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000) {
-    badges.push({ id: 'new', text: 'Новинка', color: 'bg-cyan-400 text-black' })
-  }
-
   // Если у продукта есть скидка
+  let discountPercentage = 0
   if (cheapestPrice && cheapestPrice.price_type === "sale") {
-    const discountPercentage = Math.round(
-      ((cheapestPrice.original_amount - cheapestPrice.calculated_amount) / cheapestPrice.original_amount) * 100
+    discountPercentage = Math.round(
+      ((cheapestPrice.original_price_number - cheapestPrice.calculated_price_number) / cheapestPrice.original_price_number) * 100
     )
     badges.push({ 
       id: 'discount', 
-      text: `-${discountPercentage}%`, 
-      color: 'bg-lime-400 text-black' 
+      text: `${discountPercentage}`, 
+      color: 'bg-yellow-400 text-black' 
     })
+    
+    console.log("Server | ProductPreview | DiscountPercentage:", discountPercentage);
   }
 
+  // Проверяем наличие продукта
+  const isInStock = product.variants?.some(v => (v.inventory_quantity ?? 0) > 0) ?? true
+  const deliveryInfo = isInStock ? "В течение часа" : "Нет в наличии"
+
+  // Если продукт новый (за последние 30 дней)
+  const isNew = product.created_at && 
+                new Date(product.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000
+  
+  // Проверяем, есть ли видео у продукта
+  const hasVideo = product.metadata && product.metadata.has_video === true ? true : false
+
+  // Подготовим все данные для передачи в клиентский компонент
+  const productData = {
+    id: product.id,
+    handle: product.handle,
+    title: product.title,
+    thumbnail: product.thumbnail,
+    images: product.images || [],
+    hasVideo,
+    category,
+    badges,
+    isInStock,
+    deliveryInfo,
+    cheapestPrice,
+  }
+
+  // Логирование данных, отправляемых в клиентский компонент
+  console.log("Server | ProductPreview | ProductData:", {
+    id: productData.id,
+    title: productData.title,
+    badges: productData.badges,
+    cheapestPrice: productData.cheapestPrice ? {
+      price_type: productData.cheapestPrice.price_type,
+      calculated_price: productData.cheapestPrice.calculated_price,
+      original_price: productData.cheapestPrice.original_price
+    } : null
+  });
+
   return (
-    <div className="group relative">
-      <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative aspect-square mb-2">
-          <Thumbnail
-            thumbnail={product.thumbnail}
-            images={product.images}
-            size="full"
-            isFeatured={isFeatured}
-          />
-          
-          {/* Бейджи */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {badges.map((badge) => (
-              <span 
-                key={badge.id}
-                className={`text-xs px-2 py-1 rounded-sm ${badge.color}`}
-              >
-                {badge.text}
-              </span>
-            ))}
-          </div>
-          
-          {/* Кнопка добавления в корзину */}
-          <button 
-            className="absolute bottom-2 right-2 bg-black rounded-full w-8 h-8 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Добавить в корзину"
-          >
-            <Plus />
-          </button>
-        </div>
-        
-        <div className="flex text-sm mt-2 justify-between">
-          <Text className="text-ui-fg-subtle" data-testid="product-title">
-            {product.title}
-          </Text>
-          <div className="flex items-center gap-x-2">
-            {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          </div>
-        </div>
-      </LocalizedClientLink>
-    </div>
+    <ProductPreviewClient 
+      product={productData} 
+      isFeatured={isFeatured} 
+    />
   )
 }

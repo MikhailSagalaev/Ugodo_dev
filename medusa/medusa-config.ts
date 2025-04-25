@@ -16,6 +16,14 @@ module.exports = defineConfig({
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
+  modules: [
+    {
+      resolve: './src/modules/review',
+    },
+    {
+      resolve: './src/modules/banner',
+    },
+  ],
   plugins: [
     {
       resolve: `medusa-plugin-twilio-sms`,

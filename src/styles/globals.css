@@ -109,4 +109,30 @@
   .text-3xl-semi {
     @apply text-[32px] leading-[44px] font-semibold;
   }
+
+  /* Анимация для индикаторов слайдера */
+  .animate-pulse-slow {
+    animation: pulseSlider 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
+
+/* Анимация пульсации для индикаторов слайдера */
+@keyframes pulseSlider {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Скрытие полосы прокрутки */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE и Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari и Opera */
+}
+
+/* Проверяю существующий файл и добавляю новую анимацию */

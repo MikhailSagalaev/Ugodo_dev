@@ -10,36 +10,33 @@ import { ChevronLeft, ChevronRight } from "@medusajs/icons"
 const slides = [
   {
     id: 1,
-    title: "Скидка до 30%",
-    description: "Откройте для себя коллекцию высококачественных товаров для дома, созданных с любовью к деталям и заботой о вашем комфорте",
-    image: "/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
+    headline: "на товары для дома",
+    title: "СКИДКА ДО 20%",
+    image: "/images/banners/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
     cta: {
-      text: "Смотреть каталог",
+      text: "Подробнее",
       link: "/collections/sale"
-    },
-    bgColor: "from-lime-500/5 to-green-500/5"
+    }
   },
   {
     id: 2,
-    title: "Новая коллекция",
-    description: "Эксклюзивные новинки для вашего дома. Создайте уютное пространство с нашими стильными решениями",
-    image: "/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
+    headline: "новая коллекция",
+    title: "ВЕСНА-ЛЕТО 2024",
+    image: "/images/banners/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
     cta: {
-      text: "Подробнее",
+      text: "Смотреть",
       link: "/collections/new-arrivals"
-    },
-    bgColor: "from-blue-500/5 to-purple-500/5"
+    }
   },
   {
     id: 3,
-    title: "Товары для ванной",
-    description: "Превратите вашу ванную комнату в спа-салон с нашей коллекцией премиальных товаров",
-    image: "/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
+    headline: "только в этом месяце",
+    title: "РАСПРОДАЖА",
+    image: "/images/banners/placeholder.svg", // Используем заглушку вместо отсутствующих изображений
     cta: {
       text: "Перейти",
       link: "/collections/bathroom"
-    },
-    bgColor: "from-cyan-500/5 to-blue-500/5"
+    }
   }
 ]
 
@@ -54,22 +51,6 @@ const Hero = () => {
   // Минимальное расстояние свайпа для смены слайда
   const minSwipeDistance = 50
 
-  // Автоматическое переключение слайдов
-  useEffect(() => {
-    if (isAutoPlaying) {
-      autoPlayTimerRef.current = setInterval(() => {
-        changeSlide((prev) => (prev + 1) % slides.length)
-      }, 5000) // Переключение каждые 5 секунд
-    }
-    
-    return () => {
-      if (autoPlayTimerRef.current) {
-        clearInterval(autoPlayTimerRef.current)
-        autoPlayTimerRef.current = null
-      }
-    }
-  }, [isAutoPlaying])
-
   // Функция для смены слайда с анимацией
   const changeSlide = useCallback((getNextIndex: (current: number) => number) => {
     setIsFading(true)
@@ -78,6 +59,30 @@ const Hero = () => {
       setIsFading(false)
     }, 300) // Время анимации затухания
   }, [currentSlide])
+
+  // Автоматическое переключение слайдов
+  useEffect(() => {
+    // Очищаем существующий таймер при изменении состояния
+    if (autoPlayTimerRef.current) {
+      clearInterval(autoPlayTimerRef.current)
+      autoPlayTimerRef.current = null
+    }
+    
+    // Создаем новый таймер если автовоспроизведение включено
+    if (isAutoPlaying) {
+      autoPlayTimerRef.current = setInterval(() => {
+        changeSlide((prev) => (prev + 1) % slides.length)
+      }, 5000) // Переключение каждые 5 секунд
+    }
+    
+    // Очистка при размонтировании
+    return () => {
+      if (autoPlayTimerRef.current) {
+        clearInterval(autoPlayTimerRef.current)
+        autoPlayTimerRef.current = null
+      }
+    }
+  }, [isAutoPlaying, changeSlide])
 
   // Обработчики для свайпов на мобильных устройствах
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -156,22 +161,37 @@ const Hero = () => {
 
   return (
     <div 
-      className={`w-full bg-gradient-to-r ${slide.bgColor} relative overflow-hidden transition-colors duration-500`}
+      className="w-full h-[75vh] md:h-[80vh] relative overflow-hidden"
       onMouseEnter={pauseAutoPlay}
       onMouseLeave={resumeAutoPlay}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="content-container py-12 md:py-16 lg:py-20 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className={`max-w-xl transition-opacity duration-300 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-ui-fg-base">
+      {/* Фоновое изображение на всю ширину */}
+      <div className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+        <Image 
+          src={slide.image} 
+          alt={slide.title}
+          fill
+          priority
+          className="object-cover object-center brightness-75"
+          sizes="100vw"
+        />
+        {/* Затемнение для лучшей читаемости текста */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
+      </div>
+      
+      {/* Контент поверх изображения */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="content-container">
+          <div className={`max-w-md transition-opacity duration-300 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+            <p className="text-white/90 text-lg md:text-xl mb-2 font-light tracking-wide">
+              {slide.headline}
+            </p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight tracking-wide">
               {slide.title}
             </h1>
-            <p className="text-gray-600 mb-8 text-base md:text-lg">
-              {slide.description}
-            </p>
             <div className="flex flex-wrap gap-4">
               <LocalizedClientLink href={slide.cta.link}>
                 <Button 
@@ -183,51 +203,64 @@ const Hero = () => {
               </LocalizedClientLink>
             </div>
           </div>
-          <div className={`relative w-full max-w-md lg:max-w-lg xl:max-w-xl aspect-[4/5] rounded-2xl overflow-hidden border border-ui-border-base shadow-lg transition-opacity duration-300 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-            {/* Заглушка для изображения */}
-            <div className="absolute inset-0 flex items-center justify-center bg-[#f3f3f3]">
-              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center">
-                <span className="text-gray-400">Баннер {currentSlide + 1}</span>
-              </div>
-            </div>
+        </div>
+      </div>
+      
+      {/* Индикаторы слайдов (центрированные) */}
+      <div className="absolute bottom-8 left-0 right-0 z-10">
+        <div className="content-container flex justify-center">
+          <div className="flex gap-3 justify-center">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                className="focus:outline-none"
+                onClick={() => goToSlide(index)}
+                aria-label={`Перейти к слайду ${index + 1}`}
+              >
+                <div className="relative h-[3px] w-16 bg-white/30 overflow-hidden">
+                  <div
+                    className={`absolute top-0 left-0 h-full bg-white transition-all duration-500 ease-in-out ${
+                      currentSlide === index 
+                        ? 'w-full animate-progress-bar' 
+                        : index < currentSlide 
+                          ? 'w-full opacity-50' 
+                          : 'w-0'
+                    }`}
+                  ></div>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
       
-      {/* Индикаторы слайдов */}
-      <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            className={`h-2.5 rounded-full transition-all duration-300 ${
-              index === currentSlide ? "bg-[#cbf401] w-8" : "bg-gray-300 w-2.5"
-            }`}
-            onClick={() => goToSlide(index)}
-            aria-label={`Перейти к слайду ${index + 1}`}
-          />
-        ))}
-      </div>
-      
-      {/* Кнопки навигации по слайдам */}
+      {/* Кнопки навигации слайдера (по бокам) */}
       <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 flex items-center justify-center z-10 shadow-md hover:bg-white transition-colors"
+        className="absolute left-4 md:left-6 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center z-10 transition-all duration-200"
         onClick={prevSlide}
         aria-label="Предыдущий слайд"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
       </button>
       
       <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 flex items-center justify-center z-10 shadow-md hover:bg-white transition-colors"
+        className="absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center z-10 transition-all duration-200"
         onClick={nextSlide}
         aria-label="Следующий слайд"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
       </button>
       
-      {/* Декоративные элементы */}
-      <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-lime-400/10 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-green-400/10 rounded-full blur-3xl"></div>
+      {/* Добавляем keyframes для анимации */}
+      <style jsx global>{`
+        @keyframes progress-bar {
+          0% { width: 0; }
+          100% { width: 100%; }
+        }
+        .animate-progress-bar {
+          animation: progress-bar 5s linear;
+        }
+      `}</style>
     </div>
   )
 }

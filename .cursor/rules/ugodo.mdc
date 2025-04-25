@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+В этом проекте используется yarn. Всегда обращяйся к документации medusaks >2
+- You can @ files here
+- You can use markdown but dont have to

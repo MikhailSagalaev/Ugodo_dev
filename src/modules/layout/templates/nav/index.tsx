@@ -64,11 +64,9 @@ const Nav = () => {
           {/* Правая часть - иконки */}
           <div className="flex items-center gap-x-4 h-full">
             <div className="hidden small:flex items-center gap-x-4 h-full">
-              {process.env.FEATURE_SEARCH_ENABLED && (
-                <Suspense>
-                  <Search />
-                </Suspense>
-              )}
+              <Suspense>
+                <Search />
+              </Suspense>
               
               <LocalizedClientLink
                 className="hover:text-ui-fg-base flex items-center gap-x-1"
