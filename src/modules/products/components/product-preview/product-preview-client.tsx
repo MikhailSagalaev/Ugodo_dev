@@ -3,6 +3,8 @@ import * as React from "react";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import Thumbnail from "../thumbnail";
 import { Heart, Play, ShoppingBag } from "lucide-react";
+import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer";
+import { HttpTypes } from "@medusajs/types";
 
 // Типы для пропсов компонента
 type Badge = {
@@ -41,6 +43,79 @@ type ProductPreviewCardProps = {
 function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
   const discountBadge = product.badges.find(b => b.id === 'discount');
   const price = product.cheapestPrice;
+  const [customer, setCustomer] = React.useState<HttpTypes.StoreCustomer | null>(null);
+  const [isInWishlist, setIsInWishlist] = React.useState(false);
+  const [wishlistItemId, setWishlistItemId] = React.useState<string | null>(null);
+  const [isLoadingWishlist, setIsLoadingWishlist] = React.useState(false);
+  const [isLoadingCustomer, setIsLoadingCustomer] = React.useState(true);
+
+  React.useEffect(() => {
+    setIsLoadingCustomer(true);
+    retrieveCustomer()
+      .then(setCustomer)
+      .catch(() => setCustomer(null))
+      .finally(() => setIsLoadingCustomer(false));
+  }, []);
+
+  React.useEffect(() => {
+    if (customer && !isLoadingCustomer) {
+      setIsLoadingWishlist(true);
+      getWishlist()
+        .then(items => {
+          const item = items.find(i => i.product_id === product.id);
+          if (item) {
+            setIsInWishlist(true);
+            setWishlistItemId(item.id);
+          } else {
+            setIsInWishlist(false);
+            setWishlistItemId(null);
+          }
+        })
+        .catch(err => {
+          console.error("Ошибка загрузки избранного в карточке товара:", err);
+          setIsInWishlist(false);
+          setWishlistItemId(null);
+        })
+        .finally(() => setIsLoadingWishlist(false));
+    } else if (!customer && !isLoadingCustomer) {
+        setIsInWishlist(false);
+        setWishlistItemId(null);
+    }
+  }, [customer, product.id, isLoadingCustomer]);
+
+  const handleWishlistToggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!customer) {
+      console.log("Пользователь не авторизован");
+      return;
+    }
+
+    setIsLoadingWishlist(true);
+    let success = false;
+
+    if (isInWishlist && wishlistItemId) {
+      success = await removeFromWishlist(wishlistItemId);
+      if (success) {
+        setIsInWishlist(false);
+        setWishlistItemId(null);
+      }
+    } else {
+      success = await addToWishlist(product.id);
+      if (success) {
+        getWishlist().then(items => {
+            const item = items.find(i => i.product_id === product.id);
+            if (item) {
+                setIsInWishlist(true);
+                setWishlistItemId(item.id);
+            }
+        });
+      }
+    }
+    setIsLoadingWishlist(false);
+    if (!success) {
+      console.error("Не удалось обновить избранное");
+    }
+  };
 
   return (
     <div className="self-stretch flex flex-col border border-gray-200 rounded-[4px] overflow-hidden group">
@@ -62,8 +137,21 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
             )}
             {!discountBadge && <div className="h-[30px]"/>}
 
-            <button className="bg-[#07C4F5] hover:bg-cyan-500 transition-colors h-10 w-10 rounded-md flex items-center justify-center">
-              <Heart className="w-5 h-5 text-white" />
+            <button 
+              className={`bg-[#07C4F5] ${!isLoadingCustomer && customer ? 'hover:bg-cyan-500' : 'opacity-50 cursor-not-allowed'} transition-colors h-10 w-10 rounded-md flex items-center justify-center relative`}
+              onClick={handleWishlistToggle}
+              disabled={isLoadingCustomer || !customer || isLoadingWishlist}
+              aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
+              title={!customer ? "Войдите, чтобы добавить в избранное" : (isInWishlist ? "Удалить из избранного" : "Добавить в избранное")}
+            >
+              <Heart 
+                className={`w-5 h-5 text-white transition-all ${isInWishlist ? 'fill-white' : ''}`}
+              />
+              {(isLoadingWishlist || isLoadingCustomer) && (
+                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-md">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                 </div>
+              )}
             </button>
           </div>
 

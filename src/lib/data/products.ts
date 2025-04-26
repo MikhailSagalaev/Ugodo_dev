@@ -135,29 +135,111 @@ export const listProductsWithSort = async ({
   }
 }
 
-// Добавьте функцию для получения отзывов о товарах
+// Тип для отзыва (адаптируйте под фактические поля вашего плагина)
+export interface StoreProductReview extends HttpTypes.StoreProductReview {
+  // Добавьте поля, если они отличаются от стандартных Medusa HttpTypes
+  // Например, если плагин возвращает имена пользователя:
+  // first_name?: string;
+  // last_name?: string;
+}
+
+// Функция для получения отзывов
 export async function getProductReviews({
   productId,
-  limit = 10,
+  limit = 5,
   offset = 0,
 }: {
   productId: string
   limit?: number
   offset?: number
-}) {
-  const reviews = await sdk.client.request("GET", `/store/products/${productId}/reviews`, {
-    searchParams: {
-      limit,
-      offset
+}): Promise<{ 
+  reviews: StoreProductReview[]; 
+  count: number; 
+  limit: number; 
+  average_rating: number 
+}> {
+  // Эндпоинт может отличаться в зависимости от плагина!
+  // Проверьте документацию плагина `@appateam/medusa-plugin-product-reviews`
+  const endpoint = `/store/products/${productId}/reviews`
+
+  const headers = {
+    ...(await getAuthHeaders()), // Передаем заголовки авторизации, если нужны
+  }
+
+  const next = {
+    ...(await getCacheOptions("reviews")), // Настраиваем кэширование
+    tags: [`reviews_${productId}`], // Тег для ревалидации
+  }
+
+  // Используем try-catch для обработки ошибок
+  try {
+    // Делаем запрос к API
+    const { reviews, count, average_rating } = await sdk.client.fetch<{
+      reviews: StoreProductReview[];
+      count: number;
+      average_rating: number;
+      // Добавьте другие поля, если API их возвращает (например, limit)
+    }>(endpoint, {
+      method: "GET",
+      query: {
+        limit,
+        offset,
+        // Добавьте другие параметры, если API их поддерживает (например, status='approved')
+      },
+      headers,
+      next,
+      cache: "force-cache", // Или 'no-store', если отзывы должны быть всегда свежими
+    })
+    
+    return {
+      reviews: reviews || [],
+      count: count || 0,
+      limit: limit, // Возвращаем limit, который передали
+      average_rating: average_rating || 0,
     }
+  } catch (error) {
+    console.error(`Ошибка при получении отзывов для продукта ${productId}:`, error)
+    // Возвращаем пустой результат в случае ошибки
+    return {
+      reviews: [],
+      count: 0,
+      limit: limit,
+      average_rating: 0,
+    }
+  }
+}
+
+// Функция для добавления отзыва
+interface AddReviewPayload {
+  product_id: string
+  customer_id?: string // ID пользователя, если он авторизован
+  rating: number
+  title?: string
+  content: string
+  // Плагин может требовать имя/фамилию, но безопаснее получать их на бэкенде
+  // first_name?: string;
+  // last_name?: string;
+}
+
+export async function addProductReview(
+  payload: AddReviewPayload
+): Promise<StoreProductReview> { // Возвращаем созданный отзыв
+  // Эндпоинт может отличаться
+  const endpoint = `/store/products/${payload.product_id}/reviews`
+
+  const headers = {
+    ...(await getAuthHeaders()), // Нужны заголовки авторизации!
+  }
+
+  const { review } = await sdk.client.fetch<{ review: StoreProductReview }>(endpoint, {
+    method: "POST",
+    body: payload, // Отправляем данные формы
+    headers,
+    cache: "no-store", // Не кэшируем POST запросы
   });
 
-  const stats = await sdk.client.request("GET", `/store/products/${productId}/reviews/stats`);
+  // Можно добавить ревалидацию кеша отзывов после добавления нового
+  // revalidateTag(`reviews_${payload.product_id}`)
 
-  return {
-    reviews: reviews.body.reviews,
-    count: reviews.body.count || 0,
-    limit,
-    average_rating: stats.body.average_rating || 0
-  };
+  return review
 }

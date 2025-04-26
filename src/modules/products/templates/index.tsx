@@ -11,6 +11,7 @@ import { ProductRelatedBanner } from "@modules/banner/components"
 import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
+import ProductReviews from "@modules/products/components/product-reviews"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -59,6 +60,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       {/* Баннер для связанных продуктов */}
       <div className="content-container my-8">
         <ProductRelatedBanner />
+      </div>
+      
+      {/* Блок отзывов */}
+      <div className="content-container my-16">
+        <ProductReviews productId={product.id} />
       </div>
       
       <div

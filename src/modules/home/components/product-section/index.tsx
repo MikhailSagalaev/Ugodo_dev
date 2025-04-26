@@ -76,7 +76,7 @@ export default function ProductSection({
   }
 
   return (
-    <div className={`w-full ${variant === "colored" ? "bg-gradient-to-r from-violet-50 to-pink-50" : ""}`}>
+    <div className={`w-full`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <Heading level="h2" className="text-2xl md:text-3xl font-semibold">
@@ -95,7 +95,6 @@ export default function ProductSection({
             className="mt-2 md:mt-0 text-violet-600 hover:text-violet-700 flex items-center gap-1 group"
           >
             <span>{link.text}</span>
-            <ArrowRightMini className="w-5 h-5 transform transition-transform group-hover:translate-x-1" />
           </InteractiveLink>
         )}
       </div>

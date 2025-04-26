@@ -136,3 +136,7 @@
 }
 
 /* Проверяю существующий файл и добавляю новую анимацию */
+
+.shadow-elevation-card-rest {
+  box-shadow: none !important;
+}

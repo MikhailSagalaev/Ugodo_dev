@@ -36,7 +36,8 @@ module.exports = defineConfig({
     {
       resolve: `medusa-plugin-wishlist`,
       options: {
-        enabled: true,
+        // Опции плагина, если нужны (по умолчанию обычно ничего не требуется)
+        // enableUI: true, // Если плагин добавляет что-то в админку
       },
     },
     {
@@ -44,6 +45,12 @@ module.exports = defineConfig({
       options: {
         enabled: true,
       },
+    },
+    {
+      resolve: `@appateam/medusa-plugin-product-reviews`,
+      options: {
+        enableUI: true
+      }
     },
   ],
 })

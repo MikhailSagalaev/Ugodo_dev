@@ -259,3 +259,103 @@ export const updateCustomerAddress = async (
       return { success: false, error: err.toString() }
     })
 }
+
+// Wishlist API functions
+
+// Тип для элемента избранного (может потребоваться адаптация)
+interface WishlistItem extends HttpTypes.StoreWishlistItem {
+  // Добавьте поля, если API возвращает больше данных
+  product?: HttpTypes.StoreProduct // Может возвращаться информация о продукте
+}
+
+// Тип для ответа API списка избранного
+interface WishlistResponse {
+  wishlist: {
+    id: string;
+    customer_id: string;
+    region_id: string;
+    items: WishlistItem[];
+    created_at: string;
+    updated_at: string;
+    // Добавьте другие поля, если API их возвращает
+  };
+}
+
+/**
+ * Получить список избранного пользователя
+ */
+export const getWishlist = async (): Promise<WishlistItem[]> => {
+  const headers = await getAuthHeaders();
+  if (!headers) {
+    // Не авторизован, возвращаем пустой список
+    return [];
+  }
+
+  const next = {
+    ...(await getCacheOptions("wishlist")),
+    tags: ["wishlist"], // Тег для ревалидации
+  };
+
+  try {
+    const response = await sdk.client.fetch<WishlistResponse>("/store/wishlist", {
+      method: "GET",
+      headers,
+      next,
+      cache: "force-cache", // Кэшируем список
+    });
+    return response.wishlist?.items || [];
+  } catch (error) {
+    console.error("Ошибка получения избранного:", error);
+    // Возвращаем пустой список в случае ошибки
+    return [];
+  }
+};
+
+/**
+ * Добавить товар в избранное
+ */
+export const addToWishlist = async (productId: string): Promise<boolean> => {
+  const headers = await getAuthHeaders();
+  if (!headers) {
+    console.error("Не авторизован для добавления в избранное");
+    return false;
+  }
+
+  try {
+    await sdk.client.fetch("/store/wishlist/items", {
+      method: "POST",
+      headers,
+      body: { product_id: productId }, 
+      cache: "no-store",
+    });
+    revalidateTag("wishlist"); // Ревалидируем кеш избранного
+    return true;
+  } catch (error) {
+    console.error(`Ошибка добавления товара ${productId} в избранное:`, error);
+    return false;
+  }
+};
+
+/**
+ * Удалить товар из избранного
+ */
+export const removeFromWishlist = async (itemId: string): Promise<boolean> => {
+  const headers = await getAuthHeaders();
+  if (!headers) {
+    console.error("Не авторизован для удаления из избранного");
+    return false;
+  }
+
+  try {
+    await sdk.client.fetch(`/store/wishlist/items/${itemId}`, {
+      method: "DELETE",
+      headers,
+      cache: "no-store",
+    });
+    revalidateTag("wishlist"); // Ревалидируем кеш избранного
+    return true;
+  } catch (error) {
+    console.error(`Ошибка удаления элемента ${itemId} из избранного:`, error);
+    return false;
+  }
+};
