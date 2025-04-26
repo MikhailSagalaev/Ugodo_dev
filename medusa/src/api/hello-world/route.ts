@@ -60,8 +60,13 @@ export const GET = (
  *                   type: string
  *                   example: "Hello, John!"
  */
+
+interface HelloWorldPostBody {
+  name?: string;
+}
+
 export const POST = (
-  req: MedusaRequest,
+  req: MedusaRequest<HelloWorldPostBody>,
   res: MedusaResponse
 ) => {
   const { name } = req.body

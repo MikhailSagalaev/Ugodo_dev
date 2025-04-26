@@ -1,8 +1,7 @@
 import { Router } from "express"
 import cors from "cors"
-import { ConfigModule } from "@medusajs/medusa"
-import banners from "./banners"
-import reviews from "./reviews"
+import { ConfigModule } from "@medusajs/framework/types"
+
 
 const storeRoutes = Router()
 
@@ -11,18 +10,12 @@ export default (app, rootDirectory) => {
   
   const { projectConfig } = app.getConfigModule() as ConfigModule
   const corsOptions = {
-    origin: projectConfig.store_cors.split(","),
+    origin: projectConfig.http.storeCors.split(","),
     credentials: true,
   }
   
   // Применяем CORS для маршрутов магазина
   storeRoutes.use(cors(corsOptions))
-  
-  // Маршруты для баннеров
-  banners(storeRoutes)
-  
-  // Маршруты для отзывов
-  reviews(storeRoutes)
   
   return storeRoutes
 } 

@@ -1,4 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { ICacheService } from "@medusajs/types";
 
 /**
  * @swagger
@@ -49,7 +50,7 @@ export const GET = async (
   const shouldClear = req.query.clear === "true"
   
   // Получаем сервис кеширования
-  const cacheService = req.scope.resolve("cacheService")
+  const cacheService = req.scope.resolve<ICacheService>("cacheService") as any
   
   // Очистка кеша, если запрошено
   if (shouldClear) {
@@ -115,7 +116,7 @@ export const DELETE = async (
   req: MedusaRequest,
   res: MedusaResponse
 ) => {
-  const cacheService = req.scope.resolve("cacheService")
+  const cacheService = req.scope.resolve<ICacheService>("cacheService") as any
   
   try {
     // Очищаем все ключи, начинающиеся с "cache_demo:"

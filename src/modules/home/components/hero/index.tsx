@@ -14,7 +14,7 @@ const slides = [
     id: 1,
     headline: "на товары для дома",
     title: "СКИДКА ДО 20%",
-    image: "https://images.unsplash.com/photo-1558003173-716b214346b7?q=80&w=1932&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1618220179428-22790b461013?q=80&w=2127&auto=format&fit=crop",
     cta: {
       text: "Подробнее",
       link: "/collections/sale"
@@ -24,7 +24,7 @@ const slides = [
     id: 2,
     headline: "новая коллекция",
     title: "ВЕСНА-ЛЕТО 2024",
-    image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1868&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1556020685-ae41abfc9365?q=80&w=1974&auto=format&fit=crop",
     cta: {
       text: "Смотреть",
       link: "/collections/new-arrivals"
@@ -34,7 +34,7 @@ const slides = [
     id: 3,
     headline: "только в этом месяце",
     title: "РАСПРОДАЖА",
-    image: "https://images.unsplash.com/photo-1600611963263-819d90701b7a?q=80&w=1887&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1887&auto=format&fit=crop",
     cta: {
       text: "Перейти",
       link: "/collections/bathroom"

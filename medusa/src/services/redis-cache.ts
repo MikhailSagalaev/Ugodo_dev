@@ -1,6 +1,12 @@
 import { ConfigModule } from "@medusajs/framework/types"
 import Redis from "ioredis"
 
+// Интерфейс для опций конструктора
+interface RedisCacheServiceOptions {
+  ttl?: number; // Время жизни кеша в секундах
+  namespace?: string; // Префикс для ключей
+}
+
 /**
  * Сервис для кеширования данных на основе Redis
  * Использует Redis для хранения кешированных данных
@@ -11,7 +17,7 @@ export default class RedisCacheService {
   protected readonly namespace: string
   protected readonly defaultTTL: number // в секундах
 
-  constructor({ configModule, options = {} }) {
+  constructor({ configModule, options = {} }: { configModule: ConfigModule, options?: RedisCacheServiceOptions }) {
     this.config = configModule
     
     // Опции
@@ -81,10 +87,11 @@ export default class RedisCacheService {
    * Установить значение в кэш
    * @param key Ключ
    * @param value Значение
-   * @param ttl Время жизни в секундах (по умолчанию 1 час)
+   * @param options Опции сохранения (например, { ttl: 60 })
    */
-  async set(key: string, value: any, ttl: number = this.defaultTTL): Promise<void> {
+  async set(key: string, value: any, options?: { ttl?: number }): Promise<void> {
     const prefixedKey = this.getKeyWithPrefix(key)
+    const ttl = options?.ttl ?? this.defaultTTL
     
     try {
       // Преобразуем объекты в JSON-строку
