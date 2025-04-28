@@ -8,10 +8,13 @@ import { listProducts } from "@lib/data/products"
 import Hero from "@modules/home/components/hero"
 import CategoryStories from "@modules/home/components/category-stories"
 import ProductSection from "@modules/home/components/product-section"
+import PromotionsSlider from "@modules/home/components/promotions-slider"
 import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-banner"
 import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
 import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
+import PaginatedProducts from "@modules/store/templates/paginated-products"
+import ProductPreview from "@modules/products/components/product-preview"
 
 export const metadata: Metadata = {
   title: "Интернет-магазин Ugodo",
@@ -19,6 +22,7 @@ export const metadata: Metadata = {
 }
 
 export default async function Home({ params }: { params: { countryCode: string }}) {
+  // Возвращаем деструктуризацию params
   const { countryCode } = params
   const region = await getRegion(countryCode)
 
@@ -84,31 +88,13 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
+      {/* Оборачиваем PromotionsSlider в Container */}
+      <Container className="py-8 md:py-12">
+        <PromotionsSlider />
+      </Container>
+      
       {/* Промо-баннер в середине страницы */}
       <HomeMiddleBanner className="my-8" />
-      
-      {/* Заменяем старый PromoBanner на новый WishlistDiscountBanner */}
-      <WishlistDiscountBanner />
-      
-      {/* Секция со скидками */}
-      <Container className="py-8 md:py-12">
-        <ProductSection 
-          title="Специальные предложения" 
-          products={saleProducts.slice(0, 4)} 
-          region={region}
-          link={{ href: "/collections/sale", text: "Все акции" }}
-          variant="colored"
-        />
-      </Container>
-      
-      {/* Информационный баннер о скидках */}
-      <Container className="py-8 md:py-12">
-        <InfoBanner 
-          title="Скидки до 50%"
-          description="Выбирайте из широкого ассортимента товаров по привлекательным ценам"
-          variant="secondary"
-        />
-      </Container>
       
       {/* Секция с популярными товарами */}
       <Container className="py-8 md:py-12">
@@ -120,10 +106,27 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
-      {/* Блок с преимуществами магазина */}
+      {/* Добавляем WishlistDiscountBanner сюда */}
+      <Container className="py-8 md:py-12">
+        <WishlistDiscountBanner />
+      </Container>
+      
+      {/* Добавляем блок каталога с пагинацией */}
+      <Container className="py-8 md:py-12">
+        <h2 className="text-2xl md:text-3xl font-semibold mb-6">Каталог товаров</h2>
+        <PaginatedProducts 
+          page={1} // Начинаем с первой страницы
+          countryCode={countryCode} 
+          // sortBy="created_at" // Можно добавить сортировку, если нужно
+        />
+      </Container>
+      
+      {/* Блок с преимуществами магазина - УДАЛЯЕМ */}
+      {/* 
       <Container className="py-8 md:py-12">
         <DeliveryFeatures />
       </Container>
+      */}
     </div>
   )
 }

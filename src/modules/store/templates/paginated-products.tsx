@@ -73,9 +73,15 @@ export default async function PaginatedProducts({
         data-testid="products-list"
       >
         {products.map((p) => {
+          const categoryTitle = p.type?.value 
+                                || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
           return (
             <li key={p.id}>
-              <ProductPreview product={p} region={region} />
+              <ProductPreview 
+                product={p} 
+                region={region} 
+                categoryTitle={categoryTitle} 
+              />
             </li>
           )
         })}

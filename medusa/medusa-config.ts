@@ -17,8 +17,10 @@ module.exports = defineConfig({
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
   modules: [
-
-  ],
+   {
+     resolve: "./src/modules/product-review", 
+   }
+ ],
   plugins: [
     {
       resolve: `medusa-plugin-custom-dashboard`,

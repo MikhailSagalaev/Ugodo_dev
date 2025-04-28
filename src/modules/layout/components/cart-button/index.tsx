@@ -2,9 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import CartDropdown from "../cart-dropdown"
+// Убираем импорт LineItem
+// import type { LineItem } from '@medusajs/medusa'
+// Убираем импорт Cart
+// import type { Cart } from '@medusajs/medusa'
+// Импортируем HttpTypes
+import { HttpTypes } from "@medusajs/types"
 
 export default function CartButton() {
-  const [cart, setCart] = useState(null)
+  // Используем HttpTypes.StoreCart | null для типа состояния
+  const [cart, setCart] = useState<HttpTypes.StoreCart | null>(null)
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -29,7 +36,8 @@ export default function CartButton() {
   }, [])
 
   // Получаем общее количество товаров в корзине
-  const itemsCount = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0
+  // Используем HttpTypes.StoreCartLineItem для типа item
+  const itemsCount = cart?.items?.reduce((acc: number, item: HttpTypes.StoreCartLineItem) => acc + item.quantity, 0) || 0
   
   // Обработчики наведения мыши для выпадающего меню
   const handleMouseEnter = () => {
@@ -50,7 +58,7 @@ export default function CartButton() {
       <button 
         className="flex items-center justify-center hover:text-ui-fg-base relative"
         aria-label="Корзина"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)} // Добавляем обработчик клика для открытия/закрытия
       >
         <svg 
           className="w-5 h-5" 

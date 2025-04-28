@@ -52,6 +52,23 @@ export default function ProductSection({
     containerRef.current.scrollBy({ left: 300, behavior: 'smooth' })
   }
 
+  // Обработчик колеса мыши для предотвращения вертикальной прокрутки страницы
+  const handleWheelScroll = (e: WheelEvent) => {
+    const container = containerRef.current
+    if (container && container.scrollWidth > container.clientWidth) {
+      // Проверяем, что горизонтальная прокрутка преобладает (или равна) вертикальной
+      // Позволяем небольшой перекос в сторону вертикальной для удобства на тачпадах
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5) {
+        e.preventDefault()
+        // Вручную прокручиваем контейнер по горизонтали
+        // Умножитель (здесь 1) можно настроить для изменения скорости прокрутки
+        container.scrollLeft += e.deltaX * 1 
+      }
+      // Если вертикальная прокрутка значительно преобладает, 
+      // позволяем странице скроллиться как обычно (не вызываем preventDefault)
+    }
+  }
+
   // Обновляем состояние кнопок при изменении размера окна или прокрутке
   useEffect(() => {
     const container = containerRef.current
@@ -64,10 +81,15 @@ export default function ProductSection({
     
     container.addEventListener('scroll', handleScroll)
     window.addEventListener('resize', handleResize)
+    // Добавляем слушатель колеса мыши
+    // passive: false необходимо, чтобы работал preventDefault
+    container.addEventListener('wheel', handleWheelScroll, { passive: false })
     
     return () => {
       container.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleResize)
+      // Удаляем слушатель колеса мыши
+      container.removeEventListener('wheel', handleWheelScroll)
     }
   }, [])
   
@@ -119,14 +141,24 @@ export default function ProductSection({
           ref={containerRef}
           className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4"
         >
-          {products.map((product) => (
-            <div 
-              key={product.id} 
-              className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-[calc(100%-1rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start"
-            >
-              <ProductPreview product={product} region={region} />
-            </div>
-          ))}
+          {products.map((product) => {
+            // Получаем название категории из type или categories
+            const categoryTitle = product.type?.value 
+                                  || (product.categories && product.categories.length > 0 ? product.categories[0].name : undefined);
+            return (
+              <div 
+                key={product.id} 
+                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-[calc(100%-1rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start"
+              >
+                {/* Передаем categoryTitle в ProductPreview */}
+                <ProductPreview 
+                  product={product} 
+                  region={region} 
+                  categoryTitle={categoryTitle} 
+                />
+              </div>
+            )
+          })}
         </div>
         
         {showScrollButtons && (

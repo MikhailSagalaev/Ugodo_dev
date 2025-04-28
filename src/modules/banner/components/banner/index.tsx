@@ -17,6 +17,13 @@ const Banner = ({ position, className = "" }: BannerProps) => {
 
   useEffect(() => {
     const fetchBanner = async () => {
+      // ---- ВРЕМЕННО ОТКЛЮЧАЕМ ЗАГРУЗКУ БАННЕРОВ ----
+      setLoading(false);
+      setBanner(null); // Устанавливаем null, чтобы баннер не рендерился
+      return; 
+      // ---- КОНЕЦ ВРЕМЕННОГО ОТКЛЮЧЕНИЯ ----
+
+      /* // Старый код загрузки
       try {
         setLoading(true)
         const response = await fetch(`/api/banners?position=${position}&active=true`)
@@ -42,6 +49,7 @@ const Banner = ({ position, className = "" }: BannerProps) => {
       } finally {
         setLoading(false)
       }
+      */
     }
     
     fetchBanner()

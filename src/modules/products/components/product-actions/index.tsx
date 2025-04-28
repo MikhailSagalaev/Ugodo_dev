@@ -13,6 +13,7 @@ import ProductPrice from "../product-price"
 import MobileActions from "./mobile-actions"
 import { Heart } from "lucide-react"
 import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer"
+// import { StoreCustomer } from "../../../../types/medusa" // <-- Убираем некорректный импорт
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -31,6 +32,7 @@ const optionsAsKeymap = (
 
 export default function ProductActions({
   product,
+  region,
   disabled,
 }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
@@ -59,6 +61,42 @@ export default function ProductActions({
       return isEqual(variantOptions, options)
     })
   }, [product.variants, options])
+
+  const availableOptionValues = useMemo(() => {
+    const available: Record<string, string[]> = {};
+    
+    if (!product.variants || product.variants.length === 0) {
+      product.options?.forEach(opt => available[opt.id] = []);
+      return available;
+    }
+
+    product.options?.forEach(option => {
+      const optionId = option.id;
+      const possibleValues = option.values?.map(v => v.value) || [];
+      const availableValuesForOption: string[] = [];
+
+      possibleValues.forEach(value => {
+        const testOptions = { ...options, [optionId]: value };
+
+        const variantExists = product.variants?.some(variant => {
+          const variantOptions = optionsAsKeymap(variant.options);
+          const cleanTestOptions = Object.entries(testOptions).reduce((acc, [key, val]) => {
+              if (val !== undefined) acc[key] = val;
+              return acc;
+          }, {} as Record<string, string>);
+          
+          return isEqual(variantOptions, cleanTestOptions);
+        });
+
+        if (variantExists) {
+          availableValuesForOption.push(value);
+        }
+      });
+      available[optionId] = availableValuesForOption;
+    });
+
+    return available;
+  }, [product.options, product.variants, options]);
 
   const setOptionValue = (optionId: string, value: string) => {
     setOptions((prev) => ({
@@ -114,7 +152,7 @@ export default function ProductActions({
   React.useEffect(() => {
     setIsLoadingCustomer(true)
     retrieveCustomer()
-      .then(setCustomer)
+      .then(setCustomer as any)
       .catch(() => setCustomer(null))
       .finally(() => setIsLoadingCustomer(false))
   }, [])
@@ -193,6 +231,7 @@ export default function ProductActions({
                       current={options[option.id]}
                       updateOption={setOptionValue}
                       title={option.title ?? ""}
+                      availableValues={availableOptionValues[option.id]}
                       data-testid="product-options"
                       disabled={!!disabled || isAdding}
                     />
@@ -204,9 +243,8 @@ export default function ProductActions({
           )}
         </div>
 
-        <ProductPrice product={product} variant={selectedVariant} />
-
-        <div className="flex gap-x-3 mt-4">
+        <div className="flex items-center gap-x-4 mt-4">
+          <div className="flex items-center gap-x-3">
           <Button
             onClick={handleAddToCart}
             disabled={
@@ -247,9 +285,22 @@ export default function ProductActions({
           </Button>
         </div>
 
+          <div className="flex flex-col gap-y-2">
+            {product && (
+              <ProductPrice
+                product={product}
+                variant={selectedVariant}
+                region={region}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* @ts-ignore */}
         <MobileActions
           product={product}
           variant={selectedVariant}
+          region={region}
           options={options}
           updateOptions={setOptionValue}
           inStock={inStock}

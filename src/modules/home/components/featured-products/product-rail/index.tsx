@@ -1,17 +1,21 @@
 import { listProducts } from "@lib/data/products"
 import { HttpTypes } from "@medusajs/types"
 import { Text } from "@medusajs/ui"
+import { Region } from "@medusajs/medusa"
 
 import InteractiveLink from "@modules/common/components/interactive-link"
 import ProductPreview from "@modules/products/components/product-preview"
 
+// Типы пропсов теперь включают регион
+type ProductRailProps = {
+  collection: HttpTypes.StoreCollection
+  region: HttpTypes.StoreRegion // Добавляем регион
+}
+
 export default async function ProductRail({
   collection,
   region,
-}: {
-  collection: HttpTypes.StoreCollection
-  region: HttpTypes.StoreRegion
-}) {
+}: ProductRailProps) {
   const {
     response: { products: pricedProducts },
   } = await listProducts({
@@ -38,7 +42,7 @@ export default async function ProductRail({
         {pricedProducts &&
           pricedProducts.map((product) => (
             <li key={product.id}>
-              <ProductPreview product={product} region={region} isFeatured />
+              <ProductPreview productPreview={product} region={region} isFeatured />
             </li>
           ))}
       </ul>

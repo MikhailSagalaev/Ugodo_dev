@@ -57,6 +57,7 @@ const Nav = () => {
                 width={120}
                 height={35}
                 className="object-contain"
+                priority
               />
             </LocalizedClientLink>
           </div>

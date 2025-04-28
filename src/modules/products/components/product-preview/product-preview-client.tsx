@@ -40,6 +40,11 @@ type ProductPreviewCardProps = {
   isFeatured?: boolean;
 };
 
+// Функция для рендеринга SVG (как в вашем примере)
+const renderSvg = (svgHtml: string) => {
+  return <div dangerouslySetInnerHTML={{ __html: svgHtml }} />;
+};
+
 function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
   const discountBadge = product.badges.find(b => b.id === 'discount');
   const price = product.cheapestPrice;
@@ -117,53 +122,51 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
     }
   };
 
+  // Пример SVG из вашего кода (адаптированы классы иконок)
+  const discountIconSvg = `<div class="h-10 flex justify-center items-center text-xl font-bold text-black bg-yellow-400 rounded-none w-[60px]">%</div>`;
+  const heartIconSvg = `<svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-all ${isInWishlist ? 'fill-white' : 'fill-none'}"> <path d="M23.3486 10.5713C24.0278 10.5719 24.7011 10.6904 25.3389 10.9199L25.6104 11.0244C26.2373 11.2857 26.8137 11.6536 27.3145 12.1104L27.5244 12.3115L27.5254 12.3125C29.7957 14.5927 29.864 18.0998 27.7402 20.4414L27.5283 20.6641L19 29.1914L10.4727 20.6641L10.2598 20.4414C8.2045 18.175 8.20289 14.8167 10.2588 12.54L10.4717 12.3164L10.4727 12.3154C10.9515 11.8325 11.5095 11.4364 12.1221 11.1445L12.3877 11.0264C13.1049 10.7271 13.8743 10.5721 14.6514 10.5713C16.119 10.5709 17.5332 11.1226 18.6133 12.1162L19 12.4717L19.3877 12.1162C20.4676 11.1228 21.8813 10.5711 23.3486 10.5713Z" stroke="white" stroke-width="1.14286"></path> </svg>`;
+  const videoIconSvg = `<svg width="24" height="24" viewBox="0 0 56 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path fill-rule="evenodd" clip-rule="evenodd" d="M26.0521 17.8317V6.16829L36.1538 12L26.0521 17.8317ZM36.692 11.1936L26.4809 5.29827C26.3394 5.21665 26.1788 5.17371 26.0154 5.17375C25.852 5.1738 25.6914 5.21683 25.5499 5.29853C25.4084 5.38022 25.2908 5.49771 25.209 5.6392C25.1273 5.78069 25.0841 5.9412 25.084 6.10462V17.8954C25.0831 18.0591 25.1258 18.22 25.2077 18.3617C25.2896 18.5035 25.4077 18.6208 25.55 18.7017C25.6911 18.7847 25.8518 18.8284 26.0155 18.8284C26.1791 18.8284 26.3398 18.7847 26.4809 18.7017L36.692 12.8064C36.834 12.725 36.9521 12.6076 37.0341 12.466C37.1162 12.3244 37.1595 12.1637 37.1595 12C37.1595 11.8363 37.1162 11.6756 37.0341 11.534C36.9521 11.3924 36.834 11.275 36.692 11.1936Z" fill="white"></path> </svg>`; // Упрощено для примера
+  const cartIconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.66699 8.5H21.3337L20.3595 19.2112C20.3068 19.7909 20.0393 20.33 19.6096 20.7226C19.1798 21.1153 18.6188 21.3331 18.0367 21.3333H5.96399C5.38187 21.3331 4.82086 21.1153 4.39109 20.7226C3.96132 20.33 3.69384 19.7909 3.64116 19.2112L2.66699 8.5Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"></path> <path d="M7.33398 10.834V7.33402C7.33398 6.09635 7.82565 4.90936 8.70082 4.03419C9.57599 3.15902 10.763 2.66736 12.0007 2.66736C13.2383 2.66736 14.4253 3.15902 15.3005 4.03419C16.1757 4.90936 16.6673 6.09635 16.6673 7.33402V10.834" stroke="white" stroke-width="1.5" stroke-linecap="round"></path> </svg>`;
+
   return (
-    <div className="self-stretch flex flex-col border border-gray-200 rounded-[4px] overflow-hidden group">
+    <div className="flex flex-col gap-4 w-full group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative w-full aspect-square overflow-hidden">
+        <div className="relative aspect-square w-full overflow-hidden">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
             size="full"
             isFeatured={isFeatured}
-            className="object-cover absolute inset-0 size-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
+            className="absolute inset-0 size-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
           
-          <div className="absolute top-0 left-0 p-2 w-full flex justify-between items-start z-10">
-            {discountBadge && (
-              <div className={`flex items-center justify-center text-xl font-semibold rounded-md px-2.5 py-1 min-h-[30px] ${discountBadge.color}`}>
-                %
-              </div>
-            )}
-            {!discountBadge && <div className="h-[30px]"/>}
+          <div className="absolute top-[15px] sm:top-[30px] left-[15px] right-[15px] sm:left-[30px] sm:right-[30px] flex justify-between items-start z-10 pointer-events-none">
+             {discountBadge ? renderSvg(discountIconSvg) : <div className="w-[60px] h-10" />}
 
             <button 
-              className={`bg-[#07C4F5] ${!isLoadingCustomer && customer ? 'hover:bg-cyan-500' : 'opacity-50 cursor-not-allowed'} transition-colors h-10 w-10 rounded-md flex items-center justify-center relative`}
+              className={`flex justify-center items-center h-10 w-[60px] rounded-lg transition-colors pointer-events-auto ${!isLoadingCustomer && customer ? 'bg-cyan-400 hover:bg-cyan-500' : 'bg-cyan-400 opacity-50 cursor-not-allowed'}`}
               onClick={handleWishlistToggle}
               disabled={isLoadingCustomer || !customer || isLoadingWishlist}
               aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
               title={!customer ? "Войдите, чтобы добавить в избранное" : (isInWishlist ? "Удалить из избранного" : "Добавить в избранное")}
             >
-              <Heart 
-                className={`w-5 h-5 text-white transition-all ${isInWishlist ? 'fill-white' : ''}`}
-              />
               {(isLoadingWishlist || isLoadingCustomer) && (
-                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-md">
+                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                  </div>
               )}
+              {!isLoadingWishlist && !isLoadingCustomer && renderSvg(heartIconSvg)}
             </button>
           </div>
 
-          <div className="absolute bottom-0 left-0 p-2 w-full flex justify-between items-end z-10">
-            {product.hasVideo && (
-              <div className="bg-black/60 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center">
-                <Play className="w-5 h-5 text-white" fill="white" />
+          <div className="absolute bottom-[15px] sm:bottom-[30px] left-[15px] right-[15px] sm:left-[30px] sm:right-[30px] flex justify-between items-end z-10 pointer-events-none">
+            {product.hasVideo ? (
+              <div className="flex justify-center items-center h-10 rounded-none bg-black bg-opacity-60 w-[60px]">
+                {renderSvg(videoIconSvg)}
               </div>
-            )}
-            {!product.hasVideo && <div className="h-10"/>}
+            ) : <div className="w-[60px] h-10" />}
 
-            <div className="bg-black/60 backdrop-blur-sm text-white text-xs text-right px-2.5 py-1 rounded-md">
+            <div className="h-10 flex items-center justify-center text-center text-xs text-white rounded bg-black bg-opacity-60 px-2 py-1 w-auto max-w-[148px]">
               {product.deliveryInfo}
             </div>
           </div>
@@ -171,25 +174,25 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
           {!product.isInStock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
               <div className="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-md">
-                <span className="text-white font-medium text-xl">Нет в наличии</span>
+                <span className="text-white font-medium text-lg sm:text-xl">Нет в наличии</span>
               </div>
             </div>
           )}
         </div>
         
-        <div className="p-4 flex flex-col gap-2">
-          <div className="text-gray-600 text-base line-clamp-1">
+        <div className="flex flex-col gap-2 px-4">
+          <div className="text-sm sm:text-base text-zinc-800 text-opacity-60 truncate">
             {product.category}
           </div>
-          <div className="text-zinc-800 text-lg font-medium uppercase line-clamp-2 h-[3em] leading-tight">
+          <div className="text-base sm:text-lg font-medium uppercase text-zinc-800 text-opacity-80 line-clamp-2 min-h-[2.5em] sm:min-h-[3em]">
             {product.title}
           </div>
         </div>
       </LocalizedClientLink>
       
-      <div className="mt-auto p-4 flex justify-between items-center">
+      <div className="flex justify-between items-center h-[50px] mt-auto px-4 pb-4">
         <button
-          className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${product.isInStock ? 'bg-black hover:bg-gray-700' : 'bg-gray-300 cursor-not-allowed'}`}
+          className={`flex items-center justify-center w-[50px] h-[50px] rounded-md transition-colors ${product.isInStock ? 'bg-black hover:bg-gray-800' : 'bg-gray-300 cursor-not-allowed'}`}
           aria-label="Добавить в корзину"
           disabled={!product.isInStock}
           onClick={(e) => {
@@ -197,35 +200,24 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
             console.log("Add to cart clicked for:", product.id);
           }}
         >
-          <ShoppingBag className="w-5 h-5 text-white" />
+           {renderSvg(cartIconSvg)}
         </button>
         
-        <div className="flex flex-col items-end text-black">
+        <div className="flex flex-col gap-0 items-end h-[50px] justify-center relative">
           {price ? (
-            <div className="relative h-[2.5em]">
+            <> 
               {price.price_type === 'sale' && price.original_price && (
-                <div className="absolute right-0 bottom-0 flex flex-col items-end">
-                  <div className="text-sm text-gray-500 line-through">
+                 <div className="text-sm sm:text-base text-gray-500 line-through relative">
                     {price.original_price}
+                    <div className="absolute top-[calc(50%)] left-[-2px] right-[-2px] h-[1px] bg-[#07C4F5] transform -rotate-3"></div>
                   </div>
-                  <div className="text-lg font-semibold">
-                    {price.calculated_price}
-                  </div>
-                  <div
-                    className="absolute top-[calc(50%-8px)] right-0 h-[1px] w-[calc(100%+4px)] bg-[#07C4F5] transform -rotate-6 origin-right"
-                  />
-                </div>
               )}
-              {price.price_type !== 'sale' && (
-                <div className="absolute right-0 bottom-0">
-                  <div className="text-lg font-semibold">
-                    {price.calculated_price}
-                  </div>
-                </div>
-              )}
-            </div>
+               <div className="text-base sm:text-lg font-semibold text-black">
+                {price.calculated_price}
+              </div>
+             </>
           ) : (
-            <div className="h-[2.5em]" />
+            <div className="h-[50px]" />
           )}
         </div>
       </div>

@@ -1,93 +1,49 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'js-yaml'; // Убедитесь, что js-yaml установлен: yarn add js-yaml
 
 export async function GET() {
+  console.log('Запрос к /api/swagger.json получен.'); // Лог начала
   try {
-    // Загружаем локальный файл с эндпоинтами
-    const filePath = path.join(process.cwd(), 'public', 'api-endpoints.json');
-    const endpointsData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    
-    // Создаем OpenAPI спецификацию на основе этих данных
-    const openApiSpec = {
-      openapi: '3.0.0',
-      info: {
-        title: 'Medusa API для мобильного приложения',
-        version: '1.0.0',
-        description: 'API спецификация для взаимодействия с бэкендом Medusa'
-      },
-      paths: {}
-    };
-    
-    // Преобразуем наши эндпоинты в формат OpenAPI
-    endpointsData.endpoints.forEach(endpoint => {
-      const pathKey = endpoint.path.replace(/:([^/]+)/g, '{$1}'); // заменяем :id на {id}
-      
-      if (!openApiSpec.paths[pathKey]) {
-        openApiSpec.paths[pathKey] = {};
-      }
-      
-      openApiSpec.paths[pathKey][endpoint.method.toLowerCase()] = {
-        summary: endpoint.description,
-        description: endpoint.description,
-        parameters: [
-          ...endpoint.params.map(param => ({
-            name: param.name,
-            in: 'query',
-            description: param.description,
-            schema: {
-              type: param.type
-            }
-          })),
-          // Добавляем путевые параметры
-          ...(pathKey.includes('{') ? 
-            pathKey.match(/\{([^}]+)\}/g)?.map(param => ({
-              name: param.slice(1, -1), // Удаляем { }
-              in: 'path',
-              required: true,
-              description: `ID ${param.slice(1, -1)}`,
-              schema: {
-                type: 'string'
-              }
-            })) || [] 
-            : [])
-        ],
-        requestBody: endpoint.body ? {
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: Object.entries(endpoint.body).reduce((acc, [key, type]) => {
-                  acc[key] = { 
-                    type: typeof type === 'string' ? type.split(' ')[0] : 'string' 
-                  };
-                  return acc;
-                }, {})
-              }
-            }
-          }
-        } : undefined,
-        responses: {
-          '200': {
-            description: 'Успешный ответ',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  description: endpoint.response
-                }
-              }
-            }
-          }
-        }
-      };
-    });
+    // Путь к основному файлу OpenAPI YAML
+    const openApiPath = path.join(process.cwd(), 'openapi (1).yaml');
+    console.log('Ожидаемый путь к YAML:', openApiPath); // Лог пути
 
-    return NextResponse.json(openApiSpec);
+    if (!fs.existsSync(openApiPath)) {
+      console.error('Основной файл openapi (1).yaml не найден по пути:', openApiPath);
+      return NextResponse.json(
+        { error: 'OpenAPI specification file not found.' },
+        { status: 404 }
+      );
+    }
+    console.log('Файл YAML найден.'); // Лог успеха поиска
+
+    const yamlContent = fs.readFileSync(openApiPath, 'utf-8');
+    console.log(`Содержимое YAML прочитано (первые 100 символов): ${yamlContent.substring(0, 100)}...`); // Лог чтения
+
+    const mainSpec = yaml.load(yamlContent); // Парсим YAML в JavaScript объект
+    console.log('Результат парсинга YAML:', typeof mainSpec === 'object' && mainSpec !== null ? 'Объект' : 'Не объект или null'); // Лог результата парсинга
+
+    // Проверяем, что парсинг прошел успешно
+    if (!mainSpec || typeof mainSpec !== 'object') {
+       console.error('Ошибка парсинга openapi (1).yaml');
+       return NextResponse.json(
+         { error: 'Failed to parse OpenAPI specification file.' },
+         { status: 500 }
+       );
+    }
+    console.log('Парсинг YAML успешен.'); // Лог успеха парсинга
+
+    // Возвращаем распарсенный объект как JSON
+    console.log('Отправка JSON ответа...'); // Лог перед отправкой
+    return NextResponse.json(mainSpec);
+
   } catch (error) {
-    console.error('Error serving OpenAPI spec:', error);
+    console.error('Ошибка при обработке запроса /api/swagger.json:', error); // Обновленный лог ошибки
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to serve OpenAPI specification' },
+      { error: `Failed to serve OpenAPI specification: ${errorMessage}` },
       { status: 500 }
     );
   }

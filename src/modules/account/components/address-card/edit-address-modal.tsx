@@ -125,7 +125,7 @@ const EditAddress: React.FC<EditAddressProps> = ({
         <Modal.Title>
           <Heading className="mb-2">Редактировать адрес</Heading>
         </Modal.Title>
-        <form action={formAction}>
+        <form action={formAction} suppressHydrationWarning={true}>
           <input type="hidden" name="addressId" value={address.id} />
           <Modal.Body>
             <div className="grid grid-cols-1 gap-y-2">

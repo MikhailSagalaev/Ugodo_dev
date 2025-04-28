@@ -1,15 +1,9 @@
-import { defineRouteConfig, defineWidgetConfig } from "@medusajs/admin-sdk"
-import Medusa from "@medusajs/medusa-js"
+import Medusa from "@medusajs/js-sdk"
 
-const client = new Medusa({ 
-  baseUrl: import.meta.env.VITE_MEDUSA_BACKEND_URL || "http://localhost:9000",
-  maxRetries: 3,
+export const sdk = new Medusa({
+  baseUrl: "http://localhost:9000",
+  debug: process.env.NODE_ENV === "development",
+  auth: {
+    type: "session",
+  },
 })
-
-export type ClientScope = {
-  resolve: <T>(...args: any[]) => T
-}
-
-export const sdk = {
-  client: client,
-} 

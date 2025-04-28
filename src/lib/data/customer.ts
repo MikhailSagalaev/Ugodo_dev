@@ -14,34 +14,60 @@ import {
   removeCartId,
   setAuthToken,
 } from "./cookies"
+import { Customer } from "@medusajs/medusa"
 
-export const retrieveCustomer =
-  async (): Promise<HttpTypes.StoreCustomer | null> => {
-    const authHeaders = await getAuthHeaders()
+// Тип для ответа нашего API Route Handler /api/customer/me
+type ApiCustomerResponse = {
+    customer: Omit<Customer, "password_hash">;
+}
 
-    if (!authHeaders) return null
+/**
+ * Получает данные текущего авторизованного покупателя напрямую через Medusa SDK.
+ * Возвращает данные покупателя или null, если не авторизован или произошла ошибка.
+ */
+export async function retrieveCustomer(): Promise<Omit<
+  HttpTypes.StoreCustomer,
+  "password_hash"
+> | null> {
+  const headers = await getAuthHeaders().catch(() => {
+      // Если getAuthHeaders выбросит ошибку (например, нет токена), возвращаем null
+      console.warn("Не удалось получить заголовки аутентификации для retrieveCustomer.");
+      return null;
+  });
 
-    const headers = {
-      ...authHeaders,
+  // Если заголовки получить не удалось (нет токена), пользователь не авторизован
+  if (!headers) {
+            return null;
+        }
+
+  try {
+    // Используем sdk напрямую с полученными заголовками
+    const { customer } = await sdk.store.customer.retrieve(
+        { fields: "*orders" }, // Запрашиваем нужные поля, можно настроить
+        headers
+    );
+    return customer;
+    } catch (error: any) {
+    // Medusa SDK обычно выбрасывает ошибки при 401 или других проблемах
+    let errorMessage = "Unknown error retrieving customer data";
+    if (error instanceof Error) {
+        // Пытаемся получить сообщение из medusaError, если это ошибка Medusa
+        // или используем стандартное сообщение ошибки
+        errorMessage = error.message;
+    } else if (typeof error === 'string') {
+        errorMessage = error;
+    } else {
+        // Попытка получить сообщение, если это объект с полем message
+        errorMessage = error?.message || errorMessage;
     }
-
-    const next = {
-      ...(await getCacheOptions("customers")),
+    console.error("Ошибка получения данных покупателя через Medusa SDK:", errorMessage);
+    // Очищаем токен, если он невалидный (например, 401 Unauthorized)
+    if (error?.response?.status === 401) {
+        await removeAuthToken();
     }
-
-    return await sdk.client
-      .fetch<{ customer: HttpTypes.StoreCustomer }>(`/store/customers/me`, {
-        method: "GET",
-        query: {
-          fields: "*orders",
-        },
-        headers,
-        next,
-        cache: "force-cache",
-      })
-      .then(({ customer }) => customer)
-      .catch(() => null)
-  }
+        return null;
+    }
+}
 
 export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {
   const headers = {
@@ -262,19 +288,21 @@ export const updateCustomerAddress = async (
 
 // Wishlist API functions
 
-// Тип для элемента избранного (может потребоваться адаптация)
-interface WishlistItem extends HttpTypes.StoreWishlistItem {
-  // Добавьте поля, если API возвращает больше данных
+// Тип для элемента избранного (требуется адаптация под ваш API)
+interface WishlistItem /* extends HttpTypes.StoreWishlistItem */ { // Убираем наследование от несуществующего типа
+  id: string; // Обязательное поле
+  product_id?: string; // Вероятное поле
+  // Добавьте другие поля, если API возвращает больше данных
   product?: HttpTypes.StoreProduct // Может возвращаться информация о продукте
 }
 
-// Тип для ответа API списка избранного
+// Тип для ответа API списка избранного (требуется адаптация)
 interface WishlistResponse {
   wishlist: {
     id: string;
     customer_id: string;
     region_id: string;
-    items: WishlistItem[];
+    items: WishlistItem[]; // Используем наш интерфейс
     created_at: string;
     updated_at: string;
     // Добавьте другие поля, если API их возвращает

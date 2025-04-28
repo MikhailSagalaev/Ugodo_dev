@@ -1,11 +1,5 @@
 import { model } from "@medusajs/framework/utils"
 
-export enum ReviewStatus {
-  PENDING = "pending",
-  APPROVED = "approved",
-  REJECTED = "rejected"
-}
-
 const Review = model.define("review", {
   id: model.id().primaryKey(),
   title: model.text().nullable(),
@@ -15,12 +9,13 @@ const Review = model.define("review", {
   last_name: model.text(),
   status: model.enum(["pending", "approved", "rejected"]).default("pending"),
   product_id: model.text().index("IDX_REVIEW_PRODUCT_ID"),
-  customer_id: model.text().nullable(),
-}).checks([
+  customer_id: model.text().nullable()
+})
+.checks([
   {
     name: "rating_range", 
-    expression: (columns) => `${columns.rating} >= 1 AND ${columns.rating} <= 5`,
-  },
+    expression: (columns) => `${columns.rating} >= 1 AND ${columns.rating} <= 5`
+  }
 ])
 
-export default Review 
+export default Review

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getProductReviews, StoreProductReview } from "@lib/data/products" // Предполагаем, что функция и тип будут созданы
+import { getProductReviews } from "@lib/data/reviews"
+import { StoreProductReview } from "../../../../types/reviews"
 import { Star, StarSolid } from "@medusajs/icons"
 import { Button, Heading, Skeleton } from "@medusajs/ui"
 import ProductReviewsForm from "./form"
@@ -16,9 +17,7 @@ type ProductReviewsProps = {
 // Компонент для отображения одного отзыва
 function Review({ review }: { review: StoreProductReview }) {
   const reviewDate = dayjs(review.created_at).format('D MMMM YYYY') // Форматируем дату
-  const authorName = review.customer_id 
-    ? `${review.first_name || ''} ${review.last_name || ''}`.trim() || 'Аноним'
-    : 'Аноним'
+  const authorName = `${review.first_name || ''} ${review.last_name || ''}`.trim() || 'Аноним'
 
   return (
     <div className="flex flex-col gap-y-2 text-base-regular text-ui-fg-base border-b border-ui-border-base pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
@@ -36,7 +35,7 @@ function Review({ review }: { review: StoreProductReview }) {
         </div>
         <span className="text-gray-500 text-sm-regular">{reviewDate}</span>
       </div>
-      {review.title && <Heading level="h4" className="text-md font-semibold mt-1">{review.title}</Heading>}
+      {review.title && <Heading level="h3" className="text-md font-semibold mt-1">{review.title}</Heading>}
       <p className="text-md leading-relaxed mt-1">{review.content}</p>
       <p className="text-gray-600 text-sm-regular mt-2">{authorName}</p>
     </div>
@@ -64,7 +63,6 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       offset: (currentPage - 1) * defaultLimit,
     }).then(({ reviews: paginatedReviews, average_rating, count, limit }) => {
       setReviews((prev) => {
-        // Предотвращаем дублирование при повторной загрузке той же страницы
         const existingIds = new Set(prev.map(r => r.id))
         const newReviews = paginatedReviews.filter(review => !existingIds.has(review.id));
         return currentPage === 1 ? paginatedReviews : [...prev, ...newReviews]
@@ -100,11 +98,12 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   }
 
   // Функция для перезагрузки отзывов (например, после отправки нового)
-  const refreshReviews = () => {
+  const refreshReviews = useCallback(() => {
      setPage(1) // Сбрасываем на первую страницу
      setReviews([]) // Очищаем текущий список
-     fetchReviews(1)
-  }
+     // Задержка перед перезагрузкой, чтобы дать время API обновиться
+     setTimeout(() => fetchReviews(1), 300); 
+  }, [fetchReviews])
 
   return (
     <div className="py-8 md:py-12">
@@ -112,7 +111,8 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
         <Heading level="h2" className="text-2xl md:text-3xl font-semibold mb-4">
           Отзывы покупателей
         </Heading>
-        {count > 0 && (
+        {/* Показываем рейтинг только если он больше 0 и загрузка завершена */} 
+        {!isLoading && count > 0 && (
           <div className="flex gap-x-2 justify-center items-center">
             <div className="flex gap-x-1">
               {[1, 2, 3, 4, 5].map((rate) => (
@@ -136,11 +136,11 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       {isLoading && page === 1 && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             {[...Array(defaultLimit)].map((_, i) => (
-              <div key={i} className="border-b border-ui-border-base pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
-                  <Skeleton className="w-24 h-5 mb-2" />
-                  <Skeleton className="w-3/4 h-6 mb-3" />
-                  <Skeleton className="w-full h-16 mb-3" />
-                  <Skeleton className="w-1/3 h-4" />
+              <div key={i} className="border-b border-ui-border-base pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0 animate-pulse">
+                  <Skeleton className="w-24 h-5 mb-2 rounded" />
+                  <Skeleton className="w-3/4 h-6 mb-3 rounded" />
+                  <Skeleton className="w-full h-16 mb-3 rounded" />
+                  <Skeleton className="w-1/3 h-4 rounded" />
               </div>
             ))}
           </div>
@@ -168,7 +168,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       {hasMoreReviews && !isLoading && (
         <div className="flex justify-center mt-8">
           <Button variant="secondary" onClick={loadMore} isLoading={isLoading && page > 1}>
-            Загрузить еще отзывы
+            {isLoading && page > 1 ? 'Загрузка...' : 'Загрузить еще отзывы'}
           </Button>
         </div>
       )}

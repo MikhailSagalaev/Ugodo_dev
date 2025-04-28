@@ -1,6 +1,6 @@
 import React, { Suspense } from "react"
 
-import ImageGallery from "@modules/products/components/image-gallery"
+import ProductGallery from "@modules/products/components/product-gallery"
 import ProductActions from "@modules/products/components/product-actions"
 import ProductOnboardingCta from "@modules/products/components/product-onboarding-cta"
 import ProductTabs from "@modules/products/components/product-tabs"
@@ -31,18 +31,19 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   return (
     <>
       <div
-        className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
+        className="content-container flex flex-col small:flex-row small:items-start py-6 relative gap-x-6"
         data-testid="product-container"
       >
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
+        {/* Левая колонка: Галерея - Увеличиваем ширину */}
+        <div className="w-full small:w-3/5 mb-4 small:mb-0 order-1">
+          <ProductGallery images={product?.images || []} />
+        </div>
+
+        {/* Правая колонка: Информация и Действия - Уменьшаем ширину */}
+        <div className="flex flex-col w-full small:w-2/5 small:sticky small:top-24 gap-y-6 order-2">
           <ProductInfo product={product} />
-          <ProductTabs product={product} />
-        </div>
-        <div className="block w-full relative">
-          <ImageGallery images={product?.images || []} />
-        </div>
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
-          <ProductOnboardingCta />
+           {/* Обертка для действий, чтобы они были в этой колонке */}
+           <div className="w-full">
           <Suspense
             fallback={
               <ProductActions
@@ -55,6 +56,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <ProductActionsWrapper id={product.id} region={region} />
           </Suspense>
         </div>
+        </div>
+        {/* ProductOnboardingCta можно убрать или переместить, если не нужен в этой колонке */}
+        {/* <ProductOnboardingCta /> */}
+
+      </div>
+
+      {/* Табы под основной информацией */}
+      <div className="content-container my-16" data-testid="product-tabs-container">
+        <ProductTabs product={product} />
       </div>
       
       {/* Баннер для связанных продуктов */}
@@ -63,7 +73,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       </div>
       
       {/* Блок отзывов */}
-      <div className="content-container my-16">
+      <div className="content-container my-16" data-testid="product-reviews-container">
         <ProductReviews productId={product.id} />
       </div>
       

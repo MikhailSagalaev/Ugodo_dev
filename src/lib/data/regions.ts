@@ -29,129 +29,92 @@ const FALLBACK_REGION: HttpTypes.StoreRegion = {
 const regionMap = new Map<string, HttpTypes.StoreRegion>()
 
 export const listRegions = async () => {
+  console.log("Запрашиваем список регионов из API (упрощенная версия)...");
   try {
-    console.log("Запрашиваем список регионов из API...")
-    
-    // Сначала пробуем получить регионы без кэширования
-    return sdk.client
-      .fetch<{ regions: HttpTypes.StoreRegion[] }>(`/store/regions`, {
+    // Прямой fetch запрос без обертки sdk, если sdk.client.fetch вызывает проблемы
+    // const response = await fetch(`${MEDUSA_BACKEND_URL}/store/regions`, { // Требуется MEDUSA_BACKEND_URL
+    //   method: "GET",
+    //   cache: "no-store",
+    //   headers: {
+    //      "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+    //      "Content-Type": "application/json"
+    //   }
+    // });
+    // if (!response.ok) {
+    //    throw new Error(`HTTP error! status: ${response.status}`);
+    // }
+    // const data = await response.json();
+    // const regions = data.regions;
+
+    // ИЛИ попробуем еще раз с sdk.client.fetch, но БЕЗ .catch()
+     const { regions } = await sdk.client.fetch<{ regions: HttpTypes.StoreRegion[] }>(`/store/regions`, {
         method: "GET",
         cache: "no-store",
-        next: { revalidate: 0 }
-      })
-      .then(({ regions }) => {
-        if (regions && regions.length) {
-          console.log(`Получено ${regions.length} регионов из API`);
-          return regions;
-        }
-        
-        console.log("Регионы не найдены, пробуем еще один запрос...");
-        
-        // Если регионов нет, пробуем еще раз с другими заголовками
-        return sdk.client
-          .fetch<{ regions: HttpTypes.StoreRegion[] }>(`/store/regions`, {
-            method: "GET",
-            cache: "no-store",
-            headers: {
-              "Cache-Control": "no-cache"
-            }
-          })
-          .then(({ regions }) => {
+     });
+
             if (regions && regions.length) {
-              console.log(`Получено ${regions.length} регионов из API после повторной попытки`);
+      console.log(`Получено ${regions.length} регионов из API.`);
+      regions.forEach((region) => {
+        region.countries?.forEach((c) => {
+           if(c?.iso_2) regionMap.set(c.iso_2, region);
+        });
+      });
               return regions;
             }
             
-            // В крайнем случае возвращаем предопределенный регион
-            console.log("Регионы не найдены даже после повторной попытки, используем аварийный регион");
+    console.warn("API вернуло пустой список регионов, используем аварийный регион.");
+    regionMap.set(FALLBACK_REGION.countries[0].iso_2, FALLBACK_REGION);
             return [FALLBACK_REGION];
-          });
-      })
-      .catch((err) => {
-        console.log("Ошибка при получении регионов:", err);
-        return [FALLBACK_REGION];
-      })
+
   } catch (error) {
-    console.log("Исключение при получении регионов:", error);
+    console.error("Критическая ошибка при запросе списка регионов:", error);
+    regionMap.set(FALLBACK_REGION.countries[0].iso_2, FALLBACK_REGION);
     return [FALLBACK_REGION];
   }
-}
+};
 
 export const retrieveRegion = async (id: string) => {
   try {
     console.log(`Запрашиваем регион с ID ${id} из API...`);
-    
-    // Пробуем получить регион без кэширования
-    return sdk.client
-      .fetch<{ region: HttpTypes.StoreRegion }>(`/store/regions/${id}`, {
+    const { region } = await sdk.client.fetch<{ region: HttpTypes.StoreRegion }>(
+      `/store/regions/${id}`,
+      {
         method: "GET",
         cache: "no-store",
-        next: { revalidate: 0 }
-      })
-      .then(({ region }) => {
+      }
+    );
         console.log(`Успешно получен регион с ID ${id}`);
-        return region;
-      })
-      .catch((err) => {
-        console.log(`Ошибка при получении региона ${id}:`, err);
-        
-        // Пробуем еще один запрос с другими параметрами
-        return sdk.client
-          .fetch<{ region: HttpTypes.StoreRegion }>(`/store/regions/${id}`, {
-            method: "GET",
-            cache: "no-store",
-            headers: {
-              "Cache-Control": "no-cache"
-            }
-          })
-          .then(({ region }) => {
-            console.log(`Успешно получен регион с ID ${id} после повторной попытки`);
+    // Кэшируем полученный регион
+     region.countries?.forEach((c) => {
+        if(c?.iso_2) regionMap.set(c.iso_2, region);
+      });
             return region;
-          })
-          .catch((innerErr) => {
-            console.log(`Ошибка при повторном получении региона ${id}:`, innerErr);
-            
-            // В случае ошибки, пытаемся получить все регионы и найти нужный
-            return listRegions().then(regions => {
-              // Ищем нужный регион
-              const foundRegion = regions.find(r => r.id === id);
-              if (foundRegion) {
-                console.log(`Найден регион ${id} через listRegions`);
-                return foundRegion;
-              }
-              
-              // Если не нашли и есть другие регионы, берем первый
-              if (regions.length > 0 && regions[0].id !== FALLBACK_REGION.id) {
-                console.log(`Регион ${id} не найден, используем первый доступный: ${regions[0].id}`);
-                return regions[0];
-              }
-              
-              // В самом крайнем случае используем аварийный регион
-              console.log(`Не удалось найти действительный регион, используем аварийный`);
-              return FALLBACK_REGION;
-            });
-          });
-      })
   } catch (error) {
-    console.log(`Критическая ошибка при получении региона ${id}:`, error);
+     console.error(`Ошибка при запросе региона ${id}:`, error);
+    // Вместо этого, просто возвращаем FALLBACK_REGION при любой ошибке получения конкретного региона
+    console.warn(`Не удалось получить регион ${id}, используем аварийный`);
     return FALLBACK_REGION;
   }
-}
+};
 
 export const getRegion = async (countryCode: string) => {
   try {
     // Проверяем кэш, если в нем есть нужный код страны
     if (regionMap.has(countryCode)) {
-      return regionMap.get(countryCode);
+      const cachedRegion = regionMap.get(countryCode);
+      console.log(`[getRegion] Найден регион в кэше для ${countryCode}: ${cachedRegion?.name} (ID: ${cachedRegion?.id})`);
+      return cachedRegion;
     }
 
     // Получаем все регионы
-    const regions = await listRegions();
+    const regions = await listRegions(); // Эта функция теперь более надежна
     
-    // Обновляем кэш регионов
+    // Обновляем кэш регионов (возможно, он уже обновлен внутри listRegions)
     regions.forEach((region) => {
       region.countries?.forEach((c) => {
-        regionMap.set(c?.iso_2 ?? "", region);
+        if (c?.iso_2) {
+           regionMap.set(c.iso_2, region);
+        }
       });
     });
 
@@ -159,20 +122,23 @@ export const getRegion = async (countryCode: string) => {
     const region = countryCode ? regionMap.get(countryCode) : undefined;
 
     if (region) {
+      console.log(`[getRegion] Найден регион после обновления кэша для ${countryCode}: ${region.name} (ID: ${region.id})`);
       return region;
     }
 
     // Если регион не найден по коду страны, возвращаем первый доступный
-    if (regions.length > 0) {
-      console.log(`Регион для кода страны ${countryCode} не найден, используем первый доступный`);
-      return regions[0];
+    // Исключаем fallback регион из поиска первого доступного
+    const firstAvailableRegion = regions.find(r => r.id !== FALLBACK_REGION.id);
+    if (firstAvailableRegion) {
+      console.log(`[getRegion] Регион для кода страны ${countryCode} не найден, используем первый доступный: ${firstAvailableRegion.name} (ID: ${firstAvailableRegion.id})`);
+      return firstAvailableRegion;
     }
     
     // В крайнем случае возвращаем аварийный регион
-    console.log(`Нет доступных регионов, используем аварийный регион`);
+    console.log(`[getRegion] Нет доступных регионов (кроме аварийного) для ${countryCode}, используем аварийный регион: ${FALLBACK_REGION.name} (ID: ${FALLBACK_REGION.id})`);
     return FALLBACK_REGION;
   } catch (error) {
-    console.log("Ошибка при получении региона по коду страны:", error);
+    console.log(`[getRegion] Ошибка при получении региона для ${countryCode}:`, error, `Используем аварийный регион: ${FALLBACK_REGION.name} (ID: ${FALLBACK_REGION.id})`);
     return FALLBACK_REGION;
   }
-}
+};

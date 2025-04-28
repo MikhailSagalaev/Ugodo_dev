@@ -14,6 +14,7 @@ import { isSimpleProduct } from "@lib/util/product"
 type MobileActionsProps = {
   product: HttpTypes.StoreProduct
   variant?: HttpTypes.StoreProductVariant
+  region: HttpTypes.StoreRegion
   options: Record<string, string | undefined>
   updateOptions: (title: string, value: string) => void
   inStock?: boolean
@@ -26,6 +27,7 @@ type MobileActionsProps = {
 const MobileActions: React.FC<MobileActionsProps> = ({
   product,
   variant,
+  region,
   options,
   updateOptions,
   inStock,
@@ -39,6 +41,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   const price = getProductPrice({
     product: product,
     variantId: variant?.id,
+    region: region,
   })
 
   const selectedPrice = useMemo(() => {

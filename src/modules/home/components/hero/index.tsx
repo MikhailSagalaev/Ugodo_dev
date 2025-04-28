@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Image from "next/image"
 import { Button, Heading, Text, Container } from "@medusajs/ui"
-import { ChevronLeft, ChevronRight } from "@medusajs/icons"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
@@ -43,37 +42,75 @@ const slides = [
 ]
 
 const Hero = () => {
-  // Инициализируем Embla Carousel с плагином Autoplay
+  const autoplayDelay = 10000; // 10 секунд
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
-      loop: true, // Бесконечная прокрутка
+      loop: true,
       align: 'start' 
     },
     [
       Autoplay({ 
-        delay: 5000, // Интервал автопрокрутки 5 сек
-        stopOnInteraction: true, // Останавливать при взаимодействии пользователя
-        stopOnMouseEnter: true, // Останавливать при наведении мыши
+        delay: autoplayDelay, // Используем переменную для задержки
+        stopOnInteraction: false, // Продолжать автопрокрутку после взаимодействия
+        stopOnMouseEnter: false, // НЕ останавливать при наведении мыши
       })
     ]
   )
 
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
+  const [progressBars, setProgressBars] = useState<JSX.Element[]>([]); // Для хранения элементов прогресс-баров
 
-  // Функции для навигации
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
-  const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi])
+  const scrollTo = useCallback((index: number) => {
+    emblaApi?.scrollTo(index);
+  }, [emblaApi])
 
-  // Обновление состояния при инициализации и реинициализации
   const onInit = useCallback((emblaApi: any) => {
     setScrollSnaps(emblaApi.scrollSnapList())
   }, [])
 
   const onSelect = useCallback((emblaApi: any) => {
     setSelectedIndex(emblaApi.selectedScrollSnap())
-  }, [])
+     // Перезапускаем анимацию прогресс-бара при каждом выборе слайда
+     setProgressBars(createProgressBars(emblaApi.scrollSnapList().length, emblaApi.selectedScrollSnap(), autoplayDelay));
+  }, [autoplayDelay]) // Добавляем autoplayDelay в зависимости
+
+   // Функция для создания прогресс-баров с анимацией
+   const createProgressBars = (count: number, currentIndex: number, duration: number): JSX.Element[] => {
+    return Array.from({ length: count }).map((_, index) => {
+      let progressWidth = '0%';
+      let animationClass = '';
+      let animationDur = '0ms';
+
+      if (index < currentIndex) {
+        progressWidth = '100%';
+      } else if (index === currentIndex) {
+        animationClass = 'animate-progress';
+        animationDur = `${duration}ms`;
+        // Ширина будет управляться анимацией
+      } 
+      // Для index > currentIndex ширина остается '0%'
+
+      return (
+        <div 
+          key={index} 
+          className="flex-1 h-1 bg-white/30 overflow-hidden rounded-full cursor-pointer" 
+          onClick={() => scrollTo(index)} 
+          aria-label={`Перейти к слайду ${index + 1}`}
+        >
+          <div 
+            key={`${index}-${currentIndex}`} // Оставляем динамический ключ для сброса состояния
+            className={`h-full bg-white rounded-full ${animationClass}`}
+            style={{
+              // Устанавливаем ширину для неактивных слайдов
+              width: index !== currentIndex ? progressWidth : undefined,
+              animationDuration: animationDur,
+            }}
+          ></div>
+        </div>
+      );
+    });
+  };
 
   useEffect(() => {
     if (!emblaApi) return
@@ -84,22 +121,24 @@ const Hero = () => {
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
 
+     // Инициализируем прогресс-бары при монтировании
+     setProgressBars(createProgressBars(emblaApi.scrollSnapList().length, emblaApi.selectedScrollSnap(), autoplayDelay));
+
     return () => {
-      // Очистка слушателей при размонтировании
       emblaApi.off('reInit', onInit)
       emblaApi.off('reInit', onSelect)
       emblaApi.off('select', onSelect)
     }
-  }, [emblaApi, onInit, onSelect])
+  }, [emblaApi, onInit, onSelect, autoplayDelay]) // Добавляем autoplayDelay
 
   return (
-    <div className="w-full relative overflow-hidden embla group"> {/* Добавляем embla и group */} 
+    <div className="w-full relative overflow-hidden embla"> 
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex"> {/* embla__container */} 
+        <div className="flex"> 
           {slides.map((slide) => (
             <div 
               key={slide.id} 
-              className="flex-[0_0_100%] min-w-0 relative h-[75vh] md:h-[80vh]" /* embla__slide */ 
+              className="flex-[0_0_100%] min-w-0 relative h-[75vh] md:h-[80vh]" 
             >
               {/* Фоновое изображение */}
               <Image 
@@ -144,37 +183,12 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Кнопки навигации (появляются при наведении на group) */}
-      <button
-        className="absolute left-4 md:left-6 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center z-20 transition-opacity duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
-        onClick={scrollPrev}
-        disabled={!emblaApi?.canScrollPrev()}
-        aria-label="Предыдущий слайд"
-      >
-        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
-      </button>
-      
-      <button
-        className="absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center z-20 transition-opacity duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
-        onClick={scrollNext}
-        disabled={!emblaApi?.canScrollNext()}
-        aria-label="Следующий слайд"
-      >
-        <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-      </button>
-
-      {/* Индикаторы слайдов */}
+      {/* Новые индикаторы слайдов (прогресс-бары) */}
       <div className="absolute bottom-8 left-0 right-0 z-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
-          <div className="flex gap-2 justify-center">
-            {scrollSnaps.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollTo(index)}
-                className={`w-2 h-2 rounded-full transition-colors duration-200 ${index === selectedIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'}`}
-                aria-label={`Перейти к слайду ${index + 1}`}
-              />
-            ))}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Обертка для прогресс-баров с отступами */}
+          <div className="flex gap-3 justify-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
+            {progressBars} {/* Отображаем созданные прогресс-бары */} 
           </div>
         </div>
       </div>

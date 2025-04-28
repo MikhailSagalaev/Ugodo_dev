@@ -1,162 +1,158 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { retrieveCustomer } from "@lib/data/customer"
-import { addProductReview } from "@lib/data/products" // Предполагаем, что эта функция будет создана
-import { HttpTypes } from "@medusajs/types"
-import { Button, Input, Label, Textarea, toast, Toaster, Heading } from "@medusajs/ui"
+import { useForm } from "react-hook-form"
+import { useActionState } from "react"
+import { Button, Input, Textarea, clx, Label, Skeleton } from "@medusajs/ui"
 import { Star, StarSolid } from "@medusajs/icons"
+import { retrieveCustomer } from "@lib/data/customer"
+import { Customer } from "@medusajs/medusa"
+import { createProductReviewAction, ActionResponse } from "../../../../app/actions/reviews"
+
+type ReviewFormValues = {
+  title: string
+  content: string
+  rating: number
+}
 
 type ProductReviewsFormProps = {
   productId: string
-  onReviewSubmitted: () => void // Callback для обновления списка после отправки
+  onReviewSubmitted: () => void
 }
 
+const initialState: ActionResponse = {
+    success: false,
+    message: null,
+    errors: null,
+    review: null,
+};
+
 export default function ProductReviewsForm({ productId, onReviewSubmitted }: ProductReviewsFormProps) {
-  const [customer, setCustomer] = useState<HttpTypes.StoreCustomer | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showForm, setShowForm] = useState(false)
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
-  const [rating, setRating] = useState(0)
+  const [customer, setCustomer] = useState<Omit<Customer, "password_hash"> | null>(null)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const [rating, setRating] = useState<number>(0)
+  const [state, formAction] = useActionState<ActionResponse, FormData>(createProductReviewAction.bind(null, productId), initialState)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  const {
+    register,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ReviewFormValues>({
+    defaultValues: {
+      rating: 0,
+    },
+  })
 
   useEffect(() => {
-    // Получаем данные пользователя при монтировании
-    retrieveCustomer().then(setCustomer).catch(() => setCustomer(null)) // Обрабатываем случай неавторизованного пользователя
+    setIsLoadingAuth(true)
+    retrieveCustomer()
+      .then(setCustomer)
+      .finally(() => setIsLoadingAuth(false))
   }, [])
 
-  // Функция для установки рейтинга
-  const handleSetRating = (rate: number) => {
-    // Позволяет снять оценку, если кликнуть на ту же звезду
-    setRating(rating === rate ? 0 : rate)
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    if (!content || rating === 0) {
-      toast.error("Ошибка", {
-        description: "Пожалуйста, поставьте оценку и напишите текст отзыва.",
-      })
-      return
+  useEffect(() => {
+    if (state.success) {
+        setRating(0)
+        setShowSuccessMessage(true)
+        onReviewSubmitted()
+        reset()
+        const timer = setTimeout(() => setShowSuccessMessage(false), 5000)
+        return () => clearTimeout(timer)
     }
+    if (!state.success && state.message) {
+        setShowSuccessMessage(false)
+    }
+  }, [state, reset, onReviewSubmitted])
 
-    setIsLoading(true)
-    addProductReview({
-      product_id: productId,
-      customer_id: customer?.id, // Передаем ID пользователя, если он есть
-      rating,
-      title: title || undefined, // title необязательный
-      content,
-      // Плагин может ожидать имя/фамилию, но лучше получать их на бэкенде по customer_id
-      // first_name: customer?.first_name || "",
-      // last_name: customer?.last_name || "",
-    }).then(() => {
-      setShowForm(false)
-      setTitle("")
-      setContent("")
-      setRating(0)
-      toast.success("Спасибо!", {
-        description: "Ваш отзыв отправлен на модерацию.",
-      })
-      onReviewSubmitted() // Вызываем callback для обновления списка
-    }).catch((err) => {
-      console.error("Ошибка отправки отзыва:", err);
-      toast.error("Ошибка", {
-        description: "Не удалось отправить отзыв. Попробуйте позже.",
-      })
-    }).finally(() => {
-      setIsLoading(false)
-    })
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating)
+    setValue("rating", newRating, { shouldValidate: true })
   }
 
-  // Не показываем кнопку/форму, если пользователь не авторизован
+  if (isLoadingAuth) {
+    return (
+      <div className="mt-12 border-t border-ui-border-base pt-8">
+        <Skeleton className="w-1/3 h-6 mb-4" />
+        <Skeleton className="w-full h-10 mb-2" />
+        <Skeleton className="w-full h-24 mb-4" />
+        <Skeleton className="w-1/4 h-10" />
+      </div>
+    )
+  }
+
   if (!customer) {
-    return null // Или можно показать сообщение "Войдите, чтобы оставить отзыв"
+    return (
+      <div className="mt-8 text-center border-t border-ui-border-base pt-8">
+        <p className="text-ui-fg-subtle mb-4">Чтобы оставить отзыв, пожалуйста, войдите в свой аккаунт.</p>
+        <Button asChild variant="secondary">
+          <a href="/account/login">Войти</a>
+        </Button>
+      </div>
+    )
   }
 
   return (
-    <div className="mt-12">
-      {!showForm && (
-        <div className="flex justify-center">
-          <Button onClick={() => setShowForm(true)}>Оставить отзыв</Button>
+    <div className="mt-12 border-t border-ui-border-base pt-8">
+      <h3 className="text-xl-semi mb-1">Оставить отзыв</h3>
+      <p className="text-ui-fg-subtle text-sm mb-4">Вы вошли как {customer.first_name} {customer.last_name}</p>
+      <form action={formAction} className="flex flex-col gap-y-4">
+        <input type="hidden" {...register("rating")} value={rating} />
+        <div className="flex flex-col gap-y-1">
+          <Label htmlFor="review-title">Заголовок (необязательно)</Label>
+          <Input id="review-title" {...register("title")} />
         </div>
-      )}
+        <div className="flex flex-col gap-y-1">
+          <Label htmlFor="review-content">Ваш отзыв <span className="text-rose-500">*</span></Label>
+          <Textarea id="review-content" {...register("content", { required: "Текст отзыва обязателен" })} required 
+            aria-invalid={!!errors.content || !!state.errors?.content}
+          />
+          {errors.content && <span className="text-rose-500 text-xs italic">{errors.content.message}</span>}
+          {state.errors?.content && <span className="text-rose-500 text-xs italic">{state.errors.content.join(", ")}</span>}
+        </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-y-4 border-t border-ui-border-base pt-8">
-           <Toaster /> {/* Добавляем Toaster для уведомлений */}
-           <Heading level="h3" className="text-xlarge-semi">Написать отзыв</Heading>
-           
-           {/* Рейтинг */}
-           <div>
-             <Label htmlFor="rating" className="mb-2 block">Оценка <span className="text-rose-500">*</span></Label>
-             <div className="flex gap-x-1">
-               {[1, 2, 3, 4, 5].map((rate) => (
-                 <button
-                   type="button"
-                   key={rate}
-                   onClick={() => handleSetRating(rate)}
-                   className="text-ui-fg-subtle focus:outline-none"
-                   aria-label={`Оценить ${rate} из 5`}
-                 >
-                   {rate <= rating ? (
-                     <StarSolid className="w-6 h-6 text-ui-tag-orange-icon" />
-                   ) : (
-                     <Star className="w-6 h-6" />
-                   )}
-                 </button>
-               ))}
-             </div>
-           </div>
+        <div className="flex flex-col gap-y-2">
+          <span className={clx("text-ui-fg-subtle text-sm", { "text-rose-500": !!errors.rating || !!state.errors?.rating })}>
+            Оценка <span className="text-rose-500">*</span>
+          </span>
+          <div className="flex gap-x-1">
+            {[1, 2, 3, 4, 5].map((index) => {
+              const starValue = index
+              return (
+                <button
+                  type="button"
+                  key={index}
+                  onClick={() => handleRatingChange(starValue)}
+                  className="text-ui-fg-muted cursor-pointer p-1"
+                  aria-label={`Рейтинг ${starValue}`}
+                  disabled={isSubmitting || state.success}
+                >
+                  {starValue <= rating ? (
+                    <StarSolid className="text-ui-tag-orange-icon w-6 h-6" />
+                  ) : (
+                    <Star className="w-6 h-6" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {errors.rating && <span className="text-rose-500 text-xs italic">{errors.rating.message}</span>}
+          {state.errors?.rating && <span className="text-rose-500 text-xs italic">{state.errors.rating.join(", ")}</span>}
+        </div>
 
-           {/* Заголовок */}
-           <div>
-             <Label htmlFor="title" className="mb-2 block">Заголовок (необязательно)</Label>
-             <Input
-               id="title"
-               name="title"
-               value={title}
-               onChange={(e) => setTitle(e.target.value)}
-               placeholder="Кратко о главном"
-               autoComplete="off"
-             />
-           </div>
+        {state.message && !state.success && <p className="text-rose-500 text-sm p-2 bg-rose-50 rounded">{state.message}</p>}
+        {showSuccessMessage && <p className="text-green-500 text-sm p-2 bg-green-50 rounded">Спасибо! Ваш отзыв отправлен на модерацию.</p>}
 
-           {/* Текст отзыва */}
-           <div>
-             <Label htmlFor="content" className="mb-2 block">Отзыв <span className="text-rose-500">*</span></Label>
-             <Textarea
-               id="content"
-               name="content"
-               value={content}
-               onChange={(e) => setContent(e.target.value)}
-               placeholder="Поделитесь вашим мнением о товаре..."
-               rows={4}
-               required
-             />
-           </div>
-
-           {/* Кнопки */}
-           <div className="flex justify-end gap-x-4 mt-4">
-             <Button 
-               variant="secondary" 
-               type="button" 
-               onClick={() => setShowForm(false)}
-               disabled={isLoading}
-             >
-               Отмена
-             </Button>
-             <Button 
-               type="submit" 
-               isLoading={isLoading}
-               disabled={rating === 0 || !content.trim()} // Блокируем, если нет оценки или текста
-             >
-               Отправить отзыв
-             </Button>
-           </div>
-        </form>
-      )}
+        <Button 
+          type="submit" 
+          variant="primary" 
+          isLoading={isSubmitting}
+          disabled={isSubmitting || state.success}
+        >
+          {state.success ? 'Отправлено' : isSubmitting ? 'Отправка...' : 'Отправить отзыв'}
+        </Button>
+      </form>
     </div>
   )
 } 
