@@ -13,6 +13,8 @@ import { listRegions } from "@lib/data/regions"
 import LocalizedProviders from "@modules/checkout/components/localized-providers"
 import { revalidateTag } from "next/cache"
 import { ReactNode } from "react"
+import AccountProvider from "@lib/contexts/account"
+import { WishlistProvider } from "@lib/context/wishlist-context"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -45,31 +47,33 @@ export default async function MainLayout({
     const isEmergencyMode = regions.length === 1 && regions[0].id.startsWith("reg_0");
     
     return (
-      <>
-        {isEmergencyMode && (
-          <div className="p-3 text-center bg-yellow-100 text-yellow-800 text-sm">
-            Система работает в аварийном режиме. Некоторые функции могут быть недоступны.
-          </div>
-        )}
-        <Nav />
-        {customer && cart && (
-          <CartMismatchBanner customer={customer} cart={cart} />
-        )}
+      <AccountProvider>
+        <WishlistProvider>
+          <Nav />
+          {isEmergencyMode && (
+            <div className="p-3 text-center bg-yellow-100 text-yellow-800 text-sm">
+              Система работает в аварийном режиме. Некоторые функции могут быть недоступны.
+            </div>
+          )}
+          {customer && cart && (
+            <CartMismatchBanner customer={customer} cart={cart} />
+          )}
 
-        {cart && (
-          <FreeShippingPriceNudge
-            variant="popup"
-            cart={cart}
-            shippingOptions={shippingOptions}
-          />
-        )}
-        <main className="relative">
-          <Suspense fallback={<div className="p-8 text-center">Загрузка контента...</div>}>
-            {children}
-          </Suspense>
-        </main>
-        <Footer />
-      </>
+          {cart && (
+            <FreeShippingPriceNudge
+              variant="popup"
+              cart={cart}
+              shippingOptions={shippingOptions}
+            />
+          )}
+          <main className="relative">
+            <Suspense fallback={<div className="p-8 text-center">Загрузка контента...</div>}>
+              {children}
+            </Suspense>
+          </main>
+          <Footer />
+        </WishlistProvider>
+      </AccountProvider>
     )
   } catch (error) {
     console.error("Ошибка при загрузке макета:", error);

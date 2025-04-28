@@ -9,6 +9,7 @@ import { getProductPrice } from "@lib/util/get-product-price"
 import Image from "next/image"
 import ProductPrice from "../product-price"
 import { Heart, ShoppingBag } from "@medusajs/icons"
+import WishlistButton from "@modules/common/components/wishlist-button"
 // import { ProductProvider } from "@lib/context/product-context" // Убираем импорт
 // import Thumbnail from "../thumbnail" // Не используется
 // import Link from "next/link" // Не используется LocalizedClientLink
@@ -54,24 +55,15 @@ export default function ProductPreview({
   // --- Флаг наличия товара (хотя бы одного варианта) --- 
   const isInStock = !!cheapestPrice; 
 
-  const handleWishlistClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault() // Предотвращаем переход по ссылке
-    // TODO: Добавить логику добавления/удаления из избранного
-    console.log("Wishlist clicked for:", product.handle)
-  }
-
-  const handleAddToCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault() // Предотвращаем переход по ссылке
-    // TODO: Добавить логику добавления в корзину (возможно, открытие модального окна или быстрый add)
-    console.log("Add to cart clicked for:", product.handle)
-  }
+  // Находим ID первого варианта (если есть) для кнопки
+  const firstVariantId = product.variants && product.variants.length > 0 ? product.variants[0].id : undefined;
 
   return (
     // --- Убираем ProductProvider --- 
     // <ProductProvider product={product}>
       <div className="flex flex-col">
         {/* Контейнер с изображением и оверлеями */}
-        <LocalizedClientLink
+    <LocalizedClientLink
           href={`/products/${product?.handle}`}
           className="group block relative w-full overflow-hidden aspect-square rounded-md"
           role="article"
@@ -86,8 +78,8 @@ export default function ProductPreview({
               sizes="(max-width: 576px) 50vw, (max-width: 768px) 33vw, (max-width: 992px) 25vw, 20vw"
               style={{ objectFit: "cover" }}
               className="absolute inset-0 size-full transition-transform duration-300 ease-in-out group-hover:scale-105"
-              data-testid="product-thumbnail"
-            />
+          data-testid="product-thumbnail"
+        />
           ) : (
             <div className="absolute inset-0 size-full bg-gray-100 flex items-center justify-center">
                <span className="text-gray-500 text-xs">No image</span>
@@ -107,14 +99,9 @@ export default function ProductPreview({
             )}
             <div className="flex-grow"></div>
 
-            <button
-              onClick={handleWishlistClick}
-              className="flex justify-center items-center p-2 bg-blue-400 rounded-md hover:bg-blue-500 transition-colors text-white"
-              aria-label="Add to wishlist"
-              data-testid="product-wishlist-button"
-            >
-              <Heart className="w-7 h-7" />
-            </button>
+            {/* Используем новую кнопку WishlistButton */}
+            {firstVariantId && <WishlistButton variantId={firstVariantId} />} 
+
           </div>
           
           {/* --- Добавляем метку времени/доступности --- */}
@@ -142,7 +129,6 @@ export default function ProductPreview({
               <Button 
                 variant="secondary"
                 className="!bg-black !text-white !p-2.5 !min-h-0 !h-auto !rounded-md hover:!bg-gray-800 transition-colors flex items-center justify-center"
-                onClick={handleAddToCartClick}
                 data-testid="product-add-to-cart-button"
               >
                 <ShoppingBag className="w-7 h-7" />

@@ -11,6 +11,7 @@ import Package from "@modules/common/icons/package"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
 import { signout } from "@lib/data/customer"
+import { useAccount } from "@lib/contexts/account"
 
 const AccountNav = ({
   customer,
@@ -19,10 +20,7 @@ const AccountNav = ({
 }) => {
   const route = usePathname()
   const { countryCode } = useParams() as { countryCode: string }
-
-  const handleLogout = async () => {
-    await signout(countryCode)
-  }
+  const { handleLogout } = useAccount()
 
   return (
     <div>
@@ -148,6 +146,15 @@ const AccountNav = ({
                   data-testid="orders-link"
                 >
                   Заказы
+                </AccountNavLink>
+              </li>
+              <li>
+                <AccountNavLink
+                  href="/account/wishlist"
+                  route={route!}
+                  data-testid="wishlist-link"
+                >
+                  Избранное
                 </AccountNavLink>
               </li>
               <li className="text-grey-700">

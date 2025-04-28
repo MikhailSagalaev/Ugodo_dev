@@ -19,6 +19,9 @@ module.exports = defineConfig({
   modules: [
    {
      resolve: "./src/modules/product-review", 
+   },
+   {
+     resolve: "./src/modules/wishlist/modules/wishlist",
    }
  ],
   plugins: [
