@@ -13,12 +13,16 @@ import ListRegions from "../list-regions"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { listRegions } from "@lib/data/regions"
 import Search from "@modules/search"
-import { Heart, User } from "@medusajs/icons"
+import { User } from "@medusajs/icons"
+import { HttpTypes } from "@medusajs/types"
 
-const Nav = () => {
+const Nav = ({ isHome = false }: { isHome?: boolean }) => {
   const pathName = usePathname()
   const searchParams = useSearchParams()
-  const [regions, setRegions] = useState([])
+  const [regions, setRegions] = useState<HttpTypes.StoreRegion[]>([])
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const headerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchRegions = async () => {
@@ -29,12 +33,83 @@ const Nav = () => {
     fetchRegions()
   }, [])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY
+      if (offset > 100) {
+        setIsScrolled(true)
+      } else {
+        setIsScrolled(false)
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    handleScroll() 
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight)
+    }
+  }, [])
+
+  const wrapperClasses = "absolute top-0 left-0 right-0 z-50 bg-transparent group transition-all duration-200"
+  const headerClasses = "relative h-16 mx-auto border-b border-transparent transition-all duration-200"
+  const navClasses = "content-container txt-xsmall-plus flex items-center justify-between h-full text-small-regular text-white transition-colors duration-200"
+  const secondNavClasses = "hidden small:block border-b border-transparent bg-transparent transition-all duration-200"
+
+  const getLinkClasses = (targetPath: string) => {
+      if (pathName === targetPath) {
+          return clx(
+              "text-sm font-medium transition-colors duration-200",
+              {
+                "text-white font-semibold": isHome && !isScrolled,
+                "text-ui-fg-base font-semibold": !isHome || isScrolled
+              }
+          );
+      }
+      return clx(
+          "text-sm font-medium transition-colors duration-200",
+          {
+              "text-white hover:text-gray-300": isHome && !isScrolled,
+              "text-ui-fg-subtle hover:text-ui-fg-base": !isHome || isScrolled
+          }
+      );
+  };
+
   return (
-    <div className="sticky top-0 inset-x-0 z-50 group">
-      {/* Первый уровень шапки */}
-      <header className="relative h-16 mx-auto border-b bg-white border-ui-border-base">
-        <nav className="content-container txt-xsmall-plus text-ui-fg-subtle flex items-center justify-between h-full text-small-regular">
-          {/* Левая часть - выбор города */}
+    <>
+      {!isHome && <div style={{ height: `${headerHeight}px` }} />}
+      
+      <div 
+        ref={headerRef}
+        className={clx(
+          {
+            "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group": isHome,
+            "fixed top-0 left-0 right-0 z-50 bg-white shadow-md group": !isHome,
+            "bg-transparent": isHome && !isScrolled,
+            "bg-white shadow-md": isHome && isScrolled || !isHome,
+          }
+        )}
+      >
+        <header className={clx(
+          "relative h-16 mx-auto border-b transition-all duration-200",
+          {
+            "border-transparent": isHome && !isScrolled,
+            "border-ui-border-base": !isHome || isScrolled,
+          }
+        )}>
+          <nav className={clx(
+            "content-container txt-xsmall-plus flex items-center justify-between h-full text-small-regular transition-colors duration-200",
+            {
+              "text-white": isHome && !isScrolled,
+              "text-ui-fg-subtle": !isHome || isScrolled,
+            }
+          )}>
           <div className="flex items-center h-full">
             {regions && regions.length > 1 && (
               <ListRegions
@@ -45,7 +120,6 @@ const Nav = () => {
             )}
           </div>
 
-          {/* Центральная часть - логотип */}
           <div className="flex items-center justify-center h-full">
             <LocalizedClientLink
               href="/"
@@ -62,7 +136,6 @@ const Nav = () => {
             </LocalizedClientLink>
           </div>
 
-          {/* Правая часть - иконки */}
           <div className="flex items-center gap-x-4 h-full">
             <div className="hidden small:flex items-center gap-x-4 h-full">
               <Suspense>
@@ -70,22 +143,55 @@ const Nav = () => {
               </Suspense>
               
               <LocalizedClientLink
-                className="hover:text-ui-fg-base flex items-center gap-x-1"
+                  className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
+                    "hover:text-gray-300": isHome && !isScrolled,
+                  })}
                 href="/account/wishlist"
                 aria-label="Избранное"
               >
-                <Heart />
+                  <Image 
+                    src="/images/heartIcon.svg" 
+                    alt="Избранное" 
+                    width={20} 
+                    height={20}
+                    style={{ 
+                      transition: 'filter 0.2s ease-in-out',
+                      filter: isHome && !isScrolled ? 'none' : 'invert(1)'
+                    }}
+                  />
               </LocalizedClientLink>
               
               <LocalizedClientLink
-                className="hover:text-ui-fg-base flex items-center gap-x-1"
+                   className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
+                    "hover:text-gray-300": isHome && !isScrolled,
+                  })}
                 href="/account"
                 aria-label="Аккаунт"
               >
-                <User />
+                  <User className={clx({
+                    "text-white": isHome && !isScrolled,
+                    "text-ui-fg-subtle": !isHome || isScrolled
+                  })} />
               </LocalizedClientLink>
               
-              <CartButton />
+                <LocalizedClientLink
+                  className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
+                    "hover:text-gray-300": isHome && !isScrolled,
+                  })}
+                  href="/cart"
+                  aria-label="Корзина"
+                >
+                  <Image 
+                    src="/images/cartIcon.svg" 
+                    alt="Корзина" 
+                    width={20} 
+                    height={20}
+                    style={{ 
+                      transition: 'filter 0.2s ease-in-out',
+                      filter: isHome && !isScrolled ? 'none' : 'invert(1)'
+                    }}
+                  />
+                </LocalizedClientLink>
             </div>
             <div className="flex small:hidden">
               <MobileMenu />
@@ -94,18 +200,20 @@ const Nav = () => {
         </nav>
       </header>
 
-      {/* Второй уровень шапки - меню разделов */}
-      <div className="hidden small:block bg-white border-b border-ui-border-base">
+        <div className={clx(
+          "hidden small:block border-b transition-all duration-200",
+          {
+            "bg-transparent border-transparent": isHome && !isScrolled,
+            "bg-white border-ui-border-base": !isHome || isScrolled,
+          }
+        )}>
         <div className="content-container flex justify-center">
           <nav className="flex items-center h-12">
             <ul className="flex items-center gap-x-8">
               <li>
                 <LocalizedClientLink
                   href="/store"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/store" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                    className={getLinkClasses("/store")}
                 >
                   Каталог
                 </LocalizedClientLink>
@@ -113,10 +221,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/new-arrivals"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/new-arrivals" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/new-arrivals")}
                 >
                   Новинки
                 </LocalizedClientLink>
@@ -124,10 +229,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/bestsellers"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/bestsellers" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/bestsellers")}
                 >
                   Хиты продаж
                 </LocalizedClientLink>
@@ -135,10 +237,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/promotions"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/promotions" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/promotions")}
                 >
                   Акции
                 </LocalizedClientLink>
@@ -146,10 +245,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/brands"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/brands" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/brands")}
                 >
                   Бренды
                 </LocalizedClientLink>
@@ -157,10 +253,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/blog"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/blog" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/blog")}
                 >
                   Блог
                 </LocalizedClientLink>
@@ -168,10 +261,7 @@ const Nav = () => {
               <li>
                 <LocalizedClientLink
                   href="/contacts"
-                  className={clx(
-                    "text-sm font-medium hover:text-ui-fg-base transition-colors",
-                    pathName === "/contacts" ? "text-ui-fg-base" : "text-ui-fg-subtle"
-                  )}
+                     className={getLinkClasses("/contacts")}
                 >
                   Контакты
                 </LocalizedClientLink>
@@ -181,6 +271,7 @@ const Nav = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

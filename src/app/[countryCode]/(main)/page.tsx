@@ -67,8 +67,7 @@ export default async function Home({ params }: { params: { countryCode: string }
 
   return (
     <div className="flex flex-col gap-0">
-      {/* Главный баннер верхней части страницы */}
-      <HomeTopBanner className="mb-8" />
+      {/* Главный баннер верхней части страницы - УДАЛЕН */}
       
       {/* Главный слайдер-баннер */}
       <Hero />
@@ -88,10 +87,13 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
+      {/* Выносим PromotionsSlider из Container для полной ширины */}
+      <PromotionsSlider />
+      
       {/* Оборачиваем PromotionsSlider в Container */}
-      <Container className="py-8 md:py-12">
+      {/* <Container className="py-8 md:py-12">
         <PromotionsSlider />
-      </Container>
+      </Container> */}
       
       {/* Промо-баннер в середине страницы */}
       <HomeMiddleBanner className="my-8" />
@@ -106,10 +108,8 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
-      {/* Добавляем WishlistDiscountBanner сюда */}
-      <Container className="py-8 md:py-12">
-        <WishlistDiscountBanner />
-      </Container>
+      {/* Выносим WishlistDiscountBanner из Container */}
+      <WishlistDiscountBanner />
       
       {/* Добавляем блок каталога с пагинацией */}
       <Container className="py-8 md:py-12">

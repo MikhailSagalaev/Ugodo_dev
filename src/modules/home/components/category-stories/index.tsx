@@ -72,6 +72,9 @@ const stories = [
   }
 ]
 
+// Добавим флаг просмотра, по умолчанию все не просмотрены
+const storiesWithViewed = stories.map(story => ({ ...story, isViewed: false }));
+
 const CategoryStories = () => {
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -84,6 +87,8 @@ const CategoryStories = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const progressDuration = 5000 // 5 секунд на историю
+  // Состояние для отслеживания просмотренных историй (для примера, можно заменить на localStorage)
+  const [viewedStories, setViewedStories] = useState<Record<string, boolean>>({});
 
   // Обработчик начала перетаскивания
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -114,7 +119,9 @@ const CategoryStories = () => {
     setActiveStoryIndex(index)
     setIsModalOpen(true)
     setProgress(0)
-    startProgressTimer()
+    // Отмечаем историю как просмотренную при ее открытии/отображении
+    setViewedStories(prev => ({ ...prev, [story.id]: true }));
+    startProgressTimer() // startProgressTimer уже должен вызываться здесь, если нет, то добавить
   }
 
   // Закрытие истории
@@ -128,10 +135,13 @@ const CategoryStories = () => {
   // Переход к следующей истории
   const nextStory = () => {
     if (activeStoryIndex < stories.length - 1) {
-      setActiveStoryIndex(prev => prev + 1)
-      setActiveStory(stories[activeStoryIndex + 1])
+      const nextIndex = activeStoryIndex + 1;
+      setActiveStoryIndex(nextIndex)
+      setActiveStory(stories[nextIndex])
       setProgress(0)
-      startProgressTimer()
+      // Отмечаем новую активную историю как просмотренную
+      setViewedStories(prev => ({ ...prev, [stories[nextIndex].id]: true }));
+      startProgressTimer() // Убедимся, что таймер перезапускается
     } else {
       closeStory()
     }
@@ -140,10 +150,13 @@ const CategoryStories = () => {
   // Переход к предыдущей истории
   const prevStory = () => {
     if (activeStoryIndex > 0) {
-      setActiveStoryIndex(prev => prev - 1)
-      setActiveStory(stories[activeStoryIndex - 1])
+      const prevIndex = activeStoryIndex - 1;
+      setActiveStoryIndex(prevIndex)
+      setActiveStory(stories[prevIndex])
       setProgress(0)
-      startProgressTimer()
+      // Отмечаем новую активную историю как просмотренную
+      setViewedStories(prev => ({ ...prev, [stories[prevIndex].id]: true }));
+      startProgressTimer() // Убедимся, что таймер перезапускается
     }
   }
 
@@ -281,32 +294,36 @@ const CategoryStories = () => {
   }
 
   return (
-    <div className="mt-4 mb-6 overflow-hidden">
+    <div className="py-10 px-4">
       <div 
         ref={containerRef}
-        className="flex overflow-x-auto pb-2 px-4 hide-scrollbar justify-center"
+        className="flex flex-wrap justify-center items-center gap-x-6 gap-y-10 hide-scrollbar cursor-grab pb-1"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {stories.map((story, index) => (
           <div 
             key={story.id} 
-            className="flex flex-col items-center mr-4 cursor-pointer" 
+            className={`flex-shrink-0 w-24 h-24 rounded-full relative cursor-pointer group transform transition-all duration-300 ease-in-out hover:scale-105 ${story.bgColor} ${!viewedStories[story.id] ? 'ring-2 ring-[#CBF401] ring-offset-2 ring-offset-white dark:ring-offset-black' : ''} mb-4`}
             onClick={() => openStory(story, index)}
           >
-            <div className={`w-20 h-20 rounded-full overflow-hidden border-2 border-${story.id === 'new' ? 'gray-200' : story.color} flex-shrink-0`}>
+            {/* Контейнер для изображения */}
+            <div className="w-full h-full rounded-full overflow-hidden">
               <Image 
                 src={story.image} 
                 alt={story.title}
-                width={80} 
-                height={80}
+                width={96} 
+                height={96} 
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="text-sm mt-1">{story.title}</span>
+            
+            {/* Текст под круглой историей */}
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-center w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {story.title}
+            </span>
           </div>
         ))}
       </div>

@@ -3,10 +3,10 @@ import * as React from "react";
 import Image from 'next/image';
 
 function WishlistDiscountBanner() {
-  const imageUrl = "/images/banners/banner2.png"; 
+  const imageUrl = "/images/banners/gift.png"; 
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto mt-10 md:mt-20 overflow-hidden rounded-lg">
+    <div className="relative w-full mt-10 md:mt-20 overflow-hidden">
       
       {/* Фоновое изображение с явными размерами */}
       <Image
@@ -17,11 +17,11 @@ function WishlistDiscountBanner() {
         priority={false} 
         loading="lazy"
         quality={85}
-        className="block w-full h-auto"
+        className="block w-full h-auto object-cover"
       />
 
-      {/* Контейнер для текста (оверлей) */}
-      <div className="absolute inset-0 z-10 flex flex-col items-end justify-center p-6 md:p-10 lg:p-16 text-right"> 
+      {/* Контейнер для текста (оверлей) - выравнивание по левому краю */}
+      <div className="absolute inset-0 z-10 flex flex-col items-start justify-center p-6 md:p-10 lg:p-16 text-left"> 
         <div className="text-black max-w-sm"> 
           <span className="block text-xl md:text-2xl lg:text-3xl leading-tight mb-1">
             Из вишлиста

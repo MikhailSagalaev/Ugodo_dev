@@ -8,7 +8,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import { getProductPrice } from "@lib/util/get-product-price"
 import Image from "next/image"
 import ProductPrice from "../product-price"
-import { Heart, ShoppingBag } from "@medusajs/icons"
+// import { Heart, ShoppingBag } from "@medusajs/icons"
 // import { ProductProvider } from "@lib/context/product-context" // Убираем импорт
 // import Thumbnail from "../thumbnail" // Не используется
 // import Link from "next/link" // Не используется LocalizedClientLink
@@ -73,7 +73,7 @@ export default function ProductPreview({
         {/* Контейнер с изображением и оверлеями */}
         <LocalizedClientLink
           href={`/products/${product?.handle}`}
-          className="group block relative w-full overflow-hidden aspect-square rounded-md"
+          className="group block relative w-full overflow-hidden aspect-square"
           role="article"
           aria-label={`View product: ${product.title}`}
         >
@@ -95,10 +95,11 @@ export default function ProductPreview({
           )}
 
           {/* Верхний слой (скидка и кнопка "В избранное") */}
-          <div className="flex absolute top-2 left-2 right-2 gap-2.5 justify-between items-start z-10">
+          <div className="flex absolute top-0 left-0 right-0 justify-between items-start z-10">
+            {/* Скидка остается прижатой к левому верхнему краю */}
             {cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
               <div
-                className="px-2.5 py-1.5 text-sm font-semibold text-black bg-[#CBF401] rounded-sm leading-none"
+                className="px-2.5 py-1.5 text-sm font-semibold text-black bg-[#CBF401] leading-none rounded-br-sm"
                 aria-label={`Discount: ${cheapestPrice.percentage_diff}%`}
                 data-testid="product-discount-badge"
               >
@@ -107,22 +108,29 @@ export default function ProductPreview({
             )}
             <div className="flex-grow"></div>
 
+            {/* Кнопка избранного с отступом сверху и справа */}
             <button
               onClick={handleWishlistClick}
-              className="flex justify-center items-center p-2 bg-blue-400 rounded-md hover:bg-blue-500 transition-colors text-white"
+              className="mt-2 mr-2 p-2 bg-blue-400 hover:bg-blue-500 transition-colors text-white rounded-md"
               aria-label="Add to wishlist"
               data-testid="product-wishlist-button"
             >
-              <Heart className="w-7 h-7" />
+              <Image 
+                src="/images/heartIcon.svg" 
+                alt="В избранное" 
+                width={24} 
+                height={24} 
+                className="brightness-0 invert"
+              />
             </button>
           </div>
           
-          {/* --- Добавляем метку времени/доступности --- */}
-           <div className="absolute bottom-2 right-2 z-10 pointer-events-none">
-             <div className="px-2 py-1 text-xs text-right text-white rounded bg-black/60 pointer-events-auto">
-               {timeLabelText}
-             </div>
-           </div>
+          {/* Метка времени/доступности - с отступом снизу и слева */}
+          <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
+            <div className="px-2.5 py-1.5 text-xs text-left text-white bg-black/60 pointer-events-auto rounded-md">
+              {timeLabelText}
+            </div>
+          </div>
 
         </LocalizedClientLink>
 
@@ -133,7 +141,7 @@ export default function ProductPreview({
                {categoryTitle}
              </Text>
           )}
-          <Heading level="h3" className="text-ui-fg-base text-lg font-semibold leading-tight mt-1" data-testid="product-title">
+          <Heading level="h3" className="text-[#333333] text-xl font-normal leading-tight mt-1" data-testid="product-title">
             {product.title}
           </Heading>
           <div className="mt-2 flex justify-between items-center">
@@ -145,7 +153,13 @@ export default function ProductPreview({
                 onClick={handleAddToCartClick}
                 data-testid="product-add-to-cart-button"
               >
-                <ShoppingBag className="w-7 h-7" />
+                <Image 
+                  src="/images/cartIcon.svg" 
+                  alt="В корзину" 
+                  width={24} 
+                  height={24}
+                  className="brightness-0 invert"
+                />
               </Button>
             ) : (
               <Text className="text-sm text-ui-fg-muted" data-testid="product-out-of-stock">

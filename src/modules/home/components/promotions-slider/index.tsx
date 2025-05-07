@@ -52,13 +52,13 @@ const PromotionsSlider = () => {
   }, [emblaApi])
 
   return (
-    <div className="w-full relative overflow-hidden embla mb-8 md:mb-12 lg:mb-16 px-4 md:px-6 lg:px-8"> 
+    <div className="w-full relative overflow-hidden embla mb-8 md:mb-12 lg:mb-16"> 
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex -ml-4">
           {promotionBanners.map((banner, index) => (
             <div 
               key={banner.id} 
-              className="flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 relative aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/5] pl-4"
+              className="flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 relative aspect-[16/9] md:aspect-[16/8] lg:aspect-[16/7] pl-4"
             >
               <LocalizedClientLink href={banner.link} className="relative block h-full overflow-hidden rounded-md group">
                   <Image 

@@ -13,7 +13,7 @@ const slides = [
     id: 1,
     headline: "на товары для дома",
     title: "СКИДКА ДО 20%",
-    image: "https://images.unsplash.com/photo-1618220179428-22790b461013?q=80&w=2127&auto=format&fit=crop",
+    image: "/images/hero/доставка бирюза 2.png",
     cta: {
       text: "Подробнее",
       link: "/collections/sale"
@@ -23,7 +23,7 @@ const slides = [
     id: 2,
     headline: "новая коллекция",
     title: "ВЕСНА-ЛЕТО 2024",
-    image: "https://images.unsplash.com/photo-1556020685-ae41abfc9365?q=80&w=1974&auto=format&fit=crop",
+    image: "/images/hero/Frame 1984077837 (1).jpg",
     cta: {
       text: "Смотреть",
       link: "/collections/new-arrivals"
@@ -33,7 +33,7 @@ const slides = [
     id: 3,
     headline: "только в этом месяце",
     title: "РАСПРОДАЖА",
-    image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1887&auto=format&fit=crop",
+    image: "/images/hero/девушка с коробкой 1.png",
     cta: {
       text: "Перейти",
       link: "/collections/bathroom"
@@ -156,7 +156,7 @@ const Hero = () => {
               
               {/* Контент */}
               <div className="relative z-10 h-full flex items-center">
-                <div className="container mx-auto py-16 md:py-24 px-4 sm:px-6 lg:px-8">
+                <div className="container mx-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
                   <div className="max-w-md">
                     <Text className="text-white/90 text-lg md:text-xl mb-2 font-light tracking-wide">
                       {slide.headline}
@@ -169,7 +169,7 @@ const Hero = () => {
                     </Heading>
                     <LocalizedClientLink href={slide.cta.link}>
                       <Button 
-                        className="bg-[#cbf401] hover:bg-[#d8ff00] text-black min-w-32 h-12 px-6"
+                        className="bg-black hover:bg-gray-800 text-white min-w-32 h-12 px-6"
                         size="large"
                       >
                         {slide.cta.text}

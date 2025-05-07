@@ -2,6 +2,10 @@ const { loadEnv } = require("@medusajs/utils");
 loadEnv("test", process.cwd());
 
 module.exports = {
+  projectConfig: {
+      store_cors: "https://ugodo.ru",
+      admin_cors: "https://ugodo.ru",
+  },
   transform: {
     "^.+\\.[jt]s$": [
       "@swc/jest",
