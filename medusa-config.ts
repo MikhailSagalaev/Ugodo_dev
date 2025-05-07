@@ -14,14 +14,23 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
   },
+  admin: {
+    vite: () => {
+      return {
+        server: {
+          allowedHosts: ["ugodo.ru"],
+        },
+      }
+    },
+  },
   modules: [
-    process.env.REDIS_URL ? {
+    ...(process.env.REDIS_URL ? [{
       resolve: "@medusajs/cache-redis",
       options: {
         redisUrl: process.env.REDIS_URL,
         ttl: 30,
       },
-    } : {},
+    }] : []),
   ],
   plugins: [
     {
@@ -37,23 +46,4 @@ module.exports = defineConfig({
       },
     },
   ],
-  services: [
-    process.env.REDIS_URL ? {
-      resolve: "./medusa/src/services/redis-cache",
-      options: {
-        ttl: 3600,
-        namespace: "medusa:",
-      },
-      containerName: "cacheService"
-    } : {
-      resolve: "./medusa/src/services/cache",
-      options: {},
-      containerName: "cacheService"
-    },
-    {
-      resolve: "./medusa/src/services/verification-code",
-      options: {},
-      containerName: "verificationCodeService"
-    },
-  ]
 }) 
