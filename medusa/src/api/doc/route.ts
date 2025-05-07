@@ -100,6 +100,37 @@ const options = {
     security: yamlSpec.security || generatedSpec.security || [], // Берем security из YAML или сгенерированного
   };
 
+  // Принудительно устанавливаем нужный сервер
+  mergedSpec.servers = [
+    {
+      url: "http://89.108.110.26:9000",
+      description: "Production Server Ugodo"
+    }
+  ];
+
+  // Добавляем описания к тегам Store и Admin
+  const storeTag = mergedSpec.tags.find(tag => tag.name === "Store");
+  if (storeTag) {
+    storeTag.description = "Методы API для клиентской части (магазина)";
+  } else {
+    // Если тега "Store" нет, но мы ожидаем его, можно добавить его в массив mergedSpec.tags
+    // Однако, если пути не помечены этим тегом, он будет пустым.
+    // Лучше убедиться, что аннотации @swagger в коде Store API используют тег "Store".
+    console.warn("Тег 'Store' не найден в спецификации. Описание не будет добавлено.");
+  }
+
+  const adminTag = mergedSpec.tags.find(tag => tag.name === "Admin");
+  if (adminTag) {
+    adminTag.description = "Методы API для административной панели";
+  } else {
+    console.warn("Тег 'Admin' не найден в спецификации. Описание не будет добавлено.");
+  }
+  
+  // Пересортируем теги, чтобы теги с описаниями (особенно Store и Admin) были заметнее,
+  // или чтобы пользовательский порядок соблюдался, если он задан.
+  // В данном случае, просто оставим существующую алфавитную сортировку,
+  // но описания сделают их более понятными.
+
   console.log("Спецификации успешно объединены.");
   return mergedSpec;
 }
@@ -115,7 +146,7 @@ const generateSwaggerUIHtml = (swaggerSpec: any) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Medusa API Documentation" />
   <title>Medusa API Documentation (Merged)</title>
-  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui.css\" /> {/* Обновим версию UI */}
+  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui.css\" />
   <style>
     html {
       box-sizing: border-box;
@@ -131,16 +162,15 @@ const generateSwaggerUIHtml = (swaggerSpec: any) => {
       margin: 0;
       background: #fafafa;
     }
-    .topbar { /* Убираем старый topbar, т.к. DownloadUrl плагин добавит свой */
+    .topbar { 
         display: none;
     }
   </style>
 </head>
 <body>
-  {/* Убираем старый topbar div */}
   <div id="swagger-ui"></div>
-  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js\"></script> {/* Обновим версию UI */}
-  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js\"></script> {/* Обновим версию UI */}
+  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>
+  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js\"></script>
   <script>
     window.onload = function() {
       window.ui = SwaggerUIBundle({
