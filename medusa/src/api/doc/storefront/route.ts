@@ -91,6 +91,22 @@ export const GET = async (
         if (fs.existsSync(frontendOpenApiPath)) {
             const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
             const storeSpec = yaml.load(yamlContent) as any;
+
+            // --- Начало модификации списка серверов ---
+            const prodServerUrl = "http://89.108.110.26:9000";
+            const prodServerDesc = "Production Ugodo Storefront API";
+
+            let servers = storeSpec.servers || [];
+            
+            // Удаляем существующий prod сервер, если он есть, чтобы избежать дубликатов и поставить его первым
+            servers = servers.filter(server => server.url !== prodServerUrl);
+            
+            // Добавляем/Обновляем prod сервер как первый элемент
+            servers.unshift({ url: prodServerUrl, description: prodServerDesc });
+            
+            storeSpec.servers = servers;
+            // --- Конец модификации списка серверов ---
+
             res.setHeader("Content-Type", "application/json");
             return res.json(storeSpec);
         } else {
