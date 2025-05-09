@@ -3,7 +3,7 @@ import {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import swaggerJSDoc from "swagger-jsdoc"
-import swaggerUi from "swagger-ui-express"
+// import swaggerUi from "swagger-ui-express" // Не используется напрямую для генерации HTML
 import path from "path"
 import fs from "fs"
 import yaml from 'js-yaml';
@@ -254,7 +254,7 @@ function filterStoreApiSpec(fullSpec: any): any {
 */
 
 // --- Функция для генерации HTML ---
-const generateSwaggerUIHtml = (swaggerSpec: any) => {
+const generateSwaggerUIHtmlForUrl = () => {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -263,7 +263,7 @@ const generateSwaggerUIHtml = (swaggerSpec: any) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Medusa API Documentation" />
   <title>Medusa API Documentation (Merged)</title>
-  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui.css\" />
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
     html {
       box-sizing: border-box;
@@ -279,19 +279,19 @@ const generateSwaggerUIHtml = (swaggerSpec: any) => {
       margin: 0;
       background: #fafafa;
     }
-    .topbar { 
+    /* .topbar { 
         display: none;
-    }
+    } */ // Убираем это правило, чтобы topbar (и ссылка на скачивание в нем) был виден
   </style>
 </head>
 <body>
   <div id="swagger-ui"></div>
-  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>
-  <script src=\"https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js\"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
   <script>
     window.onload = function() {
       window.ui = SwaggerUIBundle({
-        spec: ${JSON.stringify(swaggerSpec)}, // Передаем объединенную спецификацию
+        url: "?json=true", // Изменено: загружаем спецификацию с текущего пути + query-параметр
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
@@ -299,18 +299,84 @@ const generateSwaggerUIHtml = (swaggerSpec: any) => {
           SwaggerUIStandalonePreset
         ],
         plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl // Используем стандартный плагин для скачивания
+          SwaggerUIBundle.plugins.DownloadUrl
         ],
         layout: "StandaloneLayout",
-        tagsSorter: "alpha", // Сортировка тегов
-        operationsSorter: "alpha", // Сортировка операций
-        docExpansion: "none", // Свернуть все теги по умолчанию
-        filter: true, // Включаем фильтр по тегам/операциям
+        tagsSorter: "alpha",
+        operationsSorter: "alpha",
+        docExpansion: "none",
+        filter: true,
         showExtensions: true,
         showCommonExtensions: true,
-        tryItOutEnabled: true, // Разрешаем "Try it out"
-        requestSnippetsEnabled: true, // Показываем примеры запросов
-        displayRequestDuration: true // Показываем длительность запроса
+        tryItOutEnabled: true,
+        requestSnippetsEnabled: true,
+        displayRequestDuration: true
+      });
+    };
+  </script>
+</body>
+</html>
+  `;
+}
+
+// --- Новая функция для генерации HTML для Storefront API ---
+const generateSwaggerUIHtmlForStorefront = () => {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Medusa Storefront API Documentation" />
+  <title>Medusa Storefront API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #fafafa;
+    }
+    /* .topbar { 
+        display: none;
+    } */ 
+  </style>
+</head>
+<body>
+  <div id="swagger-ui-storefront"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      window.uiStorefront = SwaggerUIBundle({
+        url: "?json=true",
+        dom_id: '#swagger-ui-storefront',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        tagsSorter: "alpha",
+        operationsSorter: "alpha",
+        docExpansion: "none",
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+        tryItOutEnabled: true,
+        requestSnippetsEnabled: true,
+        displayRequestDuration: true
       });
     };
   </script>
@@ -324,46 +390,47 @@ export const GET = async (
   req: MedusaRequest,
   res: MedusaResponse
 ) => {
-  console.log(`Запрос к бэкенд-документации: ${req.url}`);
+  console.log(`GET /doc: URL='${req.url}', OriginalURL='${req.originalUrl}', Path='${req.path}', Query='${JSON.stringify(req.query)}'`);
+
   try {
-      // Новый обработчик для /doc/store-swagger.json (напрямую из openapi (1).yaml)
-      if (req.url?.endsWith("/store-swagger.json")) {
-        if (fs.existsSync(frontendOpenApiPath)) {
-          const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
-          const storeSpec = yaml.load(yamlContent) as any;
-          console.log(`Отдаем спецификацию из ${path.basename(frontendOpenApiPath)} как JSON.`);
-          res.setHeader("Content-Type", "application/json");
-          res.json(storeSpec);
-        } else {
-          console.warn(`Файл ${path.basename(frontendOpenApiPath)} не найден.`);
-          res.status(404).send(`Not Found: ${path.basename(frontendOpenApiPath)}`);
-        }
-        return;
-      }
-
-      // Для /doc/swagger.json и /doc (Swagger UI) используем объединенную спецификацию
-      // (openapi (2).yaml + аннотации)
-      const finalSpec = getMergedSwaggerSpec(); 
-
-      // Если запрашивается swagger.json, возвращаем полную объединенную спецификацию
-      if (req.url?.endsWith("/swagger.json")) { 
-        console.log("Отдаем объединенную спецификацию (полную) как JSON.");
+    // Case 1: Прямой запрос файла спецификации Storefront API
+    if (req.originalUrl?.endsWith("/doc/store-swagger.json")) {
+      console.log("Request for direct storefront swagger JSON file (/doc/store-swagger.json)");
+      if (fs.existsSync(frontendOpenApiPath)) {
+        const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
+        const storeSpec = yaml.load(yamlContent) as any;
         res.setHeader("Content-Type", "application/json");
-        res.json(finalSpec);
-        return;
+        return res.json(storeSpec);
+      } else {
+        console.warn(`Frontend OpenAPI spec file not found: ${frontendOpenApiPath}`);
+        return res.status(404).send(`Not Found: ${path.basename(frontendOpenApiPath)}`);
       }
+    }
+    
+    // Case 2: Запрос основной объединенной спецификации Swagger JSON (через query-параметр /doc?json=true)
+    if (req.query && req.query.json === 'true') { // Это условие должно быть специфичным для /doc, а не для подпутей
+      console.log("Request for main combined swagger JSON (/doc?json=true)");
+      const finalSpec = getMergedSwaggerSpec();
+      res.setHeader("Content-Type", "application/json");
+      return res.json(finalSpec);
+    }
 
-      // Генерируем HTML для Swagger UI с объединенной спецификацией
-      console.log("Генерируем и отдаем HTML для Swagger UI.");
-      const html = generateSwaggerUIHtml(finalSpec);
-  
-  // Отправляем HTML
-      res.setHeader("Content-Type", "text/html");
-      res.send(html);
+    // Case 3: Запрос HTML страницы основного Swagger UI (например, /doc)
+    // Убедимся, что это не /doc/store-swagger.json и нет query-параметра json=true
+    if (!req.originalUrl?.endsWith("/doc/store-swagger.json") && !(req.query && req.query.json === 'true')) {
+        console.log("Request for Main Swagger UI HTML page (/doc)");
+        const html = generateSwaggerUIHtmlForUrl();
+        res.setHeader("Content-Type", "text/html");
+        return res.send(html);
+    }
+
+    // Если ни один из кейсов не подошел, возвращаем 404
+    console.warn(`No specific handler in /doc/route.ts for: ${req.originalUrl}`);
+    return res.status(404).send("Not Found");
 
   } catch(error) {
        console.error("Критическая ошибка в обработчике GET /doc:", error);
-       res.status(500).send("Internal Server Error while generating API documentation.");
+       return res.status(500).send("Internal Server Error while generating API documentation.");
   }
 }
 
