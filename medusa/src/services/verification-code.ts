@@ -70,6 +70,6 @@ export default class VerificationCodeService {
     
     return true
   }
-}
+} 
 
 module.exports = VerificationCodeService 

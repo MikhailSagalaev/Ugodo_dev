@@ -174,7 +174,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                   })} />
               </LocalizedClientLink>
               
-                <CartButton />
+              <CartButton />
             </div>
             <div className="flex small:hidden">
               <MobileMenu />

@@ -3,6 +3,7 @@ import * as React from "react";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import Thumbnail from "../thumbnail";
 import { Heart, Play, ShoppingBag } from "lucide-react";
+import Image from "next/image";
 import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer";
 import { HttpTypes } from "@medusajs/types";
 
@@ -164,12 +165,18 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
           {/* КОРЗИНА */}
           {product.isInStock && (
             <button
-              className="absolute bottom-2 right-2 z-10 bg-black text-white rounded-full p-3 shadow-lg flex items-center justify-center hover:bg-gray-800 transition-colors"
+              className="absolute right-4 w-12 h-12 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
               aria-label="Добавить в корзину"
-              onClick={e => { e.preventDefault(); console.log('Add to cart clicked for:', product.id); }}
-              style={{ pointerEvents: 'auto' }}
+              onClick={e => { e.preventDefault(); console.log('Add to cart clicked for product ID (client):', product.id); }}
+              style={{ pointerEvents: 'auto', bottom: '6rem' }}
             >
-              {renderSvg(cartIconSvg)}
+              <Image
+                src="/images/cartIcon.svg"
+                alt="В корзину"
+                width={24}
+                height={24}
+                className="brightness-0 invert"
+              />
             </button>
           )}
           {/* Нет в наличии */}

@@ -236,7 +236,7 @@ export default function ProductPreview({
         {/* КОРЗИНА */}
         {isInStock && (
           <button
-            className="absolute right-4 w-12 h-12 bg-black text-white rounded-none flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
+            className="absolute right-4 w-12 h-12 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
             aria-label="Добавить в корзину"
             onClick={handleAddToCartClick}
             style={{ pointerEvents: 'auto', bottom: '6rem' }}
