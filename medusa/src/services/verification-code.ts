@@ -1,6 +1,7 @@
 import { ConfigModule } from "@medusajs/framework/types"
 import { generateRandomCode } from "../utils/generate-code"
 import CacheService from "./cache"
+import smsc from '../../../smsc_api.js'
 
 /**
  * Сервис для работы с кодами подтверждения
@@ -26,6 +27,9 @@ export default class VerificationCodeService {
    * Генерирует новый код подтверждения для указанного идентификатора
    * @param identifier Идентификатор (обычно email или телефон)
    * @returns Сгенерированный код
+   * @throws Ошибка, если не удалось отправить SMS (для телефонов)
+   *
+   * Если identifier — телефон, отправляет SMS через smsc.ru
    */
   async generateCode(identifier: string): Promise<string> {
     // Генерируем код заданной длины
@@ -33,6 +37,16 @@ export default class VerificationCodeService {
     
     // Сохраняем код в кэше с заданным временем жизни
     await this.cacheService.set(`verification_code:${identifier}`, code, this.codeTTL)
+    
+    // Если это телефон, отправляем SMS
+    if (/^\+?\d{10,15}$/.test(identifier)) {
+      await new Promise((resolve, reject) => {
+        smsc.send_sms({ phones: identifier, mes: `Ваш код: ${code}` }, (data, raw, err, code) => {
+          if (err) reject(new Error('Ошибка отправки SMS: ' + err))
+          else resolve(data)
+        })
+      })
+    }
     
     return code
   }
@@ -56,4 +70,6 @@ export default class VerificationCodeService {
     
     return true
   }
-} 
+}
+
+module.exports = VerificationCodeService 

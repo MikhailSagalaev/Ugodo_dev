@@ -139,38 +139,40 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
             isFeatured={isFeatured}
             className="absolute inset-0 size-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
-          
-          <div className="absolute top-[15px] sm:top-[30px] left-[15px] right-[15px] sm:left-[30px] sm:right-[30px] flex justify-between items-start z-10 pointer-events-none">
-             {discountBadge ? renderSvg(discountIconSvg) : <div className="w-[60px] h-10" />}
-
-            <button 
-              className={`flex justify-center items-center h-10 w-[60px] rounded-lg transition-colors pointer-events-auto ${!isLoadingCustomer && customer ? 'bg-cyan-400 hover:bg-cyan-500' : 'bg-cyan-400 opacity-50 cursor-not-allowed'}`}
-              onClick={handleWishlistToggle}
-              disabled={isLoadingCustomer || !customer || isLoadingWishlist}
-              aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
-              title={!customer ? "Войдите, чтобы добавить в избранное" : (isInWishlist ? "Удалить из избранного" : "Добавить в избранное")}
-            >
-              {(isLoadingWishlist || isLoadingCustomer) && (
-                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                 </div>
-              )}
-              {!isLoadingWishlist && !isLoadingCustomer && renderSvg(heartIconSvg)}
-            </button>
-          </div>
-
-          <div className="absolute bottom-[15px] sm:bottom-[30px] left-[15px] right-[15px] sm:left-[30px] sm:right-[30px] flex justify-between items-end z-10 pointer-events-none">
-            {product.hasVideo ? (
-              <div className="flex justify-center items-center h-10 rounded-none bg-black bg-opacity-60 w-[60px]">
-                {renderSvg(videoIconSvg)}
-              </div>
-            ) : <div className="w-[60px] h-10" />}
-
-            <div className="h-10 flex items-center justify-center text-center text-xs text-white rounded bg-black bg-opacity-60 px-2 py-1 w-auto max-w-[148px]">
-              {product.deliveryInfo}
+          {/* СКИДКА */}
+          {discountBadge && (
+            <div className="absolute top-2 left-2 bg-[#CBF401] text-black px-2 py-1 text-xs font-bold z-10 select-none">
+              -{discountBadge.text}
             </div>
-          </div>
-
+          )}
+          {/* ИЗБРАННОЕ */}
+          <button
+            className="absolute top-2 right-2 z-10 p-0 bg-transparent hover:bg-transparent focus:bg-transparent border-none shadow-none flex items-center justify-center"
+            onClick={handleWishlistToggle}
+            disabled={isLoadingCustomer || !customer || isLoadingWishlist}
+            aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
+            title={!customer ? "Войдите, чтобы добавить в избранное" : (isInWishlist ? "Удалить из избранного" : "Добавить в избранное")}
+            style={{ pointerEvents: 'auto' }}
+          >
+            {(isLoadingWishlist || isLoadingCustomer) && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+              </div>
+            )}
+            {!isLoadingWishlist && !isLoadingCustomer && renderSvg(heartIconSvg)}
+          </button>
+          {/* КОРЗИНА */}
+          {product.isInStock && (
+            <button
+              className="absolute bottom-2 right-2 z-10 bg-black text-white rounded-full p-3 shadow-lg flex items-center justify-center hover:bg-gray-800 transition-colors"
+              aria-label="Добавить в корзину"
+              onClick={e => { e.preventDefault(); console.log('Add to cart clicked for:', product.id); }}
+              style={{ pointerEvents: 'auto' }}
+            >
+              {renderSvg(cartIconSvg)}
+            </button>
+          )}
+          {/* Нет в наличии */}
           {!product.isInStock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
               <div className="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-md">
@@ -179,48 +181,23 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
             </div>
           )}
         </div>
-        
-        <div className="flex flex-col gap-2 px-4">
-          <div className="text-sm sm:text-base text-zinc-800 text-opacity-60 truncate">
-            {product.category}
-          </div>
-          <div className="text-base sm:text-lg font-medium uppercase text-zinc-800 text-opacity-80 line-clamp-2 min-h-[2.5em] sm:min-h-[3em]">
-            {product.title}
-          </div>
+        {/* Блок с ценой, категорией и названием */}
+        <div className="flex flex-col gap-1 px-4 pt-2 pb-4">
+          {/* ЦЕНА и СТАРАЯ ЦЕНА */}
+          {price && (
+            <div className="flex items-end gap-2">
+              <span className="text-xl font-semibold text-black">{price.calculated_price}</span>
+              {price.price_type === 'sale' && price.original_price && (
+                <span className="text-base text-gray-400 line-through">{price.original_price}</span>
+              )}
+            </div>
+          )}
+          {/* КАТЕГОРИЯ */}
+          <div className="text-sm text-zinc-500 truncate">{product.category}</div>
+          {/* НАЗВАНИЕ */}
+          <div className="text-base font-medium text-zinc-800 leading-tight line-clamp-2 min-h-[2.5em]">{product.title}</div>
         </div>
       </LocalizedClientLink>
-      
-      <div className="flex justify-between items-center h-[50px] mt-auto px-4 pb-4">
-        <button
-          className={`flex items-center justify-center w-[50px] h-[50px] rounded-md transition-colors ${product.isInStock ? 'bg-black hover:bg-gray-800' : 'bg-gray-300 cursor-not-allowed'}`}
-          aria-label="Добавить в корзину"
-          disabled={!product.isInStock}
-          onClick={(e) => {
-            e.preventDefault();
-            console.log("Add to cart clicked for:", product.id);
-          }}
-        >
-           {renderSvg(cartIconSvg)}
-        </button>
-        
-        <div className="flex flex-col gap-0 items-end h-[50px] justify-center relative">
-          {price ? (
-            <> 
-              {price.price_type === 'sale' && price.original_price && (
-                 <div className="text-sm sm:text-base text-gray-500 line-through relative">
-                    {price.original_price}
-                    <div className="absolute top-[calc(50%)] left-[-2px] right-[-2px] h-[1px] bg-[#07C4F5] transform -rotate-3"></div>
-                  </div>
-              )}
-               <div className="text-base sm:text-lg font-semibold text-black">
-                {price.calculated_price}
-              </div>
-             </>
-          ) : (
-            <div className="h-[50px]" />
-          )}
-        </div>
-      </div>
     </div>
   );
 }

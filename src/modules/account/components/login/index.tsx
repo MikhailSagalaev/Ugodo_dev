@@ -57,6 +57,13 @@ const Login = ({ setCurrentView }: Props) => {
         </button>
         .
       </span>
+      <button
+        onClick={() => setCurrentView(LOGIN_VIEW.SMS)}
+        className="underline text-blue-600 mt-4"
+        data-testid="sms-login-button"
+      >
+        Войти по SMS
+      </button>
     </div>
   )
 }

@@ -19,6 +19,7 @@ type ProductActionsProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
   disabled?: boolean
+  onAddToCartSuccess?: () => void
 }
 
 const optionsAsKeymap = (
@@ -34,6 +35,7 @@ export default function ProductActions({
   product,
   region,
   disabled,
+  onAddToCartSuccess,
 }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
   const [isAdding, setIsAdding] = useState(false)
@@ -147,6 +149,9 @@ export default function ProductActions({
     })
 
     setIsAdding(false)
+    if (typeof onAddToCartSuccess === 'function') {
+      onAddToCartSuccess()
+    }
   }
 
   React.useEffect(() => {
@@ -231,7 +236,6 @@ export default function ProductActions({
                       current={options[option.id]}
                       updateOption={setOptionValue}
                       title={option.title ?? ""}
-                      availableValues={availableOptionValues[option.id]}
                       data-testid="product-options"
                       disabled={!!disabled || isAdding}
                     />

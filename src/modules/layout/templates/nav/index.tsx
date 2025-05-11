@@ -174,24 +174,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                   })} />
               </LocalizedClientLink>
               
-                <LocalizedClientLink
-                  className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
-                    "hover:text-gray-300": isHome && !isScrolled,
-                  })}
-                  href="/cart"
-                  aria-label="Корзина"
-                >
-                  <Image 
-                    src="/images/cartIcon.svg" 
-                    alt="Корзина" 
-                    width={20} 
-                    height={20}
-                    style={{ 
-                      transition: 'filter 0.2s ease-in-out',
-                      filter: isHome && !isScrolled ? 'none' : 'invert(1)'
-                    }}
-                  />
-                </LocalizedClientLink>
+                <CartButton />
             </div>
             <div className="flex small:hidden">
               <MobileMenu />

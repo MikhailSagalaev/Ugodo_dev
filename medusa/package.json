@@ -39,6 +39,7 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "medusa-plugin-custom-dashboard": "^0.0.2",
+    "medusa-plugin-wishlist": "^1.1.44",
     "pg": "^8.13.0",
     "swagger-ui-express": "^5.0.1"
   },

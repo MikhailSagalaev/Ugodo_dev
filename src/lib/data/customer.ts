@@ -288,6 +288,12 @@ export const updateCustomerAddress = async (
 
 // Wishlist API functions
 
+// Получить customer_id
+async function getCustomerId(): Promise<string | null> {
+  const customer = await retrieveCustomer()
+  return customer?.id || null
+}
+
 // Тип для элемента избранного (требуется адаптация под ваш API)
 interface WishlistItem /* extends HttpTypes.StoreWishlistItem */ { // Убираем наследование от несуществующего типа
   id: string; // Обязательное поле
@@ -314,10 +320,8 @@ interface WishlistResponse {
  */
 export const getWishlist = async (): Promise<WishlistItem[]> => {
   const headers = await getAuthHeaders();
-  if (!headers) {
-    // Не авторизован, возвращаем пустой список
-    return [];
-  }
+  const customer_id = await getCustomerId();
+  if (!headers || !customer_id) return [];
 
   const next = {
     ...(await getCacheOptions("wishlist")),
@@ -325,16 +329,18 @@ export const getWishlist = async (): Promise<WishlistItem[]> => {
   };
 
   try {
-    const response = await sdk.client.fetch<WishlistResponse>("/store/wishlist", {
-      method: "GET",
-      headers,
-      next,
-      cache: "force-cache", // Кэшируем список
-    });
+    const response = await sdk.client.fetch<WishlistResponse>(
+      `/store/customers/${customer_id}/wishlist`,
+      {
+        method: "GET",
+        headers,
+        next,
+        cache: "force-cache",
+      }
+    );
     return response.wishlist?.items || [];
   } catch (error) {
     console.error("Ошибка получения избранного:", error);
-    // Возвращаем пустой список в случае ошибки
     return [];
   }
 };
@@ -344,19 +350,17 @@ export const getWishlist = async (): Promise<WishlistItem[]> => {
  */
 export const addToWishlist = async (productId: string): Promise<boolean> => {
   const headers = await getAuthHeaders();
-  if (!headers) {
-    console.error("Не авторизован для добавления в избранное");
-    return false;
-  }
+  const customer_id = await getCustomerId();
+  if (!headers || !customer_id) return false;
 
   try {
-    await sdk.client.fetch("/store/wishlist/items", {
+    await sdk.client.fetch(`/store/customers/${customer_id}/wishlist`, {
       method: "POST",
       headers,
-      body: { product_id: productId }, 
+      body: { product_id: productId },
       cache: "no-store",
     });
-    revalidateTag("wishlist"); // Ревалидируем кеш избранного
+    revalidateTag("wishlist");
     return true;
   } catch (error) {
     console.error(`Ошибка добавления товара ${productId} в избранное:`, error);
@@ -369,18 +373,19 @@ export const addToWishlist = async (productId: string): Promise<boolean> => {
  */
 export const removeFromWishlist = async (itemId: string): Promise<boolean> => {
   const headers = await getAuthHeaders();
-  if (!headers) {
-    console.error("Не авторизован для удаления из избранного");
-    return false;
-  }
+  const customer_id = await getCustomerId();
+  if (!headers || !customer_id) return false;
 
   try {
-    await sdk.client.fetch(`/store/wishlist/items/${itemId}`, {
-      method: "DELETE",
-      headers,
-      cache: "no-store",
-    });
-    revalidateTag("wishlist"); // Ревалидируем кеш избранного
+    await sdk.client.fetch(
+      `/store/customers/${customer_id}/wishlist/${itemId}`,
+      {
+        method: "DELETE",
+        headers,
+        cache: "no-store",
+      }
+    );
+    revalidateTag("wishlist");
     return true;
   } catch (error) {
     console.error(`Ошибка удаления элемента ${itemId} из избранного:`, error);
