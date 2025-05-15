@@ -132,7 +132,7 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
   return (
     <div className="flex flex-col gap-4 w-full group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative aspect-square w-full overflow-hidden">
+        <div className="relative aspect-[3/4] w-full overflow-hidden">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}

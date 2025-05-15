@@ -98,6 +98,13 @@ const Register = ({ setCurrentView }: Props) => {
         </button>
         .
       </span>
+      <button
+        onClick={() => setCurrentView(LOGIN_VIEW.SMS)}
+        className="underline text-blue-600 mt-4"
+        data-testid="sms-login-button-from-register"
+      >
+        Войти по SMS
+      </button>
     </div>
   )
 }

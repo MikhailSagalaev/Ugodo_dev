@@ -126,83 +126,125 @@ const generateStorefrontSwaggerUIHtml = (jsonUrl: string) => {
 };
 
 const getStorefrontSwaggerSpec = () => {
-    let baseSpec: any = { openapi: '3.1.0', info: {}, servers: [], tags: [], paths: {}, components: { schemas: {}, securitySchemes: {} } };
-
+    // --- Загрузка базовой спецификации из YAML (если есть) ---
+    let yamlSpec: any = {};
+    // ЗАКОММЕНТИРУЕМ ЗАГРУЗКУ ВНЕШНЕГО YAML, ЧТОБЫ ВРЕМЕННО ЕГО НЕ ПОКАЗЫВАТЬ
+    /*
     if (fs.existsSync(frontendOpenApiPath)) {
         try {
             const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
-            baseSpec = yaml.load(yamlContent) as any;
-            console.log(`Base storefront spec '${path.basename(frontendOpenApiPath)}' loaded successfully.`);
-            // Убедимся, что ключевые поля существуют
-            baseSpec.info = baseSpec.info || { title: "Ugodo Storefront API (Base)", version: "1.0.0" };
-            baseSpec.components = baseSpec.components || {};
-            baseSpec.components.schemas = baseSpec.components.schemas || {};
-            baseSpec.components.securitySchemes = baseSpec.components.securitySchemes || {};
+            yamlSpec = yaml.load(yamlContent) as any;
+            console.log(`Successfully loaded and parsed external OpenAPI spec: ${frontendOpenApiPath}`);
+            // Базовая валидация, что это похоже на OpenAPI объект
+            if (typeof yamlSpec !== 'object' || yamlSpec === null || !yamlSpec.openapi) {
+                console.warn(`Warning: Loaded YAML from ${frontendOpenApiPath} does not seem to be a valid OpenAPI spec. It will be ignored.`);
+                yamlSpec = {}; // Сбрасываем, если невалидно
+            }
         } catch (e) {
-            console.error(`Error loading or parsing base storefront spec '${frontendOpenApiPath}':`, e);
-            baseSpec.info = { title: "Ugodo Storefront API (Error Loading Base)", version: "1.0.0" };
+            console.error(`Error loading or parsing external OpenAPI spec '${frontendOpenApiPath}':`, e);
+            yamlSpec = {}; // Сбрасываем при ошибке
         }
     } else {
-        console.warn(`Base storefront spec file not found: ${frontendOpenApiPath}. Using minimal base.`);
-        baseSpec.info = { title: "Ugodo Storefront API (Base Missing)", version: "1.0.0" };
+        console.warn(`External OpenAPI spec file not found: ${frontendOpenApiPath}. It will be ignored.`);
     }
+    */
+
+    // --- Инициализация базовой спецификации для JSDoc --- 
+    // Эта спецификация будет основой, в которую jsdoc добавит свои находки.
+    // Мы не будем брать info, servers из yamlSpec, чтобы контролировать их из кода.
+    let jsdocBaseDefinition: any = {
+      openapi: yamlSpec.openapi || "3.1.0", // Берем версию OpenAPI из YAML или дефолт
+      info: {
+        title: "Ugodo Storefront API (Generated)", // Это будет перезаписано swaggerJsdocOptions
+        version: "1.0.0",
+        description: "Combined API documentation for Ugodo storefront."
+      },
+      servers: yamlSpec.servers && yamlSpec.servers.length > 0 ? yamlSpec.servers : [], // Серверы из YAML или пустой массив
+      // Компоненты из YAML будут использованы как основа
+      components: {
+        schemas: { ...(yamlSpec.components?.schemas || {}) },
+        securitySchemes: { ...(yamlSpec.components?.securitySchemes || {}) },
+        requestBodies: { ...(yamlSpec.components?.requestBodies || {}) },
+        responses: { ...(yamlSpec.components?.responses || {}) },
+        parameters: { ...(yamlSpec.components?.parameters || {}) },
+        examples: { ...(yamlSpec.components?.examples || {}) },
+        headers: { ...(yamlSpec.components?.headers || {}) },
+        links: { ...(yamlSpec.components?.links || {}) },
+        callbacks: { ...(yamlSpec.components?.callbacks || {}) },
+      },
+      // Пути из YAML будут использованы как основа
+      paths: { ...(yamlSpec.paths || {}) },
+      // Теги из YAML будут использованы как основа
+      tags: yamlSpec.tags || [],
+      // Глобальная безопасность из YAML пока не берем, jsdoc определит свою
+    };
 
     const apiKeySchemeName = "publishableApiKey";
     // Добавляем или перезаписываем схему для x-publishable-api-key, чтобы она точно была
-    baseSpec.components.securitySchemes[apiKeySchemeName] = {
-        type: "apiKey",
-        in: "header",
-        name: "x-publishable-api-key",
-        description: "Publishable API Key for Storefront API access. Obtain from Medusa admin or environment variables."
+    // Это важно, так как JSDoc-аннотации могут полагаться на эту схему.
+    jsdocBaseDefinition.components.securitySchemes = {
+      ...jsdocBaseDefinition.components.securitySchemes,
+      [apiKeySchemeName]: {
+          type: "apiKey",
+          in: "header",
+          name: "x-publishable-api-key",
+          description: "Publishable API Key for Storefront API access. Obtain from Medusa admin or environment variables."
+      }
     };
 
     const swaggerJsdocOptions: SwaggerJsdocOptionsType = {
-        failOnErrors: true, // Останавливать при ошибках парсинга JSDoc
-        definition: {
-            openapi: baseSpec.openapi || "3.1.0",
-            info: {
-                title: baseSpec.info.title || "Ugodo Storefront API",
-                version: baseSpec.info.version || "1.0.0",
-                description: baseSpec.info.description || "API for Ugodo storefront.",
+        failOnErrors: true, 
+        definition: { // Это определение перезапишет/дополнит jsdocBaseDefinition при генерации swaggerJSDoc
+            openapi: jsdocBaseDefinition.openapi, // Используем версию из jsdocBaseDefinition
+            info: { // Определяем info здесь, оно будет главным
+                title: "Ugodo Storefront API", 
+                version: "1.0.1", // Можно обновлять версию при изменениях
+                description: "Combined API documentation for Ugodo storefront from JSDoc and external YAML file.",
             },
-            servers: baseSpec.servers && baseSpec.servers.length > 0 ? baseSpec.servers : [
+            servers: jsdocBaseDefinition.servers.length > 0 ? jsdocBaseDefinition.servers : [
                 { url: "http://localhost:9000", description: "Local Development Server" },
-                // Можно добавить другие серверы, если нужно
             ],
-            components: {
-                schemas: baseSpec.components.schemas,
-                securitySchemes: baseSpec.components.securitySchemes,
-            },
+            // Компоненты: jsdoc будет добавлять свои поверх тех, что уже есть в jsdocBaseDefinition.components
+            components: jsdocBaseDefinition.components, 
+            // Пути: jsdoc будет добавлять свои поверх тех, что уже есть в jsdocBaseDefinition.paths
+            paths: jsdocBaseDefinition.paths,
+            // Теги: jsdoc будет добавлять свои поверх тех, что уже есть в jsdocBaseDefinition.tags
+            tags: jsdocBaseDefinition.tags, 
             security: [{ [apiKeySchemeName]: [] }] // Применяем publishableApiKey глобально ко всем эндпоинтам
         },
         apis: [
-            // Пути для сканирования JSDoc аннотаций стандартных storefront роутов и моделей Medusa
-            path.join(rootDir, 'src/api/routes/store/**/route.ts'),
-            path.join(rootDir, 'src/models/**/*.ts'),
-            path.join(rootDir, 'src/modules/**/models/**/*.ts'), // Если у вас есть модели в кастомных модулях
-            // path.join(rootDir, 'src/api/routes/store/**/*.yaml'), // Если есть yaml файлы с описаниями
+            // Пути для сканирования JSDoc аннотаций
+            path.join(rootDir, 'src/api/routes/store/**/*.ts'), 
+            path.join(rootDir, 'src/models/**/*.ts'),             
+            path.join(rootDir, 'src/modules/**/models/**/*.ts'),  
+            path.join(rootDir, 'src/modules/**/api/routes/store/**/*.ts'), 
+            // Добавляем путь к маршрутам плагина OTP для storefront (customer)
+            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.js'), // Возвращаем .js, т.к. плагины обычно компилируются
+            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.ts'), // Оставляем и .ts на всякий случай
+            // path.join(rootDir, 'src/modules/auth-phone-otp/service.ts'), // Удаляем путь к старому сервису
         ],
     };
 
+    console.log("Swagger JSDoc Options APIS:", swaggerJsdocOptions.apis); // Временный лог
     let finalSpec = swaggerJSDoc(swaggerJsdocOptions);
-    console.log("JSDoc spec generated for storefront. Paths found from JSDoc:", Object.keys(finalSpec.paths || {}).length);
+    console.log("JSDoc spec generated. Paths found from JSDoc processing (before merge with initial YAML paths):", Object.keys(finalSpec.paths || {}).length);
+    console.log("Total paths after JSDoc processing (includes initial YAML paths):", Object.keys(finalSpec.paths || {}).length);
 
-    // Слияние путей: JSDoc из сканируемых файлов должен иметь приоритет или дополнять baseSpec
-    finalSpec.paths = { ...(baseSpec.paths || {}), ...finalSpec.paths };
-    
-    // Слияние тегов
-    if (baseSpec.tags && Array.isArray(baseSpec.tags)) {
-        finalSpec.tags = finalSpec.tags || [];
-        const finalTagNames = new Set(finalSpec.tags.map((tag: any) => tag.name));
-        baseSpec.tags.forEach((tag: any) => {
-            if (!finalTagNames.has(tag.name)) {
-                finalSpec.tags.push(tag);
+    // --- Финальное слияние тегов (на случай, если swaggerJSDoc не идеально их смержил) ---
+    // Убедимся, что все теги из yamlSpec (если они не были добавлены JSDoc) присутствуют,
+    // и удалим дубликаты.
+    const mergedTags = [...(finalSpec.tags || [])];
+    const mergedTagNames = new Set(mergedTags.map(tag => tag.name));
+
+    if (Array.isArray(yamlSpec.tags)) {
+        yamlSpec.tags.forEach((yamlTag: any) => {
+            if (yamlTag && yamlTag.name && !mergedTagNames.has(yamlTag.name)) {
+                mergedTags.push(yamlTag);
+                mergedTagNames.add(yamlTag.name);
             }
         });
     }
-    if (finalSpec.tags && Array.isArray(finalSpec.tags)) {
-      finalSpec.tags.sort((a: any, b: any) => a.name.localeCompare(b.name));
-    }
+    finalSpec.tags = mergedTags.sort((a: any, b: any) => a.name.localeCompare(b.name));
 
     return finalSpec;
 };

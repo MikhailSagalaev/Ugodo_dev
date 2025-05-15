@@ -16,14 +16,19 @@ export default async function ProductRail({
   collection,
   region,
 }: ProductRailProps) {
+  const queryParamsForApi: HttpTypes.StoreProductParams = {
+    collection_id: [collection.id],
+    fields: "*variants.calculated_price",
+  };
+
   const {
     response: { products: pricedProducts },
   } = await listProducts({
     regionId: region.id,
     queryParams: {
-      collection_id: collection.id,
+      collection_id: [collection.id],
       fields: "*variants.calculated_price",
-    },
+    } as HttpTypes.StoreProductParams,
   })
 
   if (!pricedProducts) {
@@ -38,11 +43,11 @@ export default async function ProductRail({
           View all
         </InteractiveLink>
       </div>
-      <ul className="grid grid-cols-2 small:grid-cols-3 gap-x-6 gap-y-24 small:gap-y-36">
+      <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-x-6 gap-y-24 small:gap-y-36">
         {pricedProducts &&
           pricedProducts.map((product) => (
             <li key={product.id}>
-              <ProductPreview productPreview={product} region={region} isFeatured />
+              <ProductPreview product={product} region={region} isFeatured />
             </li>
           ))}
       </ul>

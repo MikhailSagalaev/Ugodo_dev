@@ -66,15 +66,18 @@ function ProductGallery({ images }: ProductGalleryProps) {
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="flex flex-row gap-x-4 h-full">
-      {/* Колонка с миниатюрами - теперь с Embla и ограничением высоты */}
+    <div className="flex flex-row gap-x-4 h-full items-start">
+      {/* Колонка с миниатюрами */}
       {images.length > 1 && (
-        <div className="w-[160px] h-[calc(160px*3+8px*2)] flex-shrink-0 overflow-hidden rounded-md" ref={thumbEmblaRef}>
+        <div 
+          className="w-[160px] flex-shrink-0 overflow-hidden rounded-md h-[calc((160px+theme('spacing.2'))*3-theme('spacing.1'))]"
+          ref={thumbEmblaRef}
+        >
           <div className="flex flex-col h-full">
             {images.map((image, index) => {
               const thumbAltText = image.metadata?.alt as string || `Thumbnail ${index + 1}`;
               return (
-                <div key={image.id} className="embla-thumbs__slide relative flex-[0_0_160px] py-1 pr-1">
+                <div key={image.id} className="embla-thumbs__slide relative flex-[0_0_calc(100%/3)] py-1 pr-1">
                   <button
                     onClick={() => onThumbClick(index)}
                     className={clx(
@@ -102,8 +105,8 @@ function ProductGallery({ images }: ProductGalleryProps) {
       )}
 
       {/* Основное изображение - теперь с Embla */}
-      <div className="relative overflow-hidden w-full flex-1 rounded-md" ref={emblaRef}>
-        <div className="flex">
+      <div className="relative overflow-hidden w-full flex-1 rounded-md aspect-[440/480]" ref={emblaRef}>
+        <div className="flex h-full">
           {images.map((image, index) => {
              const currentAltText = image.metadata?.alt as string || `Product image ${index + 1}`;
              const currentLabelText = image.metadata?.duration as string

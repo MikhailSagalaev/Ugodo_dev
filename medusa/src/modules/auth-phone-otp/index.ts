@@ -1,6 +1,8 @@
-import { ModuleProvider, Modules } from "@medusajs/framework/utils";
+import { Module } from "@medusajs/framework/utils";
 import SmsOtpAuthService from "./service";
 
-export default ModuleProvider(Modules.AUTH, {
-  services: [SmsOtpAuthService],
+export const AUTH_PHONE_OTP_MODULE = "authPhoneOtp"; // Уникальный идентификатор вашего модуля
+
+export default Module(AUTH_PHONE_OTP_MODULE, {
+  service: SmsOtpAuthService, // Используем service для единственного основного сервиса
 }); 

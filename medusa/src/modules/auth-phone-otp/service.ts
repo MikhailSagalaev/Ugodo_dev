@@ -30,6 +30,122 @@ type SmsOtpProviderOptions = {
 const DEFAULT_OTP_LENGTH = 6;
 const DEFAULT_OTP_TTL_SECONDS = 300; // 5 минут
 
+/**
+ * @swagger
+ * /store/auth/sms-otp/register:
+ *   post:
+ *     operationId: "PostStoreAuthSmsOtpRegister"
+ *     summary: "Request OTP for SMS Authentication (via sms-otp provider)"
+ *     description: "Requests an OTP (One-Time Password) to be sent to the provided phone number. This is the first step in SMS-based login or registration, handled by the 'sms-otp' auth provider."
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       $ref: '#/components/requestBodies/StoreAuthSmsOtpRegisterBody' # Определено в store/index.ts или общем файле
+ *     responses:
+ *       "200": # Успешный вызов метода register провайдера
+ *         description: "OTP request acknowledged by the provider. Success indicates the provider attempted to send OTP."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: "True if the provider successfully processed the request (e.g., attempted to send OTP)."
+ *                   example: true
+ *                 # Провайдер НЕ должен возвращать customer data или authIdentity на этом этапе
+ *       "400": # Ошибки валидации от провайдера
+ *         description: "Bad Request. Likely missing or invalid phone_number, as validated by the sms-otp provider."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                  success:
+ *                    type: boolean
+ *                    example: false
+ *                  error:
+ *                    type: string
+ *                    example: "Phone number is required."
+ *       "500": # Внутренние ошибки провайдера
+ *         description: "Internal Server Error within the sms-otp provider (e.g., failed to contact SMS gateway)."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                  success:
+ *                    type: boolean
+ *                    example: false
+ *                  error:
+ *                    type: string
+ *                    example: "Failed to send OTP. Please try again later."
+ *
+ * /store/auth/sms-otp/authenticate:
+ *   post:
+ *     operationId: "PostStoreAuthSmsOtpAuth"
+ *     summary: "Authenticate with OTP (via sms-otp provider)"
+ *     description: "Verifies the OTP code sent to the phone number and authenticates the customer using the 'sms-otp' auth provider. If successful, Medusa's auth flow will establish a session."
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       $ref: '#/components/requestBodies/StoreAuthSmsOtpAuthBody' # Определено в store/index.ts или общем файле
+ *     responses:
+ *       "200": # Успешный вызов метода authenticate провайдера
+ *         description: "Authentication processed by the provider. If 'success' is true, Medusa's auth flow proceeds to establish a session and may return customer data or set cookies."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: "True if OTP was valid and provider authenticated the identity."
+ *                   example: true
+ *                 authIdentity:
+ *                   $ref: '#/components/schemas/AuthIdentityDTO' # Определено в store/index.ts
+ *                 # Конечный ответ клиенту будет сформирован Medusa Auth Core,
+ *                 # он может включать customer data и session cookie.
+ *       "400": # Ошибки валидации от провайдера
+ *         description: "Bad Request. Likely missing phone_number or otp_code, as validated by the sms-otp provider."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Phone number and OTP code are required."
+ *       "401": # Ошибки аутентификации от провайдера
+ *         description: "Unauthorized. Invalid or expired OTP code, as determined by the sms-otp provider."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid OTP code."
+ *       "500": # Внутренние ошибки провайдера
+ *         description: "Internal Server Error within the sms-otp provider."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "An error occurred during authentication. Please try again."
+ */
 class SmsOtpAuthService extends AbstractAuthModuleProvider {
   static identifier = "sms-otp";
   static DISPLAY_NAME = "SMS OTP Authentication";
@@ -81,6 +197,7 @@ class SmsOtpAuthService extends AbstractAuthModuleProvider {
       upperCaseAlphabets: false,
       specialChars: false,
     });
+    //this.logger_.warn("Using mocked OTP '123456' because otp-generator is not installed or temporarily commented out.")
 
     const otpMessage = `Your OTP code is: ${otpCode}`;
     const cacheKey = `otp:${phoneNumber}`;
@@ -145,25 +262,32 @@ class SmsOtpAuthService extends AbstractAuthModuleProvider {
 
       if (typeof this.cacheService_.invalidate === 'function') {
         await this.cacheService_.invalidate(cacheKey);
+      } else if (typeof (this.cacheService_ as any).del === 'function') {
+        await (this.cacheService_ as any).del(cacheKey);
       } else {
-        this.logger_.warn(`Cache service does not have invalidate method for key: ${cacheKey}`);
+        this.logger_.warn(`Cache service does not have invalidate or del method for key: ${cacheKey}. OTP not invalidated.`);
       }
-
-      // Используем только create/retrieve, как в документации
+      
       let authIdentity: AuthIdentityDTO;
       try {
+        // Пытаемся найти существующую AuthIdentity по номеру телефона
         authIdentity = await authIdentityProviderService.retrieve({
-          entity_id: phoneNumber
+          entity_id: phoneNumber, // entity_id должен быть уникальным идентификатором пользователя в этой системе аутентификации
+          // provider_id: SmsOtpAuthService.identifier // Medusa должна сама сопоставить это с текущим провайдером
         });
+        this.logger_.info(`Found existing auth identity for ${phoneNumber}`);
       } catch (e) {
+        // Если не найдено, создаем новую AuthIdentity
+        this.logger_.info(`No existing auth identity for ${phoneNumber}, creating new one.`);
         authIdentity = await authIdentityProviderService.create({
           entity_id: phoneNumber,
-          provider_metadata: {},
-          user_metadata: {}
+          // provider_id: SmsOtpAuthService.identifier, 
+          // provider_metadata: {}, // Можно хранить специфичные для провайдера данные
+          // user_metadata: {} // Можно хранить метаданные пользователя (если Customer еще не создан)
         });
       }
-
-      this.logger_.info(`User ${phoneNumber} authenticated successfully via OTP.`);
+      
+      this.logger_.info(`User ${phoneNumber} authenticated successfully via OTP. AuthIdentity ID: ${authIdentity.id}`);
       return { success: true, authIdentity };
 
     } catch (error) {
@@ -177,7 +301,6 @@ class SmsOtpAuthService extends AbstractAuthModuleProvider {
   }
 
   // validateCallback не нужен для этого типа потока, так как нет редиректа
-  // async validateCallback(...) { ... }
 }
 
 export default SmsOtpAuthService; 

@@ -104,13 +104,13 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
           }
         )}>
           <nav className={clx(
-            "content-container txt-xsmall-plus flex items-center justify-between h-full text-small-regular transition-colors duration-200",
+            "content-container txt-xsmall-plus flex items-center h-full text-small-regular transition-colors duration-200",
             {
               "text-white": isHome && !isScrolled,
               "text-ui-fg-subtle": !isHome || isScrolled,
             }
           )}>
-          <div className="flex items-center h-full">
+          <div className="flex-1 flex items-center justify-start h-full">
             {regions && regions.length > 1 && (
               <ListRegions
                 regions={regions}
@@ -136,7 +136,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
             </LocalizedClientLink>
           </div>
 
-          <div className="flex items-center gap-x-4 h-full">
+          <div className="flex-1 flex items-center justify-end gap-x-4 h-full">
             <div className="hidden small:flex items-center gap-x-4 h-full">
               <Suspense>
                 <Search />

@@ -112,12 +112,11 @@ export default function ProductSection({
         </div>
         
         {link && (
-          <InteractiveLink 
-            href={link.href}
-            className="mt-2 md:mt-0 text-violet-600 hover:text-violet-700 flex items-center gap-1 group"
-          >
-            <span>{link.text}</span>
-          </InteractiveLink>
+          <div className="mt-8 text-center">
+            <InteractiveLink href={`/collections/${link.href}`}>
+              {link.text}
+            </InteractiveLink>
+          </div>
         )}
       </div>
       
@@ -148,7 +147,7 @@ export default function ProductSection({
             return (
               <div 
                 key={product.id} 
-                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-[calc(100%-1rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start"
+                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)] snap-start"
               >
                 {/* Передаем categoryTitle в ProductPreview */}
                 <ProductPreview 

@@ -34,13 +34,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         className="content-container flex flex-col small:flex-row small:items-start py-6 relative gap-x-6"
         data-testid="product-container"
       >
-        {/* Левая колонка: Галерея - Увеличиваем ширину */}
-        <div className="w-full small:w-3/5 mb-4 small:mb-0 order-1">
+        {/* Левая колонка: Галерея */}
+        <div className="w-full small:w-1/2 mb-4 small:mb-0 order-1">
           <ProductGallery images={product?.images || []} />
         </div>
 
-        {/* Правая колонка: Информация и Действия - Уменьшаем ширину */}
-        <div className="flex flex-col w-full small:w-2/5 small:sticky small:top-24 gap-y-6 order-2">
+        {/* Правая колонка: Информация и Действия */}
+        <div className="flex flex-col w-full small:w-1/2 small:sticky small:top-[118px] gap-y-6 order-2">
           <ProductInfo product={product} />
            {/* Обертка для действий, чтобы они были в этой колонке */}
            <div className="w-full">

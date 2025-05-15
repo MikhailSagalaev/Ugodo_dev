@@ -27,37 +27,8 @@ const DescriptionTab = ({ product }: ProductTabsProps) => {
 // Информация о продукте (материал, размеры и т.д.)
 const ProductInfoTab = ({ product }: ProductTabsProps) => {
   return (
-    <div className="text-base py-8"> { /* Увеличим шрифт для характеристик */}
-      <div className="grid grid-cols-2 gap-x-8">
-        <div className="flex flex-col gap-y-4">
-          <div>
-            <span className="font-semibold">Material</span>
-            <p>{product.material ? product.material : "-"}</p>
-          </div>
-          <div>
-            <span className="font-semibold">Country of origin</span>
-            <p>{product.origin_country ? product.origin_country : "-"}</p>
-          </div>
-          <div>
-            <span className="font-semibold">Type</span>
-            <p>{product.type ? product.type.value : "-"}</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-y-4">
-          <div>
-            <span className="font-semibold">Weight</span>
-            <p>{product.weight ? `${product.weight} g` : "-"}</p>
-          </div>
-          <div>
-            <span className="font-semibold">Dimensions</span>
-            <p>
-              {product.length && product.width && product.height
-                ? `${product.length}L x ${product.width}W x ${product.height}H`
-                : "-"}
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="text-base py-8">
+      <Text className="text-gray-500">Вся информация о характеристиках представлена в основном описании товара (справа от галереи).</Text>
     </div>
   )
 }
@@ -70,31 +41,27 @@ const ShippingInfoTab = () => {
         <div className="flex items-start gap-x-2">
           <FastDelivery />
           <div>
-            <span className="font-semibold">Fast delivery</span>
+            <span className="font-semibold">Быстрая доставка</span>
             <p className="max-w-sm">
-              Your package will arrive in 3-5 business days at your pick up
-              location or in the comfort of your home.
+              Ваш заказ прибудет в течение 3-5 рабочих дней в пункт выдачи или на дом.
             </p>
           </div>
         </div>
         <div className="flex items-start gap-x-2">
           <Refresh />
           <div>
-            <span className="font-semibold">Simple exchanges</span>
+            <span className="font-semibold">Простой обмен</span>
             <p className="max-w-sm">
-              Is the fit not quite right? No worries - we&apos;ll exchange your
-              product for a new one.
+              Не подошел размер или товар? Без проблем – обменяем на новый.
             </p>
           </div>
         </div>
         <div className="flex items-start gap-x-2">
           <Back />
           <div>
-            <span className="font-semibold">Easy returns</span>
+            <span className="font-semibold">Легкий возврат</span>
             <p className="max-w-sm">
-              Just return your product and we&apos;ll refund your money. No
-              questions asked – we&apos;ll do our best to make sure your return
-              is hassle-free.
+              Просто верните товар, и мы вернем вам деньги. Без лишних вопросов – мы сделаем все возможное, чтобы ваш возврат прошел без проблем.
             </p>
           </div>
         </div>
@@ -128,28 +95,30 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
   // Определяем вкладки и их компоненты
   const tabs = [
     {
-      label: "Описание", // Используем динамическое описание
+      label: "Описание", 
       component: <DescriptionTab product={product} />,
     },
     {
-      label: "Характеристики", // Используем динамические характеристики
-      component: <ProductInfoTab product={product} />,
-    },
-    {
-      label: "Доставка и возврат", // Используем динамическую инфу о доставке
+      label: "Доставка и возврат",
       component: <ShippingInfoTab />,
     },
     {
-      label: "Бренд", // Используем динамический бренд
+      label: "Бренд",
       component: <BrandTab product={product} />,
     },
-    {
-      label: "Дополнительная информация", // Заглушка
-      component: <AdditionalInfoTab />,
-    },
+    // УДАЛЯЕМ ТАБ "Дополнительная информация"
+    // {
+    //   label: "Дополнительная информация",
+    //   component: <AdditionalInfoTab />,
+    // },
   ]
 
-  const [activeTab, setActiveTab] = useState(tabs[0].label)
+  // Если табы пусты, не рендерим компонент
+  if (tabs.length === 0) {
+    return null;
+  }
+
+  const [activeTab, setActiveTab] = useState(tabs[0].label) // Устанавливаем первый доступный таб активным
 
   return (
     <div className="w-full">

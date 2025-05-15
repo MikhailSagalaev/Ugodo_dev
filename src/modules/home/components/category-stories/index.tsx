@@ -294,34 +294,33 @@ const CategoryStories = () => {
   }
 
   return (
-    <div className="py-10 px-4">
+    <div className="pt-10 px-4">
       <div 
         ref={containerRef}
-        className="flex flex-wrap justify-center items-center gap-x-6 gap-y-10 hide-scrollbar cursor-grab pb-1"
+        className="flex justify-center overflow-x-auto scrollbar-hide py-4 space-x-4 pl-4 pr-8 md:pl-0 md:pr-0"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
         {stories.map((story, index) => (
-          <div 
-            key={story.id} 
-            className={`flex-shrink-0 w-24 h-24 rounded-full relative cursor-pointer group transform transition-all duration-300 ease-in-out hover:scale-105 ${story.bgColor} ${!viewedStories[story.id] ? 'ring-2 ring-[#CBF401] ring-offset-2 ring-offset-white dark:ring-offset-black' : ''} mb-4`}
+          <div // Основной контейнер для одного элемента истории (кружок + текст под ним)
+            key={story.id}
+            className={`flex-shrink-0 w-24 flex flex-col items-center cursor-pointer group transform transition-all duration-300 ease-in-out hover:scale-105 mb-4`}
             onClick={() => openStory(story, index)}
+            role="button"
+            aria-label={`Открыть историю: ${story.title}`}
           >
-            {/* Контейнер для изображения */}
-            <div className="w-full h-full rounded-full overflow-hidden">
-              <Image 
-                src={story.image} 
-                alt={story.title}
-                width={96} 
-                height={96} 
-                className="w-full h-full object-cover"
-              />
+            <div // Контейнер для кружка
+              className={`w-20 h-20 rounded-full relative overflow-hidden border-2 ${viewedStories[story.id] ? 'border-gray-300' : `border-[${story.color}]`} ${story.bgColor} ${story.textColor} flex items-center justify-center`}
+            >
+              <span className="font-semibold text-center text-xs uppercase tracking-wider px-1">
+                NEW
+              </span>
             </div>
-            
             {/* Текст под круглой историей */}
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-center w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span 
+              className="mt-2 text-xs text-center w-full text-gray-700 dark:text-gray-300 transition-opacity duration-300">
               {story.title}
             </span>
           </div>

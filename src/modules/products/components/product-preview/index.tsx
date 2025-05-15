@@ -158,7 +158,7 @@ export default function ProductPreview({
       {/* Контейнер с изображением и оверлеями */}
       <LocalizedClientLink
         href={`/products/${product?.handle}`}
-        className="group block relative w-full overflow-hidden aspect-square"
+        className="group block relative w-full overflow-hidden aspect-[3/4]"
         role="article"
         aria-label={`View product: ${product.title}`}
       >
@@ -219,7 +219,7 @@ export default function ProductPreview({
       </LocalizedClientLink>
 
       {/* Блок с ценой, категорией и названием */}
-      <div className="mt-2 flex flex-col gap-1 px-2 pb-2">
+      <div className="mt-2 flex flex-col gap-1 px-2 pb-2 relative">
         {/* ЦЕНА и СТАРАЯ ЦЕНА */}
         {cheapestPrice && (
           <div className="flex items-end gap-2">
@@ -236,20 +236,19 @@ export default function ProductPreview({
         {/* КОРЗИНА */}
         {isInStock && (
           <button
-            className="absolute right-4 w-12 h-12 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
+            className="absolute right-4 bottom-16 w-10 h-10 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
             aria-label="Добавить в корзину"
             onClick={handleAddToCartClick}
-            style={{ pointerEvents: 'auto', bottom: '6rem' }}
             disabled={isAddingToCart}
           >
             {isAddingToCart ? (
-              <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Image
                 src="/images/cartIcon.svg"
                 alt="В корзину"
-                width={24}
-                height={24}
+                width={20}
+                height={20}
                 className="brightness-0 invert"
               />
             )}

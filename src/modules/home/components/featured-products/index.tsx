@@ -5,7 +5,7 @@ import ProductPreview from "@modules/products/components/product-preview"
 // Типы пропсов теперь включают регион
 type FeaturedProductsProps = {
   collections: HttpTypes.StoreCollection[]
-  region: HttpTypes.StoreRegion | Region // Добавляем регион
+  region: HttpTypes.StoreRegion // Исправляем тип
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ collections, region }) => {
@@ -18,14 +18,14 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ collections, region
             Каждый сезон мы представляем новые товары. Следите за нашими новинками.
           </p>
         </div>
-        <ul className="grid grid-cols-2 small:grid-cols-4 gap-x-4 gap-y-8">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-8">
           {collections.map((collection) =>
             collection.products?.map((product) => (
               <li key={product.id}>
                 {/* Передаем регион в ProductPreview */}
-                <ProductPreview productPreview={product} region={region} isFeatured />
-    </li>
-  ))
+                <ProductPreview product={product} region={region} isFeatured />
+              </li>
+            ))
           )}
         </ul>
       </div>
