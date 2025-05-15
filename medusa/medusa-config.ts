@@ -5,25 +5,34 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: process.env.REDIS_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:8001",
+      storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
-      authCors: process.env.AUTH_CORS || "http://localhost:8000,http://localhost:9000",
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
+      authCors: process.env.AUTH_CORS!,
+      jwtSecret: process.env.JWT_SECRET|| "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
   admin: {
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
-    vite: () => {
-      return {
-        server: {
-          allowedHosts: ["ugodo.ru"],
-        },
-      }
-    },
+    backendUrl: process.env.MEDUSA_BACKEND_URL!
   },
   modules: [
+    {
+      resolve: "@medusajs/medusa/file",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/file-local",
+            id: "local",
+            options: {
+              upload_dir: "static",
+              backend_url: process.env.MEDUSA_BACKEND_URL! + "/static",
+            },
+          },
+        ],
+      },
+    },
     {
       resolve: "./src/modules/product-review", 
     },
@@ -40,7 +49,7 @@ module.exports = defineConfig({
             id: "otp",
             resolve: "@perseidesjs/auth-otp/providers/otp",
             dependencies: [Modules.CACHE, ContainerRegistrationKeys.LOGGER],
-          },
+          },    
         ],
       },
     },
