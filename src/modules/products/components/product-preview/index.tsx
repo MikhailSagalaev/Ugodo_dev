@@ -31,6 +31,9 @@ type ProductPreviewProps = {
   showTimeLabel?: (product: HttpTypes.StoreProduct) => boolean
   timeLabelPlaceholder?: ReactNode
   videoIconPlaceholder?: string
+  isFirstInMobileRow?: boolean
+  isLeftSideInMobileGrid?: boolean
+  isFirstInSlider?: boolean
 }
 
 // Иконки-заглушки из примера
@@ -45,6 +48,9 @@ export default function ProductPreview({
   showTimeLabel = () => false,
   timeLabelPlaceholder = "В течение часа",
   videoIconPlaceholder = "/images/video-icon.svg", // Укажите путь к вашей иконке
+  isFirstInMobileRow = false,
+  isLeftSideInMobileGrid = false,
+  isFirstInSlider = false,
 }: ProductPreviewProps) {
   // Получаем информацию о цене и скидке
   const { cheapestPrice } = getProductPrice({
@@ -66,6 +72,8 @@ export default function ProductPreview({
   const [isLoadingCustomer, setIsLoadingCustomer] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
 
   useEffect(() => {
     setIsLoadingCustomer(true);
@@ -99,6 +107,16 @@ export default function ProductPreview({
       setWishlistItemId(null);
     }
   }, [customer, product.id, isLoadingCustomer]);
+
+  // Эффект для определения размера экрана
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.matchMedia("(min-width: 1024px)").matches)
+    }
+    checkScreenSize() // Первоначальная проверка
+    window.addEventListener("resize", checkScreenSize)
+    return () => window.removeEventListener("resize", checkScreenSize) // Очистка
+  }, [])
 
   const handleWishlistClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -154,7 +172,11 @@ export default function ProductPreview({
   }
 
   return (
-    <div className="flex flex-col">
+    <div 
+      className="flex flex-col md:mx-2 mx-0"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Контейнер с изображением и оверлеями */}
       <LocalizedClientLink
         href={`/products/${product?.handle}`}
@@ -182,7 +204,7 @@ export default function ProductPreview({
         {/* СКИДКА */}
         {cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
           <div
-            className="absolute top-4 left-4 bg-[#CBF401] text-black px-2 py-1 text-xs font-bold z-10 select-none"
+            className="absolute top-0 left-0 bg-[#baff29] text-black px-2 py-1 text-xs font-bold z-10 select-none"
             aria-label={`Discount: ${cheapestPrice.percentage_diff}%`}
             data-testid="product-discount-badge"
           >
@@ -218,57 +240,73 @@ export default function ProductPreview({
         )}
       </LocalizedClientLink>
 
-      {/* Блок с ценой, категорией и названием */}
-      <div className="mt-2 flex flex-col gap-1 px-2 pb-2 relative">
-        {/* ЦЕНА и СТАРАЯ ЦЕНА */}
+      {/* Блок с ценой, категорией и названием - ИЗМЕНЕН ПОРЯДОК И СТИЛИ */}
+      <div className={clx(
+        "mt-2 flex flex-col gap-1 pb-2 relative",
+        { 
+          "pl-5": (isLeftSideInMobileGrid && !isLargeScreen) || isFirstInSlider
+        },
+        isFirstInMobileRow ? "sm:ml-0" : "",
+        "sm:px-2"
+      )}>
+        {/* ОПЦИИ ТОВАРА - ПЕРВЫЙ ЭЛЕМЕНТ */}
+        <div className="md:hidden mb-1 flex flex-wrap gap-1 order-1">
+          {product.options?.map((option) => 
+            option.values && option.values.length > 0 && (
+              <div key={option.id} className="text-xs text-gray-500">
+                {option.values.slice(0, 3).map((value, idx) => (
+                  <span key={value.value} className="inline-block bg-gray-100 px-1.5 py-0.5 rounded mr-1 mb-1">
+                    {value.value}
+                  </span>
+                ))}
+                {option.values.length > 3 && <span>+{option.values.length - 3}</span>}
+              </div>
+            )
+          )}
+        </div>
+        
+        {/* КАТЕГОРИЯ - ВТОРОЙ ЭЛЕМЕНТ */}
+        <div className="text-sm text-zinc-500 truncate order-2">{categoryTitle || product.collection?.title || product.type?.value}</div>
+        
+        {/* НАЗВАНИЕ - ТРЕТИЙ ЭЛЕМЕНТ */}
+        <div className={`text-base font-medium leading-tight line-clamp-2 min-h-[2.5em] ${isHovered ? 'text-[#6290c3]' : 'text-zinc-800'} transition-colors order-3`}>
+          {product.title}
+        </div>
+        
+        {/* ЦЕНА И СТАРАЯ ЦЕНА - ЧЕТВЕРТЫЙ ЭЛЕМЕНТ */}
         {cheapestPrice && (
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 mt-1 order-4">
             <span className="text-xl font-semibold text-black">{cheapestPrice.calculated_price}</span>
             {cheapestPrice.price_type === 'sale' && cheapestPrice.original_price && (
               <span className="text-base text-gray-400 line-through">{cheapestPrice.original_price}</span>
             )}
           </div>
         )}
-        {/* КАТЕГОРИЯ */}
-        <div className="text-sm text-zinc-500 truncate">{categoryTitle || product.collection?.title || product.type?.value}</div>
-        {/* НАЗВАНИЕ */}
-        <div className="text-base font-medium text-zinc-800 leading-tight line-clamp-2 min-h-[2.5em]">{product.title}</div>
-        {/* КОРЗИНА */}
-        {isInStock && (
-          <button
-            className="absolute right-4 bottom-16 w-10 h-10 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
-            aria-label="Добавить в корзину"
-            onClick={handleAddToCartClick}
-            disabled={isAddingToCart}
-          >
-            {isAddingToCart ? (
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Image
-                src="/images/cartIcon.svg"
-                alt="В корзину"
-                width={20}
-                height={20}
-                className="brightness-0 invert"
-              />
-            )}
-          </button>
-        )}
+        
+        {/* КОРЗИНА - кнопка */}
+        <Button
+          onClick={handleAddToCartClick}
+          isLoading={isAddingToCart}
+          className="absolute right-2 bottom-[7rem] md:bottom-4 w-10 h-10 bg-[#1A1341] text-white rounded-md flex items-center justify-center hover:bg-[#2d1f6e] transition-colors z-10 p-0"
+          aria-label="Добавить в корзину"
+        >
+          {!isAddingToCart && <Image alt="В корзину" loading="lazy" width="20" height="20" decoding="async" data-nimg="1" style={{color: 'transparent'}} src="/images/cartIcon.svg" />}
+        </Button>
       </div>
-      {/* Модалка выбора варианта */}
-      <Modal isOpen={isModalOpen} close={() => setIsModalOpen(false)} size="medium">
-        <Modal.Title>Выберите вариант товара</Modal.Title>
-        <Modal.Body>
-          <ProductActions 
-            product={product} 
-            region={region} 
-            onAddToCartSuccess={() => {
-              toast.success("Товар добавлен в корзину")
-              setIsModalOpen(false)
-            }}
-          />
-        </Modal.Body>
-      </Modal>
+      
+      {/* Модальное окно для выбора опций */}
+      {isModalOpen && (
+        <Modal 
+          isOpen={isModalOpen} 
+          close={() => setIsModalOpen(false)}
+          size="small"
+        >
+          <Modal.Title>
+            <div className="mb-4 text-xl font-semibold">Выберите опции</div>
+          </Modal.Title>
+          <ProductActions product={product} region={region} />
+        </Modal>
+      )}
     </div>
   )
 }

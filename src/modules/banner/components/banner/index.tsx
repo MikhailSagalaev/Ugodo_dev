@@ -82,13 +82,13 @@ const Banner = ({ position, className = "" }: BannerProps) => {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
           />
           
-          <div className="absolute inset-0 bg-black/30 p-6 flex flex-col justify-center text-white">
-            <Heading level="h2" className="text-2xl md:text-3xl font-bold mb-2">
+          <div className="absolute inset-0 bg-black/30 p-6 flex flex-col justify-end pb-10 text-white">
+            <Heading level="h2" className="text-xl md:text-2xl font-bold mb-2">
               {banner.title}
             </Heading>
             
             {banner.subtitle && (
-              <Text className="text-sm md:text-base mb-4">
+              <Text className="text-xs md:text-sm mb-4">
                 {banner.subtitle}
               </Text>
             )}
@@ -106,12 +106,12 @@ const Banner = ({ position, className = "" }: BannerProps) => {
       ) : (
         <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center">
           <div className="text-center p-6">
-            <Heading level="h2" className="text-2xl md:text-3xl font-bold mb-2">
+            <Heading level="h2" className="text-xl md:text-2xl font-bold mb-2">
               {banner.title}
             </Heading>
             
             {banner.subtitle && (
-              <Text className="text-sm md:text-base mb-4">
+              <Text className="text-xs md:text-sm mb-4">
                 {banner.subtitle}
               </Text>
             )}

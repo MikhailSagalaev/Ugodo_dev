@@ -47,7 +47,7 @@ const Search = () => {
     
     if (!query.trim()) return
     
-    router.push(`/search?q=${encodeURIComponent(query)}`)
+    router.push(`/store?q=${encodeURIComponent(query)}`)
     setIsOpen(false)
   }
   

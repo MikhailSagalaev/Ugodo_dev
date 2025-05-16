@@ -248,7 +248,7 @@ export default function ProductActions({
         </div>
 
         <div className="flex items-center gap-x-4 mt-4">
-          <div className="flex items-center gap-x-3">
+          <div className="flex items-center gap-x-3 mb-24">
           <Button
             onClick={handleAddToCart}
             disabled={

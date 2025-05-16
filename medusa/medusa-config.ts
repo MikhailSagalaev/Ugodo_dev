@@ -11,7 +11,8 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS || "http://localhost:8000,http://localhost:9000",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-    }
+    },
+    redis_url: null
   },
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
@@ -29,18 +30,10 @@ module.exports = defineConfig({
       options: {
         providers: [
           {
-            resolve: "@medusajs/medusa/file-s3",
-            id: "minio",
+            resolve: "@medusajs/medusa/file-local",
+            id: "local",
             options: {
-              file_url: process.env.MINIO_FILE_URL,
-              access_key_id: process.env.MINIO_ACCESS_KEY_ID,
-              secret_access_key: process.env.MINIO_SECRET_ACCESS_KEY,
-              region: "us-east-1", // Для MinIO обычно используется us-east-1
-              bucket: process.env.MINIO_BUCKET,
-              endpoint: process.env.MINIO_ENDPOINT,
-              additional_client_config: {
-                forcePathStyle: true, // Необходимо для MinIO
-              },
+              upload_dir: "uploads",
             },
           },
         ],

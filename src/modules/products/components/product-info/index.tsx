@@ -8,51 +8,31 @@ type ProductInfoProps = {
 }
 
 const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
-  // 1. Извлекаем метаданные
-  const metadata = product.metadata || {} // Если metadata undefined, используем пустой объект
+  // Преобразуем метаданные в массив характеристик для отображения
+  const getProductAttributes = () => {
+    if (!product.metadata) return []
 
-  // 2. Фильтруем и форматируем метаданные для отображения
-  const displayableMetadata = Object.entries(metadata)
-    .filter(([key, value]) => {
-      // Исключаем ключи, начинающиеся с '_', null/undefined значения, пустые строки, или строки только из '-'
-      return !key.startsWith("_") && value !== null && value !== undefined && String(value).trim() !== "" && String(value).trim() !== "-";
-    })
-    .map(([key, value]) => ({
-      id: key,
-      label: key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
-      value: String(value),
-    }));
+    return Object.entries(product.metadata)
+      .filter(([key, value]) => {
+        // Пропускаем служебные поля (начинающиеся с _) и пустые значения
+        return !key.startsWith("_") && 
+               value !== null && 
+               value !== undefined && 
+               String(value).trim() !== "" && 
+               String(value).trim() !== "-";
+      })
+      .map(([key, value]) => ({
+        key,
+        label: key
+          .split("_")
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" "),
+        value: String(value)
+      }));
+  };
 
-  // 3. Определяем, что показывать: метаданные, описание или заглушку
-  let contentToDisplay;
-
-  if (displayableMetadata.length > 0) {
-    contentToDisplay = (
-      <div className="text-sm flex flex-col gap-y-2 mt-4" data-testid="product-metadata-attributes">
-        {displayableMetadata.map((metaItem) => (
-          <div key={metaItem.id} className="grid grid-cols-[auto_1fr] gap-x-3 items-baseline">
-            <Text className="text-gray-700 font-medium">{metaItem.label}:</Text>
-            <Text className="text-gray-800 text-left">{metaItem.value}</Text>
-          </div>
-        ))}
-      </div>
-    );
-  } else if (product.description && product.description.trim() !== "") {
-    contentToDisplay = (
-      <Text
-        className="text-medium text-ui-fg-subtle whitespace-pre-line mt-4"
-        data-testid="product-description-fallback"
-      >
-        {product.description}
-      </Text>
-    );
-  } else {
-    contentToDisplay = (
-      <Text className="text-sm text-gray-500 mt-4" data-testid="product-no-info">
-        Подробная информация о товаре отсутствует.
-      </Text>
-    );
-  }
+  const attributes = getProductAttributes();
+  const hasAttributes = attributes.length > 0;
 
   return (
     <div id="product-info" className="w-full">
@@ -76,8 +56,30 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
           {product.title}
         </Heading>
 
-        {/* Вывод контента (метаданные, описание или заглушка) */}
-        {contentToDisplay}
+        {/* Описание товара */}
+        {product.description && (
+          <Text
+            className="text-medium text-ui-fg-subtle whitespace-pre-line"
+            data-testid="product-description"
+          >
+            {product.description}
+          </Text>
+        )}
+
+        {/* Характеристики товара из метаданных */}
+        {hasAttributes && (
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <Text className="font-semibold mb-4 text-lg">Характеристики:</Text>
+            <div className="grid gap-y-3">
+              {attributes.map((attr) => (
+                <div key={attr.key} className="grid grid-cols-[1fr_2fr] gap-x-4">
+                  <Text className="text-gray-700 font-medium">{attr.label}:</Text>
+                  <Text className="text-gray-900">{attr.value}</Text>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

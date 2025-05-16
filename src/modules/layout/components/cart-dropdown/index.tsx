@@ -58,7 +58,6 @@ const CartDropdown = ({
   useEffect(() => {
     if (itemRef.current !== totalItems && !pathname.includes("/cart")) {
       setIsOpen(true)
-      timedClose()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalItems, itemRef.current])
@@ -66,13 +65,6 @@ const CartDropdown = ({
   return (
     <div className="h-full z-50">
       <Popover className="relative h-full">
-        <PopoverButton 
-          className="flex items-center justify-center"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Показать корзину"
-        >
-          <span className="sr-only">Показать корзину</span>
-        </PopoverButton>
         <Transition
           show={isOpen}
           as={Fragment}

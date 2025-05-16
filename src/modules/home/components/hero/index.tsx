@@ -138,7 +138,7 @@ const Hero = () => {
           {slides.map((slide) => (
             <div 
               key={slide.id} 
-              className="flex-[0_0_100%] min-w-0 relative h-[75vh] md:h-[80vh]" 
+              className="flex-[0_0_100%] min-w-0 relative h-[40vh] lg:h-[70vh]"
             >
               {/* Фоновое изображение */}
               <Image 
@@ -156,20 +156,20 @@ const Hero = () => {
               
               {/* Контент */}
               <div className="relative z-10 h-full flex items-center">
-                <div className="container mx-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
+                <div className="container ml-5 mr-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
                   <div className="max-w-md">
-                    <Text className="text-white/90 text-lg md:text-xl mb-2 font-light tracking-wide">
+                    <Text className="text-white/90 text-[14px] mb-2 font-light tracking-wide">
                       {slide.headline}
                     </Text>
                     <Heading 
                       level="h1" 
-                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight tracking-tight"
+                      className="text-[30px] font-bold mb-6 text-white leading-tight tracking-tight"
                     >
                       {slide.title}
                     </Heading>
                     <LocalizedClientLink href={slide.cta.link}>
                       <Button 
-                        className="bg-black hover:bg-gray-800 text-white min-w-32 h-12 px-6"
+                        className="bg-black hover:bg-gray-800 text-white min-w-32 h-12 px-6 shadow-none rounded-none"
                         size="large"
                       >
                         {slide.cta.text}
@@ -184,12 +184,9 @@ const Hero = () => {
       </div>
 
       {/* Новые индикаторы слайдов (прогресс-бары) */}
-      <div className="absolute bottom-8 left-0 right-0 z-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Обертка для прогресс-баров с отступами */}
-          <div className="flex gap-3 justify-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
-            {progressBars} {/* Отображаем созданные прогресс-бары */} 
-          </div>
+      <div className="absolute bottom-8 left-0 right-0 z-20 px-4 sm:px-6 lg:px-8">
+        <div className="flex gap-3 justify-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
+          {progressBars} {/* Отображаем созданные прогресс-бары */} 
         </div>
       </div>
     </div>

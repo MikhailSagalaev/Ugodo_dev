@@ -13,7 +13,7 @@ import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-b
 import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
 import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
-import PaginatedProducts from "@modules/store/templates/paginated-products"
+import PaginatedProducts from "@modules/store/components/product-list"
 import ProductPreview from "@modules/products/components/product-preview"
 
 export const metadata: Metadata = {
@@ -73,19 +73,17 @@ export default async function Home({ params }: { params: { countryCode: string }
       <Hero />
       
       {/* Блок Stories для категорий */}
-      <Container className="py-8 md:py-12">
-        <CategoryStories />
-      </Container>
+      <CategoryStories />
       
       {/* Секция с новинками */}
-      <Container className="py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <ProductSection 
           title="Новинки" 
           products={newProducts} 
           region={region}
           link={{ href: "/collections/new-arrivals", text: "Все новинки" }}
         />
-      </Container>
+      </div>
       
       {/* Выносим PromotionsSlider из Container для полной ширины */}
       <PromotionsSlider />
@@ -99,27 +97,29 @@ export default async function Home({ params }: { params: { countryCode: string }
       <HomeMiddleBanner className="my-8" />
       
       {/* Секция с популярными товарами */}
-      <Container className="py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <ProductSection 
           title="Популярное" 
           products={popularProducts} 
           region={region}
           link={{ href: "/collections/popular", text: "Смотреть все" }}
         />
-      </Container>
+      </div>
       
       {/* Выносим WishlistDiscountBanner из Container */}
       <WishlistDiscountBanner />
       
       {/* Добавляем блок каталога с пагинацией */}
-      <Container className="py-8 md:py-12">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-6">Каталог товаров</h2>
+      <div className="py-8 md:py-12">
+        <div className="content-container mb-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">Каталог товаров</h2>
+        </div>
         <PaginatedProducts 
           page={1} // Начинаем с первой страницы
           countryCode={countryCode} 
           // sortBy="created_at" // Можно добавить сортировку, если нужно
         />
-      </Container>
+      </div>
       
       {/* Блок с преимуществами магазина - УДАЛЯЕМ */}
       {/* 

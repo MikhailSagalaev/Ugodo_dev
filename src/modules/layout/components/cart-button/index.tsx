@@ -15,6 +15,7 @@ export default function CartButton() {
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Для таймаута скрытия
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -41,11 +42,18 @@ export default function CartButton() {
   
   // Обработчики наведения мыши для выпадающего меню
   const handleMouseEnter = () => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current)
+      leaveTimeoutRef.current = null
+    }
     setIsOpen(true)
   }
   
   const handleMouseLeave = () => {
-    setIsOpen(false)
+    // Устанавливаем таймаут для закрытия
+    leaveTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false)
+    }, 300) // 300 мс задержки
   }
   
   return (
@@ -58,7 +66,13 @@ export default function CartButton() {
       <button 
         className="flex items-center justify-center hover:text-ui-fg-base relative"
         aria-label="Корзина"
-        onClick={() => setIsOpen(!isOpen)} // Добавляем обработчик клика для открытия/закрытия
+        onClick={() => {
+          if (leaveTimeoutRef.current) { // Если есть таймаут на закрытие, отменяем его
+            clearTimeout(leaveTimeoutRef.current)
+            leaveTimeoutRef.current = null
+          }
+          setIsOpen(!isOpen) // Переключаем состояние по клику
+        }}
       >
         <svg 
           className="w-5 h-5" 

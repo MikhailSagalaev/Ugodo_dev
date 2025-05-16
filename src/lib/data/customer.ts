@@ -29,44 +29,57 @@ export async function retrieveCustomer(): Promise<Omit<
   HttpTypes.StoreCustomer,
   "password_hash"
 > | null> {
-  const headers = await getAuthHeaders().catch(() => {
-      // Если getAuthHeaders выбросит ошибку (например, нет токена), возвращаем null
-      console.warn("Не удалось получить заголовки аутентификации для retrieveCustomer.");
-      return null;
-  });
-
-  // Если заголовки получить не удалось (нет токена), пользователь не авторизован
-  if (!headers) {
-            return null;
-        }
-
   try {
-    // Используем sdk напрямую с полученными заголовками
+    // Пытаемся получить заголовки авторизации
+    const headers = await getAuthHeaders().catch((headerError) => {
+      console.warn("Не удалось получить заголовки аутентификации:", headerError?.message || String(headerError));
+      return {};
+    });
+
+    // Проверяем наличие токена в заголовках
+    if (!headers || !('authorization' in headers) || !(headers as any).authorization) {
+      // Если токена нет, пользователь не авторизован - это нормальная ситуация
+      return null;
+    }
+
+    // Добавим дебаг-информацию
+    console.log("Выполняем запрос с заголовками авторизации:", 
+      (headers as any).authorization ? `Bearer ${(headers as any).authorization.substring(7, 15)}...` : "Заголовок пуст");
+
+    // Используем sdk с полученными заголовками для получения данных клиента
     const { customer } = await sdk.store.customer.retrieve(
-        { fields: "*orders" }, // Запрашиваем нужные поля, можно настроить
-        headers
+      { fields: "*orders" }, // Запрашиваем нужные поля
+      headers
     );
+    
     return customer;
-    } catch (error: any) {
-    // Medusa SDK обычно выбрасывает ошибки при 401 или других проблемах
+  } catch (error: any) {
+    // Обработка ошибок
     let errorMessage = "Unknown error retrieving customer data";
+    let statusCode = error?.response?.status || 0;
+    
     if (error instanceof Error) {
-        // Пытаемся получить сообщение из medusaError, если это ошибка Medusa
-        // или используем стандартное сообщение ошибки
-        errorMessage = error.message;
+      errorMessage = error.message;
     } else if (typeof error === 'string') {
-        errorMessage = error;
+      errorMessage = error;
+    } else if (error?.response?.data?.message) {
+      errorMessage = error.response.data.message;
     } else {
-        // Попытка получить сообщение, если это объект с полем message
-        errorMessage = error?.message || errorMessage;
+      errorMessage = error?.message || errorMessage;
     }
-    console.error("Ошибка получения данных покупателя через Medusa SDK:", errorMessage);
-    // Очищаем токен, если он невалидный (например, 401 Unauthorized)
-    if (error?.response?.status === 401) {
-        await removeAuthToken();
+    
+    // Расширенное логирование для отладки
+    console.error(`[ Server ] Ошибка получения данных покупателя через Medusa SDK: "${errorMessage}" (status: ${statusCode})`);
+    
+    // Если ошибка 401 или 403, очищаем токен
+    if (statusCode === 401 || statusCode === 403) {
+      console.log("Удаляем невалидный токен авторизации");
+      await removeAuthToken();
     }
-        return null;
-    }
+    
+    // В случае ошибки возвращаем null вместо выброса исключения
+    return null;
+  }
 }
 
 export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {

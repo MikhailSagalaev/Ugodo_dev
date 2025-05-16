@@ -9,43 +9,19 @@ services:
       - "9000:9000"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/medusa-db
-      - REDIS_URL=redis://redis:6379
       - STORE_CORS=http://localhost:8000,http://89.108.110.26:8000,https://ugodo.ru
       - ADMIN_CORS=http://localhost:9000,http://89.108.110.26:9000,https://ugodo.ru
       - AUTH_CORS=http://localhost:9000,http://89.108.110.26:9000,http://localhost:8000,http://89.108.110.26:8000,https://ugodo.ru
       - MEDUSA_BACKEND_URL=https://ugodo.ru
       - JWT_SECRET=supersecret
       - COOKIE_SECRET=supersecret
-      # MinIO конфигурация
-      - MINIO_FILE_URL=https://ugodo.ru/minio
-      - MINIO_ACCESS_KEY_ID=minioadmin
-      - MINIO_SECRET_ACCESS_KEY=minioadmin
-      - MINIO_BUCKET=medusa-uploads
-      - MINIO_ENDPOINT=http://minio:9000
     depends_on:
       - postgres
-      - redis
-      - minio
     volumes:
       - ./medusa:/app
     working_dir: /app
     # Запускаем Medusa сервер напрямую из монтированного каталога
     command: sh -c "yarn install && yarn build && yarn start"
-    restart: unless-stopped
-    networks:
-      - medusa-network
-      
-  minio:
-    image: minio/minio
-    ports:
-      - "9001:9000"  # API порт
-      - "9091:9090"  # Веб-консоль
-    volumes:
-      - minio_data:/data
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    command: server /data --console-address ":9090"
     restart: unless-stopped
     networks:
       - medusa-network
@@ -64,20 +40,8 @@ services:
     networks:
       - medusa-network
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - medusa-network
-
 volumes:
   postgres_data:
-  redis_data:
-  minio_data:
   
 networks:
   medusa-network:

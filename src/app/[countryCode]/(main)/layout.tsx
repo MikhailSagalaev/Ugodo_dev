@@ -38,23 +38,74 @@ export default async function MainLayout({
   children: ReactNode
   params: { countryCode: string }
 }) {
+  let customer = null;
+  let cart = null;
+  let shippingOptions: StoreCartShippingOption[] = [];
+  let regions = [];
+  let isEmergencyMode = false;
+  let loadingError = null;
+
   try {
-    const customer = await retrieveCustomer()
-    const cart = await retrieveCart()
-    let shippingOptions: StoreCartShippingOption[] = []
+    // Получаем данные клиента с обработкой возможных ошибок
+    customer = await retrieveCustomer().catch(error => {
+      console.error("Ошибка при получении данных клиента:", error instanceof Error ? error.message : String(error));
+      return null;
+    });
 
+    // Получаем корзину
+    cart = await retrieveCart().catch(error => {
+      console.error("Ошибка при получении корзины:", error instanceof Error ? error.message : String(error));
+      return null;
+    });
+
+    // Если корзина получена успешно, получаем варианты доставки
     if (cart) {
-      const { shipping_options } = await listCartOptions()
-
-      shippingOptions = shipping_options
+      try {
+        const { shipping_options } = await listCartOptions();
+        shippingOptions = shipping_options;
+      } catch (error) {
+        console.error("Ошибка при получении вариантов доставки:", error instanceof Error ? error.message : String(error));
+      }
     }
 
     // Пытаемся получить регионы
-    const regions = await listRegions()
-    
+    try {
+      regions = await listRegions();
     // Проверяем, получены ли регионы из API или это аварийные регионы
-    const isEmergencyMode = regions.length === 1 && regions[0].id.startsWith("reg_0");
-    
+      isEmergencyMode = regions.length === 1 && regions[0].id.startsWith("reg_0");
+    } catch (error) {
+      console.error("Ошибка при получении регионов:", error instanceof Error ? error.message : String(error));
+      isEmergencyMode = true;
+    }
+  } catch (error) {
+    console.error("Критическая ошибка при загрузке макета:", error);
+    loadingError = error;
+  }
+
+  // Если произошла критическая ошибка, возвращаем страницу с сообщением об ошибке
+  if (loadingError) {
+    return (
+      <div className="p-8">
+        <div className="p-6 max-w-2xl mx-auto my-8 bg-red-50 border border-red-200 rounded-lg text-center">
+          <h1 className="text-2xl font-bold text-red-800 mb-3">Произошла ошибка при загрузке магазина</h1>
+          <p className="text-red-700 mb-4">
+            Мы не смогли загрузить необходимые данные. Пожалуйста, попробуйте обновить страницу или вернитесь позже.
+          </p>
+          <div className="text-sm text-red-600 p-3 bg-white rounded border border-red-100">
+            Техническая информация: {loadingError instanceof Error ? loadingError.message : String(loadingError)}
+          </div>
+          <button 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            onClick={() => window.location.reload()}
+          >
+            Обновить страницу
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Нормальный рендер макета
     return (
       <>
         {isEmergencyMode && (
@@ -84,29 +135,5 @@ export default async function MainLayout({
         </main>
         <Footer />
       </>
-    )
-  } catch (error) {
-    console.error("Ошибка при загрузке макета:", error);
-    
-    // Возвращаем базовый макет с сообщением об ошибке
-    return (
-      <div className="p-8">
-        <div className="p-6 max-w-2xl mx-auto my-8 bg-red-50 border border-red-200 rounded-lg text-center">
-          <h1 className="text-2xl font-bold text-red-800 mb-3">Произошла ошибка при загрузке магазина</h1>
-          <p className="text-red-700 mb-4">
-            Мы не смогли загрузить регионы из базы данных. Пожалуйста, попробуйте обновить страницу или вернитесь позже.
-          </p>
-          <div className="text-sm text-red-600 p-3 bg-white rounded border border-red-100">
-            Техническая информация: {(error as Error).message || "Неизвестная ошибка"}
-          </div>
-          <button 
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            onClick={() => window.location.reload()}
-          >
-            Обновить страницу
-          </button>
-        </div>
-      </div>
-    )
-  }
+  );
 }

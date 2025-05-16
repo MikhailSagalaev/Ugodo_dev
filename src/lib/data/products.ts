@@ -3,9 +3,11 @@
 import { sdk } from "@lib/config"
 import { sortProducts } from "@lib/util/sort-products"
 import { HttpTypes } from "@medusajs/types"
-import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import { getAuthHeaders, getCacheOptions } from "./cookies"
 import { getRegion, retrieveRegion } from "./regions"
+
+// ОПРЕДЕЛЯЕМ И ЭКСПОРТИРУЕМ ТИП ЗДЕСЬ
+export type SortOptions = "created_at" | "price_asc" | "price_desc" | "name_asc" | "name_desc";
 
 export const listProducts = async ({
   pageParam = 1,

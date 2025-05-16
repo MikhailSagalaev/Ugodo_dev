@@ -46,10 +46,23 @@ const PromotionsSlider = () => {
     },
     [Autoplay({ delay: 7000, stopOnInteraction: false, stopOnMouseEnter: true })]
   )
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   const scrollTo = useCallback((index: number) => {
     emblaApi?.scrollTo(index)
   }, [emblaApi])
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setSelectedIndex(emblaApi.selectedScrollSnap())
+  }, [emblaApi, setSelectedIndex])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    onSelect()
+    emblaApi.on('select', onSelect)
+    emblaApi.on('reInit', onSelect)
+  }, [emblaApi, onSelect])
 
   return (
     <div className="w-full relative overflow-hidden embla mb-8 md:mb-12 lg:mb-16"> 
@@ -58,9 +71,9 @@ const PromotionsSlider = () => {
           {promotionBanners.map((banner, index) => (
             <div 
               key={banner.id} 
-              className="flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 relative aspect-[16/9] md:aspect-[16/8] lg:aspect-[16/7] pl-4"
+              className="flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_100%] min-w-0 relative aspect-[16/9] md:aspect-[16/8] lg:h-[70vh] pl-4"
             >
-              <LocalizedClientLink href={banner.link} className="relative block h-full overflow-hidden rounded-md group">
+              <LocalizedClientLink href={banner.link} className="relative block h-full overflow-hidden group">
                   <Image 
                     src={banner.image} 
                     alt={banner.alt}
@@ -81,7 +94,7 @@ const PromotionsSlider = () => {
                         {banner.subheadline}
                       </Text>
                       <Button 
-                        className="bg-white hover:bg-gray-100 text-black"
+                        className="bg-white hover:bg-gray-100 text-black rounded-none border-none"
                         size="large"
                       >
                         {banner.cta}
@@ -92,6 +105,17 @@ const PromotionsSlider = () => {
             </div>
           ))}
         </div>
+      </div>
+      {/* Dots navigation */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+        {promotionBanners.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => scrollTo(index)}
+            className={`w-3 h-3 rounded-full ${selectedIndex === index ? 'bg-white' : 'bg-white/50'} transition-colors duration-200`}
+            aria-label={`Перейти к слайду ${index + 1}`}
+          />
+        ))}
       </div>
     </div>
   )
