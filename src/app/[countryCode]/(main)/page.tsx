@@ -83,8 +83,6 @@ export default async function Home({ params }: { params: { countryCode: string }
   // Получаем родительские категории для блока "Популярные категории"
   const productCategories = await listCategories({
     parent_category_id: "null",
-    is_active: true,
-    is_internal: false,
     limit: 6
   }).catch((err) => {
     console.error("Ошибка при загрузке категорий:", err)

@@ -24,7 +24,7 @@ export default async function CountryCodeLayout(props: { children: React.ReactNo
       
       // Возвращаем базовый шаблон с сообщением об ошибке
       return (
-        <html lang="ru" data-mode="light" suppressHydrationWarning={true}>
+        <html lang="ru">
           <body>
             <div style={{ padding: "20px", textAlign: "center" }}>
               <h1>Ошибка загрузки региона</h1>
@@ -37,7 +37,7 @@ export default async function CountryCodeLayout(props: { children: React.ReactNo
     
     // Если регионы есть, продолжаем рендеринг
     return (
-      <html lang="ru" data-mode="light" suppressHydrationWarning={true}>
+      <html lang="ru">
         <body>
           {props.children}
         </body>
@@ -48,7 +48,7 @@ export default async function CountryCodeLayout(props: { children: React.ReactNo
     
     // В случае ошибки возвращаем базовый шаблон с сообщением
     return (
-      <html lang="ru" data-mode="light" suppressHydrationWarning={true}>
+      <html lang="ru">
         <body>
           <div style={{ padding: "20px", textAlign: "center" }}>
             <h1>Ошибка загрузки магазина</h1>
