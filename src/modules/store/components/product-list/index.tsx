@@ -90,6 +90,7 @@ export default async function PaginatedProducts({
             <ProductPreview 
               product={p} 
               region={region} 
+              isLeftSideInMobileGrid={index % 2 === 0}
               // categoryTitle не так важен для общего списка на главной, можно убрать или найти категорию по умолчанию
             />
           </li>

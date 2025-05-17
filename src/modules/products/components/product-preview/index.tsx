@@ -240,11 +240,11 @@ export default function ProductPreview({
         )}
       </LocalizedClientLink>
 
-      {/* Блок с ценой, категорией и названием - ИЗМЕНЕН ПОРЯДОК И СТИЛИ */}
+      {/* Блок с ценой, категорией и названием - ВОССТАНОВЛЕН К ОРИГИНАЛЬНОЙ СТРУКТУРЕ */}
       <div className={clx(
         "mt-2 flex flex-col gap-1 pb-2 relative",
         { 
-          "pl-5": (isLeftSideInMobileGrid && !isLargeScreen) || isFirstInSlider
+          "pl-5": (isLeftSideInMobileGrid && !isLargeScreen) || (isFirstInSlider && !isLargeScreen)
         },
         isFirstInMobileRow ? "sm:ml-0" : "",
         "sm:px-2"
@@ -283,7 +283,7 @@ export default function ProductPreview({
           </div>
         )}
         
-        {/* КОРЗИНА - кнопка */}
+        {/* КОРЗИНА - кнопка (ВОССТАНОВЛЕНА ОРИГИНАЛЬНАЯ КНОПКА) */}
         <Button
           onClick={handleAddToCartClick}
           isLoading={isAddingToCart}
@@ -294,7 +294,7 @@ export default function ProductPreview({
         </Button>
       </div>
       
-      {/* Модальное окно для выбора опций */}
+      {/* Модальное окно для выбора опций (ВОССТАНОВЛЕНО К ОРИГИНАЛЬНОЙ ЛОГИКЕ) */}
       {isModalOpen && (
         <Modal 
           isOpen={isModalOpen} 

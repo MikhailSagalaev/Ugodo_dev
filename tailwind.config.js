@@ -34,6 +34,11 @@ module.exports = {
           80: "#1F2937",
           90: "#111827",
         },
+        ugodo: {
+          "DEFAULT": "#BAFF29",
+          "light": "#D4FF7A",
+          "dark": "#A3E600"
+        }
       },
       borderRadius: {
         none: "0px",

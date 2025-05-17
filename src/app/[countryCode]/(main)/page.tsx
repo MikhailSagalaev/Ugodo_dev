@@ -1,14 +1,19 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Container } from "@medusajs/ui"
+import { HttpTypes } from "@medusajs/types"
 
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
 import { listProducts } from "@lib/data/products"
+import { listCategories } from "@lib/data/categories"
+import { getTagByValue } from "@lib/data/tags"
 import Hero from "@modules/home/components/hero"
 import CategoryStories from "@modules/home/components/category-stories"
+import PopularCategories from "@modules/home/components/popular-categories"
 import ProductSection from "@modules/home/components/product-section"
 import PromotionsSlider from "@modules/home/components/promotions-slider"
+import FeaturedBrands from "@modules/home/components/featured-brands"
 import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-banner"
 import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
@@ -53,27 +58,61 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  // Получаем популярные товары
-  const { response: { products: popularProducts } } = await listProducts({
-    regionId: region.id,
-    queryParams: {
+  // Получаем тег 'bestseller'
+  const bestsellerTag = await getTagByValue('bestseller');
+
+  // Получаем популярные товары (хиты продаж) по тегу 'bestseller'
+  let bestsellerProducts: HttpTypes.StoreProduct[] = [];
+  if (bestsellerTag && bestsellerTag.id) {
+    const queryParamsForBestsellers = {
       limit: 8,
-      order: "-updated_at",
-    },
-  }).catch(err => {
-    console.error("Ошибка при загрузке популярных товаров:", err)
-    return { response: { products: [] } }
+      tags: [bestsellerTag.id] 
+    };
+    const { response } = await listProducts({
+      regionId: region.id,
+      queryParams: queryParamsForBestsellers as any,
+    }).catch(err => {
+      console.error("Ошибка при загрузке хитов продаж:", err)
+      return { response: { products: [] } }
+    });
+    bestsellerProducts = response.products;
+  } else {
+    console.warn("Тег 'bestseller' не найден. Блок хитов продаж может быть пустым.")
+  }
+
+  // Получаем родительские категории для блока "Популярные категории"
+  const productCategories = await listCategories({
+    parent_category_id: "null",
+    is_active: true,
+    is_internal: false,
+    limit: 6
+  }).catch((err) => {
+    console.error("Ошибка при загрузке категорий:", err)
+    return []
   })
+
+  // Получаем коллекции (бренды) для блока "Популярные бренды"
+  const { collections: brandCollections } = await listCollections({
+    limit: "12" // Ограничиваем количество, как в компоненте
+  }).catch(err => {
+    console.error("Ошибка при загрузке коллекций (брендов):", err);
+    return { collections: [], count: 0, limit: 12, offset: 0 }; // Возвращаем совместимую структуру
+  });
 
   return (
     <div className="flex flex-col gap-0">
       {/* Главный баннер верхней части страницы - УДАЛЕН */}
       
-      {/* Главный слайдер-баннер */}
+      {/* Заменяем HeroBanner на Hero */}
       <Hero />
       
       {/* Блок Stories для категорий */}
       <CategoryStories />
+      
+      {/* Блок Популярные категории */}
+      {productCategories && productCategories.length > 0 && (
+        <PopularCategories categories={productCategories} countryCode={countryCode} />
+      )}
       
       {/* Секция с новинками */}
       <div className="py-8 md:py-12">
@@ -96,18 +135,20 @@ export default async function Home({ params }: { params: { countryCode: string }
       {/* Промо-баннер в середине страницы */}
       <HomeMiddleBanner className="my-8" />
       
-      {/* Секция с популярными товарами */}
+      {/* Секция с популярными товарами (хитами продаж) */}
       <div className="py-8 md:py-12">
         <ProductSection 
-          title="Популярное" 
-          products={popularProducts} 
+          title="Хиты продаж"
+          products={bestsellerProducts}
           region={region}
-          link={{ href: "/collections/popular", text: "Смотреть все" }}
+          link={{ href: "/bestsellers", text: "Все хиты продаж" }}
         />
       </div>
       
-      {/* Выносим WishlistDiscountBanner из Container */}
-      <WishlistDiscountBanner />
+      {/* Блок Популярные бренды */}
+      {brandCollections && brandCollections.length > 0 && (
+        <FeaturedBrands collections={brandCollections} countryCode={countryCode} />
+      )}
       
       {/* Добавляем блок каталога с пагинацией */}
       <div className="py-8 md:py-12">

@@ -11,11 +11,14 @@ export const listProductTypes = async () => {
   }
 
   return sdk.client
-    .fetch<{ types: { id: string; value: string }[] }>("/store/product-types", {
+    .fetch<{ product_types: HttpTypes.StoreProductType[] }>("/store/product-types", {
+      method: "GET",
+      query: {
+      },
       next,
       cache: "force-cache",
     })
-    .then(({ types }) => types)
+    .then(({ product_types }) => product_types)
     .catch((error) => {
       console.error("Ошибка при получении типов товаров:", error)
       return []

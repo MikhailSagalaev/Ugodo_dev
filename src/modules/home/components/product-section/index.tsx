@@ -142,7 +142,7 @@ export default function ProductSection({
           ref={containerRef}
           className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x snap-mandatory"
         >
-          {products.map((product) => {
+          {products.map((product, index) => {
             // Получаем название категории из type или categories
             const categoryTitle = product.type?.value 
                                   || (product.categories && product.categories.length > 0 ? product.categories[0].name : undefined);
@@ -151,11 +151,12 @@ export default function ProductSection({
                 key={product.id} 
                 className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)] snap-start"
               >
-                {/* Передаем categoryTitle в ProductPreview */}
+                {/* Передаем categoryTitle и isFirstInSlider в ProductPreview */}
                 <ProductPreview 
                   product={product} 
                   region={region} 
                   categoryTitle={categoryTitle} 
+                  isFirstInSlider={index === 0}
                 />
               </div>
             )

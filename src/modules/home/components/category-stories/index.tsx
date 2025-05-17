@@ -294,10 +294,10 @@ const CategoryStories = () => {
   }
 
   return (
-    <div className="pt-10 px-4">
+    <div className="pt-10 overflow-hidden">
       <div 
         ref={containerRef}
-        className="flex justify-center overflow-x-auto scrollbar-hide py-4 space-x-4 pl-4 pr-8 md:pl-0 md:pr-0"
+        className="flex justify-center overflow-x-auto scrollbar-hide py-4 space-x-2 md:pl-0 md:pr-0"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -306,13 +306,13 @@ const CategoryStories = () => {
         {stories.map((story, index) => (
           <div // Основной контейнер для одного элемента истории (кружок + текст под ним)
             key={story.id}
-            className={`flex-shrink-0 w-24 flex flex-col items-center cursor-pointer group transform transition-all duration-300 ease-in-out hover:scale-105 mb-4`}
+            className={`flex-shrink-0 w-20 flex flex-col items-center cursor-pointer group transform transition-all duration-300 ease-in-out hover:scale-105 mb-4 first:ml-4`}
             onClick={() => openStory(story, index)}
             role="button"
             aria-label={`Открыть историю: ${story.title}`}
           >
             <div // Контейнер для кружка
-              className={`w-20 h-20 rounded-full relative overflow-hidden border-2 ${viewedStories[story.id] ? 'border-gray-300' : `border-[${story.color}]`} ${story.bgColor} ${story.textColor} flex items-center justify-center`}
+              className={`w-16 h-16 rounded-full relative overflow-hidden border-2 ${viewedStories[story.id] ? 'border-gray-300' : `border-[${story.color}]`} ${story.bgColor} ${story.textColor} flex items-center justify-center`}
             >
               <span className="font-semibold text-center text-xs uppercase tracking-wider px-1">
                 NEW

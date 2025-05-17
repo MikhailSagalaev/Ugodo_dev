@@ -1,3 +1,10 @@
+/**
+ * @file: src/modules/mobile/components/index.tsx
+ * @description: Компоненты мобильной навигации (боковое меню MobileNav и нижняя панель MobileBottomNav).
+ * @dependencies: react, next/link, @medusajs/ui, @medusajs/icons, @lib/sdk, @medusajs/types, @modules/common/components/localized-client-link
+ * @created: 2024-07-27 (Примерная дата, заменить на актуальную при необходимости)
+ */
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -98,6 +105,33 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                     onClick={() => setIsOpen(false)}
                   >
                     Каталог
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink 
+                    href="/new-arrivals"
+                    className="flex items-center gap-3 py-2 text-base font-medium text-gray-700 hover:text-violet-600 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Новинки
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink 
+                    href="/bestsellers"
+                    className="flex items-center gap-3 py-2 text-base font-medium text-gray-700 hover:text-violet-600 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Хиты продаж
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink 
+                    href="/brands"
+                    className="flex items-center gap-3 py-2 text-base font-medium text-gray-700 hover:text-violet-600 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Бренды
                   </LocalizedClientLink>
                 </li>
                 <li>
@@ -217,7 +251,7 @@ const MobileBottomNav = () => {
         </LocalizedClientLink>
         
         <LocalizedClientLink 
-          href="/categories" 
+          href="/store" 
           className="flex flex-col items-center p-2"
         >
           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
