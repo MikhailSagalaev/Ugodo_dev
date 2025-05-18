@@ -1,0 +1,15 @@
+node_modules
+.git
+.github
+.next
+dist
+.medusa-uploads
+.env*
+!.env.template
+README.md
+README-DEPLOYMENT.md
+**/.DS_Store
+**/node_modules
+.vscode
+.idea
+tmp 

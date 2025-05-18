@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  medusa:
+    image: ${DOCKER_USERNAME}/medusa-app:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - DATABASE_URL=postgres://postgres:${DB_PASSWORD}@postgres:5432/medusa-db
+      - REDIS_URL=redis://redis:6379
+      - STORE_CORS=${STORE_CORS}
+      - ADMIN_CORS=${ADMIN_CORS}
+      - AUTH_CORS=${AUTH_CORS}
+      - MEDUSA_BACKEND_URL=${MEDUSA_BACKEND_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - medusa_uploads:/app/.medusa/data/uploads
+    restart: unless-stopped
+    networks:
+      - medusa-network
+      
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=medusa-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - medusa-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - medusa-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  medusa_uploads:
+  
+networks:
+  medusa-network:
+    driver: bridge 
