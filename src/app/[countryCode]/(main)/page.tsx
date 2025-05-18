@@ -73,12 +73,12 @@ export default async function Home({ params }: { params: { countryCode: string }
       <Hero />
       
       {/* Блок Stories для категорий */}
-      <Container className="py-8 md:py-12">
+      <Container className="pt-2 pb-1">
         <CategoryStories />
       </Container>
       
       {/* Секция с новинками */}
-      <Container className="py-8 md:py-12">
+      <Container className="pt-2 pb-6">
         <ProductSection 
           title="Новинки" 
           products={newProducts} 
@@ -88,7 +88,9 @@ export default async function Home({ params }: { params: { countryCode: string }
       </Container>
       
       {/* Выносим PromotionsSlider из Container для полной ширины */}
-      <PromotionsSlider />
+      <div className="mt-0 mb-2">
+        <PromotionsSlider />
+      </div>
       
       {/* Оборачиваем PromotionsSlider в Container */}
       {/* <Container className="py-8 md:py-12">

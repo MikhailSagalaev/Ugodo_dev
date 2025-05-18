@@ -39,6 +39,7 @@ const promotionBanners = [
 ]
 
 const PromotionsSlider = () => {
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true, 
@@ -51,8 +52,24 @@ const PromotionsSlider = () => {
     emblaApi?.scrollTo(index)
   }, [emblaApi])
 
+  // Handle slide change
+  useEffect(() => {
+    if (!emblaApi) return
+
+    const onSelect = () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap())
+    }
+
+    emblaApi.on('select', onSelect)
+    onSelect()
+
+    return () => {
+      emblaApi.off('select', onSelect)
+    }
+  }, [emblaApi])
+
   return (
-    <div className="w-full relative overflow-hidden embla mb-8 md:mb-12 lg:mb-16"> 
+    <div className="w-full relative overflow-hidden embla mb-0"> 
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex -ml-4">
           {promotionBanners.map((banner, index) => (
@@ -90,6 +107,23 @@ const PromotionsSlider = () => {
                 </div>
                </LocalizedClientLink>
             </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Dot indicators */}
+      <div className="absolute bottom-4 left-0 right-0 z-20">
+        <div className="flex justify-center gap-1">
+          {promotionBanners.map((_, index) => (
+            <div
+              key={index}
+              onClick={() => scrollTo(index)}
+              className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-200 
+                ${index === selectedIndex 
+                  ? 'bg-black' 
+                  : 'bg-white border border-black hover:bg-gray-300'}`}
+              aria-label={`Перейти к слайду ${index + 1}`}
+            />
           ))}
         </div>
       </div>

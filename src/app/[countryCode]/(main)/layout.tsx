@@ -52,16 +52,8 @@ export default async function MainLayout({
     // Пытаемся получить регионы
     const regions = await listRegions()
     
-    // Проверяем, получены ли регионы из API или это аварийные регионы
-    const isEmergencyMode = regions.length === 1 && regions[0].id.startsWith("reg_0");
-    
     return (
       <>
-        {isEmergencyMode && (
-          <div className="p-3 text-center bg-yellow-100 text-yellow-800 text-sm">
-            Система работает в аварийном режиме. Некоторые функции могут быть недоступны.
-          </div>
-        )}
         <Suspense>
           <NavWithHome countryCode={params.countryCode} />
         </Suspense>

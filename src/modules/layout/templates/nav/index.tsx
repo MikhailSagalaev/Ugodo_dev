@@ -16,12 +16,16 @@ import Search from "@modules/search"
 import { User } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 
+const NAV_ICON_SIZE = 22; // Единый размер для всех иконок
+
 const Nav = ({ isHome = false }: { isHome?: boolean }) => {
   const pathName = usePathname()
   const searchParams = useSearchParams()
   const [regions, setRegions] = useState<HttpTypes.StoreRegion[]>([])
   const [isScrolled, setIsScrolled] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(0)
+  const [showCatalogNav, setShowCatalogNav] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const headerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -35,12 +39,25 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const offset = window.scrollY
-      if (offset > 100) {
+      const currentScrollY = window.scrollY
+      
+      // Check if scrolled more than 100px to change header background
+      if (currentScrollY > 100) {
         setIsScrolled(true)
       } else {
         setIsScrolled(false)
       }
+      
+      // Hide/show catalog nav based on scroll direction
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down - hide catalog nav
+        setShowCatalogNav(false)
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show catalog nav
+        setShowCatalogNav(true)
+      }
+      
+      setLastScrollY(currentScrollY)
     }
 
     window.addEventListener("scroll", handleScroll)
@@ -49,7 +66,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     return () => {
       window.removeEventListener("scroll", handleScroll)
     }
-  }, [])
+  }, [lastScrollY])
 
   useEffect(() => {
     if (headerRef.current) {
@@ -57,28 +74,17 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     }
   }, [])
 
-  const wrapperClasses = "absolute top-0 left-0 right-0 z-50 bg-transparent group transition-all duration-200"
-  const headerClasses = "relative h-16 mx-auto border-b border-transparent transition-all duration-200"
-  const navClasses = "content-container txt-xsmall-plus flex items-center justify-between h-full text-small-regular text-white transition-colors duration-200"
-  const secondNavClasses = "hidden small:block border-b border-transparent bg-transparent transition-all duration-200"
+  // Determine icon color based on scroll state and group hover
+  const getIconColor = () => {
+    if (isScrolled) return "black";
+    return "white";
+  }
 
   const getLinkClasses = (targetPath: string) => {
       if (pathName === targetPath) {
-          return clx(
-              "text-sm font-medium transition-colors duration-200",
-              {
-                "text-white font-semibold": isHome && !isScrolled,
-                "text-ui-fg-base font-semibold": !isHome || isScrolled
-              }
-          );
+          return "text-base font-normal transition-colors duration-200 text-black";
       }
-      return clx(
-          "text-sm font-medium transition-colors duration-200",
-          {
-              "text-white hover:text-gray-300": isHome && !isScrolled,
-              "text-ui-fg-subtle hover:text-ui-fg-base": !isHome || isScrolled
-          }
-      );
+      return "text-base font-normal transition-colors duration-200 text-black hover:text-gray-700";
   };
 
   return (
@@ -88,172 +94,222 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
       <div 
         ref={headerRef}
         className={clx(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group hover:bg-white",
           {
-            "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group": isHome,
-            "fixed top-0 left-0 right-0 z-50 bg-white shadow-md group": !isHome,
-            "bg-transparent": isHome && !isScrolled,
-            "bg-white shadow-md": isHome && isScrolled || !isHome,
+            "bg-transparent": !isScrolled,
+            "bg-white shadow-sm": isScrolled,
           }
         )}
       >
-        <header className={clx(
-          "relative h-16 mx-auto border-b transition-all duration-200",
-          {
-            "border-transparent": isHome && !isScrolled,
-            "border-ui-border-base": !isHome || isScrolled,
-          }
-        )}>
-          <nav className={clx(
-            "content-container txt-xsmall-plus flex items-center h-full text-small-regular transition-colors duration-200",
-            {
-              "text-white": isHome && !isScrolled,
-              "text-ui-fg-subtle": !isHome || isScrolled,
-            }
-          )}>
-          <div className="flex-1 flex items-center justify-start h-full">
-            {regions && regions.length > 1 && (
-              <ListRegions
-                regions={regions}
-                pathName={pathName}
-                searchParams={searchParams}
-              />
-            )}
-          </div>
-
-          <div className="flex items-center justify-center h-full">
-            <LocalizedClientLink
-              href="/"
-              className="txt-compact-xlarge-plus hover:text-ui-fg-base"
-            >
-              <Image
-                src="/images/logo.svg"
-                alt="Ugodo logo"
-                width={120}
-                height={35}
-                className="object-contain"
-                priority
-              />
-            </LocalizedClientLink>
-          </div>
-
-          <div className="flex-1 flex items-center justify-end gap-x-4 h-full">
-            <div className="hidden small:flex items-center gap-x-4 h-full">
-              <Suspense>
-                <Search />
-              </Suspense>
-              
-              <LocalizedClientLink
-                  className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
-                    "hover:text-gray-300": isHome && !isScrolled,
-                  })}
-                href="/account/wishlist"
-                aria-label="Избранное"
-              >
-                  <Image 
-                    src="/images/heartIcon.svg" 
-                    alt="Избранное" 
-                    width={20} 
-                    height={20}
-                    style={{ 
-                      transition: 'filter 0.2s ease-in-out',
-                      filter: isHome && !isScrolled ? 'none' : 'invert(1)'
-                    }}
-                  />
-              </LocalizedClientLink>
-              
-              <LocalizedClientLink
-                   className={clx("hover:text-ui-fg-base flex items-center gap-x-1", {
-                    "hover:text-gray-300": isHome && !isScrolled,
-                  })}
-                href="/account"
-                aria-label="Аккаунт"
-              >
-                  <User className={clx({
-                    "text-white": isHome && !isScrolled,
-                    "text-ui-fg-subtle": !isHome || isScrolled
-                  })} />
-              </LocalizedClientLink>
-              
-              <CartButton />
+        <header className="relative h-20 mx-auto">
+          <nav className="content-container flex items-center h-full text-base">
+            <div className="flex-1 flex items-center justify-start h-full">
+              {regions && regions.length > 1 && (
+                <ListRegions
+                  regions={regions}
+                  pathName={pathName}
+                  searchParams={searchParams}
+                />
+              )}
             </div>
-            <div className="flex small:hidden">
-              <MobileMenu />
+
+            <div className="flex items-center justify-center h-full">
+              <LocalizedClientLink
+                href="/"
+                className="text-xl"
+              >
+                <Image
+                  src="/images/logo.svg"
+                  alt="Ugodo logo"
+                  width={140}
+                  height={40}
+                  className="object-contain"
+                  priority
+                />
+              </LocalizedClientLink>
             </div>
-          </div>
-        </nav>
-      </header>
+
+            <div className="flex-1 flex items-center justify-end h-full">
+              <div className="hidden small:flex items-center gap-x-8 h-full">
+                <div className="w-[22px] h-[22px] flex items-center justify-center">
+                  <Suspense>
+                    <Search isScrolled={isScrolled} />
+                  </Suspense>
+                </div>
+                
+                <LocalizedClientLink
+                  href="/account/wishlist"
+                  aria-label="Избранное"
+                  className="w-[22px] h-[22px] flex items-center justify-center"
+                >
+                  <svg 
+                    width="22" 
+                    height="22" 
+                    viewBox="0 0 22 22" 
+                    fill="none" 
+                    stroke={!isScrolled ? "white" : "black"}
+                    className="group-hover:stroke-black transition-colors duration-200"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M15.3486 1.571289C16.0278 1.571905 16.7011 1.690419 17.3389 1.919922L17.6104 2.02441C18.2373 2.28569 18.8137 2.65363 19.3145 3.11035L19.5244 3.31152L19.5254 3.3125C21.7957 5.59273 21.864 9.09981 19.7402 11.4414L19.5283 11.6641L11 20.1914L2.47266 11.6641L2.25977 11.4414C0.204502 9.17497 0.202891 5.81674 2.25879 3.54004L2.47168 3.31641L2.47266 3.31543C2.95145 2.83254 3.5095 2.43645 4.12207 2.14453L4.3877 2.02637C5.10485 1.727112 5.87428 1.572073 6.65137 1.571289C8.11898 1.570947 9.5332 2.12258 10.6133 3.11621L11 3.47168L11.3877 3.11621C12.4676 2.12276 13.8813 1.571086 15.3486 1.571289Z" strokeWidth="1.14286"/>
+                  </svg>
+                </LocalizedClientLink>
+                
+                <LocalizedClientLink
+                  href="/account"
+                  aria-label="Аккаунт"
+                  className="w-[22px] h-[22px] flex items-center justify-center"
+                >
+                  <svg 
+                    width="22" 
+                    height="22" 
+                    viewBox="0 0 22 22" 
+                    fill="none" 
+                    stroke={!isScrolled ? "white" : "black"}
+                    className="group-hover:stroke-black transition-colors duration-200"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M18 19v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M11 9a4 4 0 100-8 4 4 0 000 8z"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </LocalizedClientLink>
+                
+                <div className="w-[22px] h-[22px] flex items-center justify-center">
+                  <CartButton isScrolled={isScrolled} />
+                </div>
+              </div>
+              <div className="flex small:hidden">
+                <MobileMenu />
+              </div>
+            </div>
+          </nav>
+        </header>
 
         <div className={clx(
-          "hidden small:block border-b transition-all duration-200",
+          "hidden small:block transition-all duration-300 transform-gpu overflow-hidden",
           {
-            "bg-transparent border-transparent": isHome && !isScrolled,
-            "bg-white border-ui-border-base": !isHome || isScrolled,
+            "bg-transparent group-hover:bg-white": !isScrolled,
+            "bg-white": isScrolled,
+            "max-h-14 opacity-100": showCatalogNav,
+            "max-h-0 opacity-0": !showCatalogNav,
           }
         )}>
-        <div className="content-container flex justify-center">
-          <nav className="flex items-center h-12">
-            <ul className="flex items-center gap-x-8">
-              <li>
-                <LocalizedClientLink
-                  href="/store"
-                    className={getLinkClasses("/store")}
-                >
-                  Каталог
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/new-arrivals"
-                     className={getLinkClasses("/new-arrivals")}
-                >
-                  Новинки
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/bestsellers"
-                     className={getLinkClasses("/bestsellers")}
-                >
-                  Хиты продаж
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/promotions"
-                     className={getLinkClasses("/promotions")}
-                >
-                  Акции
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/brands"
-                     className={getLinkClasses("/brands")}
-                >
-                  Бренды
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/blog"
-                     className={getLinkClasses("/blog")}
-                >
-                  Блог
-                </LocalizedClientLink>
-              </li>
-              <li>
-                <LocalizedClientLink
-                  href="/contacts"
-                     className={getLinkClasses("/contacts")}
-                >
-                  Контакты
-                </LocalizedClientLink>
-              </li>
-            </ul>
-          </nav>
+          <div className="content-container flex justify-center">
+            <nav className="flex items-center h-14">
+              <ul className="flex items-center gap-x-10">
+                <li>
+                  <LocalizedClientLink
+                    href="/store"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Каталог
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/new-arrivals"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Новинки
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/bestsellers"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Хиты продаж
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/promotions"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Акции
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/brands"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Бренды
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/blog"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Блог
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/contacts"
+                    className={clx(
+                      "text-base font-normal transition-colors duration-200",
+                      {
+                        "text-white group-hover:text-black": !isScrolled,
+                        "text-black": isScrolled
+                      }
+                    )}
+                  >
+                    Контакты
+                  </LocalizedClientLink>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
-    </div>
     </>
   )
 }
