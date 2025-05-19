@@ -184,7 +184,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                   </svg>
                 </LocalizedClientLink>
                 
-                <div className="w-[22px] h-[22px] flex items-center justify-center">
+                <div className="w-[22px] h-[22px] flex items-center justify-center relative z-[60]">
                   <CartButton isScrolled={isScrolled} />
                 </div>
               </div>
@@ -196,7 +196,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
         </header>
 
         <div className={clx(
-          "hidden small:block transition-all duration-300 transform-gpu overflow-hidden",
+          "hidden small:block transition-all duration-300 transform-gpu overflow-hidden z-50",
           {
             "bg-transparent group-hover:bg-white": !isScrolled,
             "bg-white": isScrolled,

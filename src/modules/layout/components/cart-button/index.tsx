@@ -58,7 +58,7 @@ export default function CartButton({ isScrolled = false }: { isScrolled?: boolea
       onMouseLeave={handleMouseLeave}
     >
       <button 
-        className="flex items-center justify-center"
+        className="flex items-center justify-center relative"
         aria-label="Корзина"
         onClick={() => setIsOpen(!isOpen)} // Добавляем обработчик клика для открытия/закрытия
       >
