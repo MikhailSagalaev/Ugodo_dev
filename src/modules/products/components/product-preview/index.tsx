@@ -16,12 +16,56 @@ const COLORS = {
   mint: "#C2E7DA",
   darkBlue: "#1A1341",
   blue: "#6290C3",
-  cream: "#F1FFEZ",
+  cream: "#F1FFE2",
   neonGreen: "#BAFF29"
 }
 
 // Путь к заглушке
 const PLACEHOLDER_IMAGE = "/images/placeholder-chair.png";
+
+// Функция для преобразования названия цвета в CSS цвет
+const getColorValue = (colorName: string): string => {
+  if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(colorName)) {
+    return colorName;
+  }
+  
+  if (/^rgba?\(/.test(colorName)) {
+    return colorName;
+  }
+  
+  const colorMap: {[key: string]: string} = {
+    'черный': '#000000',
+    'белый': '#FFFFFF',
+    'красный': '#FF0000',
+    'зеленый': '#008000',
+    'синий': '#0000FF',
+    'желтый': '#FFFF00',
+    'оранжевый': '#FFA500',
+    'фиолетовый': '#800080',
+    'розовый': '#FFC0CB',
+    'серый': '#808080',
+    'коричневый': '#A52A2A',
+    'голубой': '#00BFFF',
+    
+    'black': '#000000',
+    'white': '#FFFFFF',
+    'red': '#FF0000',
+    'green': '#008000',
+    'yellow': '#FFFF00',
+    'orange': '#FFA500',
+    'purple': '#800080',
+    'pink': '#FFC0CB',
+    'gray': '#808080',
+    'grey': '#808080',
+    'brown': '#A52A2A',
+    'cyan': '#00FFFF',
+    
+    ...COLORS
+  };
+  
+  const lowerColorName = colorName.toLowerCase();
+  return colorMap[lowerColorName] || colorName;
+};
 
 // Типы пропсов теперь включают регион
 type ProductPreviewProps = {
@@ -35,6 +79,8 @@ type ProductPreviewProps = {
   videoIconPlaceholder?: string;
   // Для расположения текста (правый/левый)
   textAlign?: "left" | "right";
+  // Тип флажка: new, hit или none
+  badgeType?: "new" | "hit" | "none";
 };
 
 // Иконки-заглушки из примера
@@ -51,6 +97,8 @@ export default function ProductPreview({
   videoIconPlaceholder = "/images/video-icon.svg",
   // По умолчанию текст слева
   textAlign = "left",
+  // Тип флажка: new, hit или none
+  badgeType = "none",
 }: ProductPreviewProps) {
   // Get price information
   const { cheapestPrice } = getProductPrice({
@@ -116,16 +164,12 @@ export default function ProductPreview({
     option.title.toLowerCase().includes('color')
   );
 
-  // Получаем только реальные цвета из базы данных
   const colors = colorOptions?.values || [];
   const hasColors = colors.length > 0;
 
-  // Текстовое выравнивание
   const textAlignClass = textAlign === "right" ? "text-right" : "text-left";
 
-  // Обработчики для изображения
   const handleImageError = () => {
-    console.warn(`Image failed to load: ${product.title || 'unnamed product'}`);
     setImageError(true);
   };
 
@@ -133,7 +177,6 @@ export default function ProductPreview({
     setImageLoaded(true);
   };
 
-  // Определяем, какое изображение показывать
   const shouldShowPlaceholder = !product.thumbnail || imageError;
   const imageSrc = shouldShowPlaceholder ? PLACEHOLDER_IMAGE : (product.thumbnail as string);
 
@@ -142,15 +185,13 @@ export default function ProductPreview({
       className="group relative flex flex-col w-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ width: '320px' }}
     >
-      {/* Image container */}
+      
       <LocalizedClientLink
         href={`/products/${product?.handle}`}
         className="block relative w-full overflow-hidden bg-white aspect-square"
-        style={{ width: '320px', height: '320px' }}
       >
-        {/* Product image */}
+        
         <div className="relative w-full h-full transition-transform duration-300 group-hover:scale-105">
           <Image
             src={imageSrc}
@@ -163,21 +204,28 @@ export default function ProductPreview({
           />
         </div>
 
-        {/* NEW badge */}
-        {isNew && (
+        
+        {badgeType === "new" && (
           <div className="absolute top-3 left-3 bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
             NEW
           </div>
         )}
 
-        {/* Discount badge - показываем только если товар не новинка */}
-        {!isNew && cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
+        
+        {badgeType === "hit" && (
+          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
+            HIT
+          </div>
+        )}
+
+        
+        {badgeType === "none" && cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
           <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
             -{cheapestPrice.percentage_diff}%
           </div>
         )}
 
-        {/* Wishlist heart button */}
+        
         <button
           onClick={toggleWishlist}
           onMouseEnter={handleHeartMouseEnter}
@@ -189,8 +237,8 @@ export default function ProductPreview({
             width="24" 
             height="24" 
             viewBox="0 0 24 24" 
-            fill={isWished || isHeartHovered ? "#6290C3" : "none"} 
-            stroke={isHeartHovered ? "#6290C3" : "#6290C3"} 
+            fill={isWished || isHeartHovered ? COLORS.mint : "none"} 
+            stroke={isHeartHovered ? COLORS.mint : COLORS.mint} 
             strokeWidth={isHeartHovered ? "2" : "2"}
             className="transition-all duration-200"
             xmlns="http://www.w3.org/2000/svg"
@@ -199,7 +247,7 @@ export default function ProductPreview({
           </svg>
         </button>
 
-        {/* Out of stock overlay */}
+        
         {!isInStock && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="bg-black/70 px-4 py-2 rounded">
@@ -208,13 +256,13 @@ export default function ProductPreview({
           </div>
         )}
 
-        {/* Add to cart button - показывается при наведении */}
+        
         {isInStock && isHovered && (
           <div className="absolute bottom-3 right-3 z-10">
             <button
               onClick={handleAddToCart}
               className={`w-11 h-11 flex items-center justify-center transition-colors duration-200 ${
-                isAddingToCart ? 'bg-[#6290C3]' : 'bg-black hover:bg-[#6290C3]'
+                isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-black hover:bg-[#C2E7DA]'
               }`}
               aria-label="Добавить в корзину"
               disabled={isAddingToCart}
@@ -243,46 +291,50 @@ export default function ProductPreview({
         )}
       </LocalizedClientLink>
 
-      {/* Color options */}
+      
       {hasColors && (
-        <div className={`flex space-x-1 mt-2 ${textAlign === "right" ? "mr-3 justify-end" : "ml-3 justify-start"}`} style={{ width: '320px' }}>
-          {colors.slice(0, 3).map((color, idx) => (
-            <div 
-              key={idx} 
-              className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0" 
-              style={{ 
-                backgroundColor: color.value 
-              }}
-              title={color.value}
-            />
-          ))}
+        <div className="flex space-x-2 mt-3 mr-3 justify-end w-full">
+          {colors.slice(0, 3).map((color, idx) => {
+            const colorValue = getColorValue(color.value);
+            return (
+              <div 
+                key={idx} 
+                className="w-5 h-5 rounded-sm border border-gray-300 flex-shrink-0 shadow-sm" 
+                style={{ 
+                  backgroundColor: colorValue,
+                  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
+                }}
+                title={color.value}
+              />
+            );
+          })}
           {colors.length > 3 && (
-            <div className="text-xs text-gray-500 flex items-center">
+            <div className="text-xs text-gray-500 flex items-center font-medium">
               +{colors.length - 3}
             </div>
           )}
         </div>
       )}
 
-      {/* Product info - Обновленный порядок вывода со стилем Золотого Яблока */}
-      <div className={`pt-2 pb-2 flex flex-col ${textAlignClass}`} style={{ width: '320px' }}>
-        {/* Категория товара (первая строка) */}
+      
+      <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
+        
         {secondaryTitle && (
-          <div className={`text-[11px] px-3 mb-1 ${isHovered ? 'text-[#6290C3]' : 'text-black'} transition-colors duration-200 uppercase`}>
+          <div className={`text-[11px] px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
             {secondaryTitle}
           </div>
         )}
         
-        {/* Название товара (вторая строка) - Увеличенный размер текста */}
-        <h3 className={`text-[20px] font-medium px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#6290C3]' : 'text-black'} transition-colors duration-200 uppercase`}>
+        
+        <h3 className={`text-[20px] font-medium px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
           {product.title}
         </h3>
         
-        {/* Цена (третья строка) */}
+        
         {cheapestPrice && (
           <div className="px-3 w-full">
             <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : ""}`}>
-              <span className={`text-[20px] font-bold ${isHovered ? 'text-[#6290C3]' : 'text-black'} transition-colors duration-200 uppercase`}>
+              <span className={`text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
                 {cheapestPrice.calculated_price}
               </span>
               {cheapestPrice.price_type === 'sale' && cheapestPrice.original_price && (

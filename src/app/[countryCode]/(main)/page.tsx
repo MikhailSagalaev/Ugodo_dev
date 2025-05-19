@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { Container } from "@medusajs/ui"
+import { Container, Heading } from "@medusajs/ui"
 
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
@@ -16,6 +16,8 @@ import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import ProductPreview from "@modules/products/components/product-preview"
 import ProductSlider from "@modules/home/components/product-slider"
+import CategoryShowcase from "@modules/home/components/category-showcase"
+import MarketplaceBestsellers from "@modules/home/components/marketplace-bestsellers"
 
 export const metadata: Metadata = {
   title: "Интернет-магазин Ugodo",
@@ -23,7 +25,6 @@ export const metadata: Metadata = {
 }
 
 export default async function Home({ params }: { params: { countryCode: string }}) {
-  // Возвращаем деструктуризацию params
   const { countryCode } = params
   const region = await getRegion(countryCode)
 
@@ -31,7 +32,6 @@ export default async function Home({ params }: { params: { countryCode: string }
     return notFound()
   }
 
-  // Получаем новинки
   const { response: { products: newProducts } } = await listProducts({
     regionId: region.id,
     queryParams: {
@@ -43,7 +43,6 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  // Получаем товары со скидкой
   const { response: { products: saleProducts } } = await listProducts({
     regionId: region.id,
     queryParams: {
@@ -54,7 +53,6 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  // Получаем популярные товары
   const { response: { products: popularProducts } } = await listProducts({
     regionId: region.id,
     queryParams: {
@@ -66,19 +64,30 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
+  // Для блока "Дом и сад" используем часть новых товаров, так как нет специального фильтра
+  const homeGardenProducts = newProducts.slice(0, 8)
+
+  // Для блока "Хиты продаж на маркетплейсах" используем популярные товары
+  const marketplaceBestsellers = popularProducts.slice(0, 8)
+
+  const { response: { products: catalogProducts, count: totalCount } } = await listProducts({
+    regionId: region.id,
+    queryParams: {
+      limit: 16,
+    },
+  }).catch(err => {
+    console.error("Ошибка при загрузке каталога товаров:", err)
+    return { response: { products: [], count: 0 } }
+  })
+
   return (
     <div className="flex flex-col gap-0">
-      {/* Главный баннер верхней части страницы - УДАЛЕН */}
-      
-      {/* Главный слайдер-баннер */}
       <Hero />
       
-      {/* Блок Stories для категорий */}
       <Container className="pt-2 pb-1">
         <CategoryStories />
       </Container>
       
-      {/* Секция с новинками */}
       <Container className="pt-2 pb-6">
         <ProductSlider 
           title="НОВИНКИ" 
@@ -87,20 +96,16 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
-      {/* Выносим PromotionsSlider из Container для полной ширины */}
-      <div className="mt-0 mb-2">
-        <PromotionsSlider />
-      </div>
+      <PromotionsSlider />
       
-      {/* Оборачиваем PromotionsSlider в Container */}
-      {/* <Container className="py-8 md:py-12">
-        <PromotionsSlider />
-      </Container> */}
-      
-      {/* Промо-баннер в середине страницы */}
       <HomeMiddleBanner className="my-8" />
       
-      {/* Секция с популярными товарами */}
+      <CategoryShowcase
+        title="Дом и сад"
+        products={homeGardenProducts}
+        region={region}
+      />
+      
       <Container className="py-8 md:py-12">
         <ProductSlider 
           title="ПОПУЛЯРНОЕ" 
@@ -109,25 +114,25 @@ export default async function Home({ params }: { params: { countryCode: string }
         />
       </Container>
       
-      {/* Выносим WishlistDiscountBanner из Container */}
       <WishlistDiscountBanner />
       
-      {/* Добавляем блок каталога с пагинацией */}
-      <Container className="py-8 md:py-12">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-6">Каталог товаров</h2>
-        <PaginatedProducts 
-          page={1} // Начинаем с первой страницы
-          countryCode={countryCode} 
-          // sortBy="created_at" // Можно добавить сортировку, если нужно
-        />
-      </Container>
+      <MarketplaceBestsellers
+        title="Хиты продаж на маркетплейсах"
+        products={marketplaceBestsellers}
+        region={region}
+      />
       
-      {/* Блок с преимуществами магазина - УДАЛЯЕМ */}
-      {/* 
       <Container className="py-8 md:py-12">
-        <DeliveryFeatures />
+        <div className="w-full max-w-[1360px] mx-auto">
+          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase mb-8">КАТАЛОГ ТОВАРОВ</Heading>
+          <PaginatedProducts 
+            initialProducts={catalogProducts}
+            totalCount={totalCount}
+            countryCode={countryCode}
+            region={region}
+          />
+        </div>
       </Container>
-      */}
     </div>
   )
 }

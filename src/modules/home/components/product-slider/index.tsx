@@ -20,13 +20,53 @@ export default function ProductSlider({
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,
-    slidesToScroll: 1
+    slidesToScroll: 1,
+    startIndex: 1
   })
 
-  // Группируем продукты по 4 штуки для слайдера
+  // Определяем тип флажка в зависимости от заголовка блока
+  const getBadgeType = () => {
+    const normalizedTitle = title.toLowerCase();
+    if (normalizedTitle.includes('новинки')) {
+      return "new";
+    } else if (normalizedTitle.includes('популярное') || normalizedTitle.includes('хит')) {
+      return "hit";
+    }
+    return "none";
+  };
+
+  const badgeType = getBadgeType();
+
+  // Определяем количество карточек в группе в зависимости от размера экрана
+  const [itemsPerGroup, setItemsPerGroup] = useState(4);
+  
+  useEffect(() => {
+    // Функция для определения количества карточек в зависимости от размера экрана
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerGroup(1); // Мобильные устройства - 1 карточка
+      } else if (window.innerWidth < 1024) {
+        setItemsPerGroup(2); // Планшеты - 2 карточки
+      } else if (window.innerWidth < 1280) {
+        setItemsPerGroup(3); // Маленькие десктопы - 3 карточки
+      } else {
+        setItemsPerGroup(4); // Большие десктопы - 4 карточки
+      }
+    };
+    
+    // Вызываем функцию при монтировании и изменении размера окна
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Группируем продукты в зависимости от количества карточек в группе
   const productGroups = []
-  for (let i = 0; i < products.length; i += 4) {
-    productGroups.push(products.slice(i, i + 4))
+  for (let i = 0; i < products.length; i += itemsPerGroup) {
+    productGroups.push(products.slice(i, i + itemsPerGroup))
   }
 
   return (
@@ -62,25 +102,25 @@ export default function ProductSlider({
           <div className="flex">
             {productGroups.map((group, groupIndex) => (
               <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                <div className="flex justify-center gap-8">
+                <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
                   {group.map((product, index) => {
                     const categoryTitle = product.type?.value || 
                       (product.categories && product.categories.length > 0 ? 
                         product.categories[0].name : undefined);
                     
-                    // Выравнивание текста: первые две карточки - справа, остальные - слева
-                    const textAlign = index < 2 ? "right" : "left";
+                    // Всегда выравниваем текст слева
+                    const textAlign = "left";
                     
                     return (
                       <div 
                         key={product.id} 
-                        className="flex justify-center"
+                        className="flex justify-center w-full sm:w-[calc(50%-12px)] md:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)] xl:w-[calc(25%-24px)]"
                       >
                         <ProductPreview 
                           product={product} 
                           region={region} 
                           categoryTitle={categoryTitle}
-                          textAlign={textAlign}
+                          badgeType={badgeType}
                         />
                       </div>
                     )
