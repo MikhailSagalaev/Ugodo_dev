@@ -15,6 +15,7 @@ import DeliveryFeatures from "@modules/home/components/delivery-feature"
 import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import ProductPreview from "@modules/products/components/product-preview"
+import ProductSlider from "@modules/home/components/product-slider"
 
 export const metadata: Metadata = {
   title: "Интернет-магазин Ugodo",
@@ -79,11 +80,10 @@ export default async function Home({ params }: { params: { countryCode: string }
       
       {/* Секция с новинками */}
       <Container className="pt-2 pb-6">
-        <ProductSection 
-          title="Новинки" 
+        <ProductSlider 
+          title="НОВИНКИ" 
           products={newProducts} 
           region={region}
-          link={{ href: "/collections/new-arrivals", text: "Все новинки" }}
         />
       </Container>
       
@@ -102,11 +102,10 @@ export default async function Home({ params }: { params: { countryCode: string }
       
       {/* Секция с популярными товарами */}
       <Container className="py-8 md:py-12">
-        <ProductSection 
-          title="Популярное" 
+        <ProductSlider 
+          title="ПОПУЛЯРНОЕ" 
           products={popularProducts} 
           region={region}
-          link={{ href: "/collections/popular", text: "Смотреть все" }}
         />
       </Container>
       

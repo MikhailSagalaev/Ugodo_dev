@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
 import { Button, Heading, Text } from "@medusajs/ui"
 import { BannerPositionEnum, BannerType } from "../../types"
+import SafeImage from "@modules/common/components/safe-image"
 
 interface BannerProps {
   position: BannerPositionEnum
@@ -73,13 +73,14 @@ const Banner = ({ position, className = "" }: BannerProps) => {
     <div className={`relative w-full overflow-hidden rounded-lg ${className}`}>
       {banner.image_url ? (
         <div className="relative w-full h-[300px]">
-          <Image 
+          <SafeImage 
             src={banner.image_url}
             alt={banner.title}
             fill
             style={{ objectFit: "cover" }}
             priority={position === BannerPositionEnum.HOME_TOP}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
+            startWithPlaceholder={true}
           />
           
           <div className="absolute inset-0 bg-black/30 p-6 flex flex-col justify-center text-white">

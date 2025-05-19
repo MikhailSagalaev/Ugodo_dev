@@ -2,9 +2,9 @@
 import * as React from "react";
 import { HttpTypes } from "@medusajs/types";
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { clx } from "@medusajs/ui";
 import useEmblaCarousel from 'embla-carousel-react';
+import SafeImage from "@modules/common/components/safe-image";
 
 interface ProductGalleryProps {
   images: HttpTypes.StoreProductImage[];
@@ -88,13 +88,14 @@ function ProductGallery({ images }: ProductGalleryProps) {
                     )}
                     data-testid={`product-thumbnail-${image.id}`}
                   >
-                    <Image
+                    <SafeImage
                       src={image.url}
                       alt={thumbAltText}
                       fill
                       sizes="160px"
                       style={{ objectFit: "cover" }}
                       className="absolute inset-0"
+                      startWithPlaceholder={true}
                     />
                   </button>
                 </div>
@@ -116,7 +117,7 @@ function ProductGallery({ images }: ProductGalleryProps) {
             return (
               <div key={image.id} className="embla__slide min-w-0 flex-[0_0_100%] relative">
                 <div className="relative aspect-[440/480] w-full overflow-hidden" data-testid="product-main-image-container">
-                  <Image
+                  <SafeImage
                     src={image.url}
                     alt={currentAltText} 
                     fill
@@ -124,6 +125,7 @@ function ProductGallery({ images }: ProductGalleryProps) {
                     style={{ objectFit: "cover" }}
                     priority={index === selectedIndex} 
                     data-testid="product-main-image"
+                    startWithPlaceholder={true}
                   />
                   <div className="absolute bottom-2 right-2 z-10 pointer-events-none">
                      <div className="px-2 py-1 text-xs text-right text-white rounded bg-black/60 pointer-events-auto">

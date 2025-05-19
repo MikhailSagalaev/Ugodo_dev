@@ -69,14 +69,14 @@ export default async function PaginatedProducts({
   return (
     <>
       <ul
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-x-6 gap-y-8 w-full"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-10 w-full justify-items-center"
         data-testid="products-list"
       >
         {products.map((p) => {
           const categoryTitle = p.type?.value 
                                 || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
           return (
-            <li key={p.id}>
+            <li key={p.id} className="flex justify-center">
               <ProductPreview 
                 product={p} 
                 region={region} 

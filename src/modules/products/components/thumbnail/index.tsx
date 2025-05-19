@@ -1,8 +1,8 @@
 import { Container, clx } from "@medusajs/ui"
-import Image from "next/image"
 import React from "react"
 
 import PlaceholderImage from "@modules/common/icons/placeholder-image"
+import SafeImage from "@modules/common/components/safe-image"
 
 type ThumbnailProps = {
   thumbnail?: string | null
@@ -51,7 +51,7 @@ const ImageOrPlaceholder = ({
   size,
 }: Pick<ThumbnailProps, "size"> & { image?: string }) => {
   return image ? (
-    <Image
+    <SafeImage
       src={image}
       alt="Thumbnail"
       className="absolute inset-0 object-cover object-center"
@@ -59,6 +59,7 @@ const ImageOrPlaceholder = ({
       quality={50}
       sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
       fill
+      startWithPlaceholder={true}
     />
   ) : (
     <div className="w-full h-full absolute inset-0 flex items-center justify-center">
