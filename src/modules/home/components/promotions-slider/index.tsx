@@ -43,7 +43,7 @@ const SLIDE_GAP = 90; // Gap between slides in pixels
 const PromotionsSlider = () => {
   const [selectedIndex, setSelectedIndex] = useState(1)
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
+      loop: true, 
     align: 'center',
     slidesToScroll: 1,
     startIndex: 1
@@ -100,46 +100,46 @@ const PromotionsSlider = () => {
       <div className="w-full relative overflow-hidden"> 
         <div className="overflow-hidden px-[45px]" ref={emblaRef}>
           <div className="flex">
-            {promotionBanners.map((banner, index) => (
-              <div 
-                key={banner.id} 
+          {promotionBanners.map((banner, index) => (
+            <div 
+              key={banner.id} 
                 className="flex-none"
                 style={{ width: `${SLIDE_WIDTH}px`, maxWidth: 'calc(100vw - 40px)', marginRight: `${SLIDE_GAP}px` }}
-              >
+            >
                 <LocalizedClientLink href={banner.link} className="relative block overflow-hidden rounded-md group">
                   <div className="relative w-full" style={{ height: '395px' }}>
-                    <Image 
-                      src={banner.image} 
-                      alt={banner.alt}
-                      fill
-                      priority={index === 0}
-                      loading={index === 0 ? "eager" : "lazy"}
+                  <Image 
+                    src={banner.image} 
+                    alt={banner.alt}
+                    fill
+                    priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
                       sizes="(max-width: 768px) 100vw, 990px"
-                      quality={90}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-0"></div>
+                    quality={90}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-0"></div>
                     <div className="absolute inset-0 z-10 flex flex-col justify-center items-center">
                       <div className="max-w-lg text-white text-center px-8">
-                        <Heading level="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 leading-tight">
-                          {banner.headline}
-                        </Heading>
-                        <Text size="large" className="mb-4 md:mb-6 text-white/90">
-                          {banner.subheadline}
-                        </Text>
-                        <Button 
-                          className="bg-white hover:bg-gray-100 text-black"
-                          size="large"
-                        >
-                          {banner.cta}
-                        </Button>
+                      <Heading level="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 leading-tight">
+                        {banner.headline}
+                      </Heading>
+                      <Text size="large" className="mb-4 md:mb-6 text-white/90">
+                        {banner.subheadline}
+                      </Text>
+                      <Button 
+                        className="bg-white hover:bg-gray-100 text-black"
+                        size="large"
+                      >
+                        {banner.cta}
+                      </Button>
                       </div>
-                    </div>
                   </div>
-                </LocalizedClientLink>
-              </div>
-            ))}
-          </div>
+                </div>
+               </LocalizedClientLink>
+            </div>
+          ))}
+        </div>
         </div>
       </div>
     </section>

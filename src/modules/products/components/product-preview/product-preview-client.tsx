@@ -195,14 +195,14 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
           {/* Нет в наличии */}
           {!product.isInStock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-              <div className="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-md">
+              <div className="bg-black/80 backdrop-blur-sm px-3 sm:px-6 py-3 rounded-md">
                 <span className="text-white font-medium text-lg sm:text-xl">Нет в наличии</span>
               </div>
             </div>
           )}
         </div>
         {/* Блок с ценой, категорией и названием */}
-        <div className="flex flex-col gap-1 px-4 pt-2 pb-4 text-left">
+        <div className="flex flex-col gap-1 px-2 sm:px-4 pt-2 pb-4 text-left">
           {/* ЦЕНА и СТАРАЯ ЦЕНА */}
           {price && (
             <div className="flex items-end gap-2">

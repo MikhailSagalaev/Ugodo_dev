@@ -17,11 +17,16 @@ export default function ProductSlider({
   products, 
   region
 }: ProductSliderProps) {
+  // Определяем разные настройки для мобильной и десктопной версий
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Инициализируем Embla Carousel с разными опциями в зависимости от устройства
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,
-    slidesToScroll: 1,
-    startIndex: 1
+    slidesToScroll: isMobile ? 'auto' : 1, // На мобильных скроллит на сколько проскроллили
+    startIndex: 1,
+    containScroll: isMobile ? 'trimSnaps' : undefined // Для мобильных - свободный скролл
   })
 
   // Определяем тип флажка в зависимости от заголовка блока
@@ -41,9 +46,12 @@ export default function ProductSlider({
   const [itemsPerGroup, setItemsPerGroup] = useState(4);
   
   useEffect(() => {
-    // Функция для определения количества карточек в зависимости от размера экрана
+    // Функция для определения количества карточек и типа устройства
     const handleResize = () => {
-      if (window.innerWidth < 640) {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      
+      if (mobile) {
         setItemsPerGroup(1); // Мобильные устройства - 1 карточка
       } else if (window.innerWidth < 1024) {
         setItemsPerGroup(2); // Планшеты - 2 карточки
@@ -71,64 +79,91 @@ export default function ProductSlider({
 
   return (
     <section className="py-6 md:py-8">
-      <div className="content-container px-4 md:px-8 relative">
-        <div className="flex items-center justify-between mb-8">
+      <div className="content-container px-0 sm:px-4 md:px-8 relative">
+        <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
           <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
           
-          {/* Навигационные стрелки в стиле со скриншота */}
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={() => emblaApi?.scrollPrev()}
-              className="w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
-              aria-label="Предыдущие товары"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button 
-              onClick={() => emblaApi?.scrollNext()}
-              className="w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
-              aria-label="Следующие товары"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          {/* Навигационные стрелки только для десктопа */}
+          {!isMobile && (
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => emblaApi?.scrollPrev()}
+                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
+                aria-label="Предыдущие товары"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button 
+                onClick={() => emblaApi?.scrollNext()}
+                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
+                aria-label="Следующие товары"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex">
-            {productGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
-                  {group.map((product, index) => {
-                    const categoryTitle = product.type?.value || 
-                      (product.categories && product.categories.length > 0 ? 
-                        product.categories[0].name : undefined);
-                    
-                    // Всегда выравниваем текст слева
-                    const textAlign = "left";
-                    
-                    return (
-                      <div 
-                        key={product.id} 
-                        className="flex justify-center w-full sm:w-[calc(50%-12px)] md:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)] xl:w-[calc(25%-24px)]"
-                      >
-                        <ProductPreview 
-                          product={product} 
-                          region={region} 
-                          categoryTitle={categoryTitle}
-                          badgeType={badgeType}
-                        />
-                      </div>
-                    )
-                  })}
+          {isMobile ? (
+            // Мобильная версия - индивидуальные карточки шириной 225px без группировки
+            <div className="flex pl-4 pr-4">
+              {products.map((product) => {
+                const categoryTitle = product.type?.value || 
+                  (product.categories && product.categories.length > 0 ? 
+                    product.categories[0].name : undefined);
+                
+                return (
+                  <div 
+                    key={product.id} 
+                    className="flex-[0_0_225px] mr-4 min-w-0"
+                  >
+                    <ProductPreview 
+                      product={product} 
+                      region={region} 
+                      categoryTitle={categoryTitle}
+                      badgeType={badgeType}
+                      textAlign="left"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            // Десктопная версия - группы карточек с переключением
+            <div className="flex">
+              {productGroups.map((group, groupIndex) => (
+                <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
+                  <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
+                    {group.map((product) => {
+                      const categoryTitle = product.type?.value || 
+                        (product.categories && product.categories.length > 0 ? 
+                          product.categories[0].name : undefined);
+                      
+                      return (
+                        <div 
+                          key={product.id} 
+                          className="flex justify-center w-full sm:w-[calc(50%-12px)] md:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)] xl:w-[calc(25%-24px)]"
+                        >
+                          <ProductPreview 
+                            product={product} 
+                            region={region} 
+                            categoryTitle={categoryTitle}
+                            badgeType={badgeType}
+                            textAlign="left"
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

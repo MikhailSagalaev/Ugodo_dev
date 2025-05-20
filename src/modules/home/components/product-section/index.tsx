@@ -138,7 +138,7 @@ export default function ProductSection({
         
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4"
+          className="flex overflow-x-auto gap-5 sm:gap-8 pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:px-0"
         >
           {products.map((product) => {
             // Получаем название категории из type или categories

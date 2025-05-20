@@ -182,7 +182,7 @@ export default function ProductPreview({
 
   return (
     <div 
-      className="group relative flex flex-col w-full"
+      className="group relative flex flex-col w-full sm:max-w-none max-w-[225px]"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -197,7 +197,7 @@ export default function ProductPreview({
             src={imageSrc}
             alt={product.title || "Product image"}
             fill
-            sizes="(max-width: 640px) 160px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
+            sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
             className="object-cover"
             onError={handleImageError}
             onLoad={handleImageLoad}
@@ -250,7 +250,7 @@ export default function ProductPreview({
         
         {!isInStock && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-black/70 px-4 py-2 rounded">
+            <div className="bg-black/70 px-2 sm:px-4 py-2 rounded">
               <span className="text-white font-medium">Нет в наличии</span>
             </div>
           </div>
@@ -297,15 +297,15 @@ export default function ProductPreview({
           {colors.slice(0, 3).map((color, idx) => {
             const colorValue = getColorValue(color.value);
             return (
-              <div 
-                key={idx} 
+            <div 
+              key={idx} 
                 className="w-5 h-5 rounded-sm border border-gray-300 flex-shrink-0 shadow-sm" 
-                style={{ 
+              style={{ 
                   backgroundColor: colorValue,
                   boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                }}
-                title={color.value}
-              />
+              }}
+              title={color.value}
+            />
             );
           })}
           {colors.length > 3 && (
@@ -320,21 +320,21 @@ export default function ProductPreview({
       <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
         
         {secondaryTitle && (
-          <div className={`text-[11px] px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
+          <div className={`text-[11px] sm:text-[11px] px-2 sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight`}>
             {secondaryTitle}
           </div>
         )}
         
         
-        <h3 className={`text-[20px] font-medium px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
+        <h3 className={`text-base sm:text-[20px] font-medium px-2 sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
           {product.title}
         </h3>
         
         
         {cheapestPrice && (
-          <div className="px-3 w-full">
+          <div className="px-2 sm:px-3 w-full">
             <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : ""}`}>
-              <span className={`text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
+              <span className={`text-base sm:text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
                 {cheapestPrice.calculated_price}
               </span>
               {cheapestPrice.price_type === 'sale' && cheapestPrice.original_price && (

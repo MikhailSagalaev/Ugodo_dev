@@ -140,3 +140,18 @@
 .shadow-elevation-card-rest {
   box-shadow: none !important;
 }
+
+/* Стили для карточек товаров */
+@media (max-width: 640px) {
+  /* Убираем горизонтальные отступы в мобильной версии */
+  div[class*="shadow-elevation-card-rest"][class*="bg-ui-bg-base"][class*="w-full"][class*="rounded-lg"][class*="px-6"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* Убираем горизонтальные отступы во всех карточках с px-6 */
+  div[class*="px-6"][class*="py-4"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
