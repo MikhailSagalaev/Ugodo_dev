@@ -24,9 +24,10 @@ export default function ProductSlider({
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,
-    slidesToScroll: isMobile ? 'auto' : 1, // На мобильных скроллит на сколько проскроллили
+    slidesToScroll: isMobile ? 'auto' : 1,
     startIndex: 1,
-    containScroll: isMobile ? 'trimSnaps' : undefined // Для мобильных - свободный скролл
+    containScroll: isMobile ? 'trimSnaps' : undefined,
+    dragFree: isMobile
   })
 
   // Определяем тип флажка в зависимости от заголовка блока

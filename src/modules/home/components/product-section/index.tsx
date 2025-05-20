@@ -138,7 +138,7 @@ export default function ProductSection({
         
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-5 sm:gap-8 pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:px-0"
+          className="flex overflow-x-auto gap-6 pb-4 hide-scrollbar -mx-4 sm:px-4"
         >
           {products.map((product) => {
             // Получаем название категории из type или categories
@@ -147,7 +147,7 @@ export default function ProductSection({
             return (
               <div 
                 key={product.id} 
-                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)] snap-start"
+                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)]"
               >
                 {/* Передаем categoryTitle в ProductPreview */}
                 <ProductPreview 

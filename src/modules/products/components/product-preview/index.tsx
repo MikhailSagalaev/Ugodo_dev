@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { HttpTypes } from "@medusajs/types";
 import { toast } from "@medusajs/ui";
 import dynamic from "next/dynamic";
@@ -117,6 +117,16 @@ export default function ProductPreview({
   const [isHeartHovered, setIsHeartHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsTabletOrMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Wishlist toggle (simplified)
   const toggleWishlist = (e: React.MouseEvent) => {
@@ -182,17 +192,16 @@ export default function ProductPreview({
 
   return (
     <div 
-      className="group relative flex flex-col w-full sm:max-w-none max-w-[225px]"
+      className={`group relative flex flex-col w-full sm:max-w-none max-w-[225px] ${isTabletOrMobile ? 'pb-6' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       
       <LocalizedClientLink
         href={`/products/${product?.handle}`}
-        className="block relative w-full overflow-hidden bg-white aspect-square"
+        className="block relative w-full overflow-hidden bg-white"
       >
-        
-        <div className="relative w-full h-full transition-transform duration-300 group-hover:scale-105">
+        <div className="relative w-full aspect-square transition-transform duration-300 group-hover:scale-105">
           <Image
             src={imageSrc}
             alt={product.title || "Product image"}
@@ -203,29 +212,27 @@ export default function ProductPreview({
             onLoad={handleImageLoad}
           />
         </div>
+        {/* Белый блок под фото для корзины */}
+        <div className="w-full h-3 lg:h-7 bg-white"></div>
 
-        
         {badgeType === "new" && (
           <div className="absolute top-3 left-3 bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
             NEW
           </div>
         )}
 
-        
         {badgeType === "hit" && (
           <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
             HIT
           </div>
         )}
 
-        
         {badgeType === "none" && cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
           <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
             -{cheapestPrice.percentage_diff}%
           </div>
         )}
 
-        
         <button
           onClick={toggleWishlist}
           onMouseEnter={handleHeartMouseEnter}
@@ -247,7 +254,6 @@ export default function ProductPreview({
           </svg>
         </button>
 
-        
         {!isInStock && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="bg-black/70 px-2 sm:px-4 py-2 rounded">
@@ -256,23 +262,24 @@ export default function ProductPreview({
           </div>
         )}
 
-        
-        {isInStock && isHovered && (
-          <div className="absolute bottom-3 right-3 z-10">
+        {(isInStock && (isTabletOrMobile || isHovered)) && (
+          <div className={isTabletOrMobile ? "absolute bottom-0 right-3 z-10" : "absolute bottom-3 right-3 z-10"}>
             <button
               onClick={handleAddToCart}
-              className={`w-11 h-11 flex items-center justify-center transition-colors duration-200 ${
-                isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-black hover:bg-[#C2E7DA]'
-              }`}
+              className={
+                isTabletOrMobile
+                  ? `w-[35px] h-[35px] flex items-center justify-center bg-black transition-colors duration-200 rounded-md`
+                  : `w-11 h-11 flex items-center justify-center transition-colors duration-200 ${isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-black hover:bg-[#C2E7DA]'} rounded-md`
+              }
               aria-label="Добавить в корзину"
               disabled={isAddingToCart}
             >
               {isAddingToCart ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className={isTabletOrMobile ? "w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" : "w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"} />
               ) : (
                 <svg 
-                  width="20" 
-                  height="20" 
+                  width={isTabletOrMobile ? 20 : 20}
+                  height={isTabletOrMobile ? 20 : 20}
                   viewBox="0 0 24 24" 
                   fill="none" 
                   stroke="white" 
@@ -291,7 +298,6 @@ export default function ProductPreview({
         )}
       </LocalizedClientLink>
 
-      
       {hasColors && (
         <div className="flex space-x-2 mt-3 mr-3 justify-end w-full">
           {colors.slice(0, 3).map((color, idx) => {
@@ -316,7 +322,6 @@ export default function ProductPreview({
         </div>
       )}
 
-      
       <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
         
         {secondaryTitle && (
