@@ -48,9 +48,19 @@ export default function CategoryShowcase({
   const topProducts = products.slice(0, halfPoint)
   const bottomProducts = products.slice(halfPoint)
 
+  const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsTabletOrMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <section className="py-12 relative">
-      <div className="content-container px-4 md:px-8 relative">
+      <div className="content-container md:px-8 relative px-0">
         <div className="w-full max-w-[1360px] mx-auto">
           {/* Название по центру */}
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title.toLowerCase()}</h2>
@@ -87,68 +97,88 @@ export default function CategoryShowcase({
               </LocalizedClientLink>
             </div>
             
-            {/* Карточки товаров справа (вертикальное расположение) */}
-            <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
-              {/* Верхняя карусель */}
-              <div className="relative h-1/2">
-                <div className="overflow-hidden h-full" ref={topEmblaRef}>
-                  <div className="flex h-full">
-                    {topProducts.map((product) => {
-                      const categoryTitle = product.type?.value || 
-                        (product.categories && product.categories.length > 0 ? 
-                          product.categories[0].name : undefined);
-                      
-                      return (
-                        <div 
-                          key={product.id} 
-                          className="flex-shrink-0 w-full"
-                        >
-                          <div className="bg-white rounded-md overflow-hidden h-full">
-                            <ProductPreview 
-                              product={product} 
-                              region={region} 
-                              categoryTitle={categoryTitle}
-                              badgeType="none"
-                              textAlign="left"
-                            />
+            {/* Карточки товаров: горизонтальный скролл на моб/планшетах, вертикальные карусели на десктопе */}
+            {isTabletOrMobile ? (
+              <div className="w-full flex flex-row gap-[20px] overflow-x-auto hide-scrollbar -mx-[10px] px-[10px]">
+                {products.map((product) => {
+                  const categoryTitle = product.type?.value || 
+                    (product.categories && product.categories.length > 0 ? 
+                      product.categories[0].name : undefined);
+                  return (
+                    <div key={product.id} className="flex-shrink-0 w-[225px]">
+                      <div className="aspect-[3/4] w-full">
+                        <ProductPreview 
+                          product={product} 
+                          region={region} 
+                          categoryTitle={categoryTitle}
+                          badgeType="none"
+                          textAlign="left"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
+                {/* Верхняя карусель */}
+                <div className="relative h-1/2">
+                  <div className="overflow-hidden h-full" ref={topEmblaRef}>
+                    <div className="flex h-full">
+                      {topProducts.map((product) => {
+                        const categoryTitle = product.type?.value || 
+                          (product.categories && product.categories.length > 0 ? 
+                            product.categories[0].name : undefined);
+                        return (
+                          <div 
+                            key={product.id} 
+                            className="flex-shrink-0 w-full"
+                          >
+                            <div className="bg-white rounded-md overflow-hidden h-full">
+                              <ProductPreview 
+                                product={product} 
+                                region={region} 
+                                categoryTitle={categoryTitle}
+                                badgeType="none"
+                                textAlign="left"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {/* Нижняя карусель */}
+                <div className="relative h-1/2">
+                  <div className="overflow-hidden h-full" ref={bottomEmblaRef}>
+                    <div className="flex h-full">
+                      {bottomProducts.map((product) => {
+                        const categoryTitle = product.type?.value || 
+                          (product.categories && product.categories.length > 0 ? 
+                            product.categories[0].name : undefined);
+                        return (
+                          <div 
+                            key={product.id} 
+                            className="flex-shrink-0 w-full"
+                          >
+                            <div className="bg-white rounded-md overflow-hidden h-full">
+                              <ProductPreview 
+                                product={product} 
+                                region={region} 
+                                categoryTitle={categoryTitle}
+                                badgeType="none"
+                                textAlign="left"
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Нижняя карусель */}
-              <div className="relative h-1/2">
-                <div className="overflow-hidden h-full" ref={bottomEmblaRef}>
-                  <div className="flex h-full">
-                    {bottomProducts.map((product) => {
-                      const categoryTitle = product.type?.value || 
-                        (product.categories && product.categories.length > 0 ? 
-                          product.categories[0].name : undefined);
-                      
-                      return (
-                        <div 
-                          key={product.id} 
-                          className="flex-shrink-0 w-full"
-                        >
-                          <div className="bg-white rounded-md overflow-hidden h-full">
-                            <ProductPreview 
-                              product={product} 
-                              region={region} 
-                              categoryTitle={categoryTitle}
-                              badgeType="none"
-                              textAlign="left"
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

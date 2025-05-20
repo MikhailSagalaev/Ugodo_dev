@@ -40,12 +40,12 @@ export default function PaginatedProducts({
   const [isLoading, setIsLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(totalCount > PRODUCT_LIMIT)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   
   useEffect(() => {
     // Функция для определения типа устройства
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
+      setIsTabletOrMobile(window.innerWidth < 1024);
     };
     
     // Вызываем функцию при монтировании и изменении размера окна
@@ -100,24 +100,26 @@ export default function PaginatedProducts({
   }
 
   return (
-    <div className="w-full max-w-[1360px] mx-auto px-0 sm:px-4">
+    <div className="w-full max-w-[1360px] mx-auto px-0">
       <div className="overflow-hidden">
         {products.length > 0 && (
           <div className={`
             grid
-            ${isMobile ? 'grid-cols-2 gap-x-4 gap-y-6' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
+            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
             w-full
             justify-start
           `}>
             {products.slice(0, 8).map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
               return (
-                <div key={p.id} className={`flex ${isMobile ? 'justify-center' : 'justify-start'}`}>
-                  <ProductPreview 
-                    product={p} 
-                    region={region} 
-                    categoryTitle={categoryTitle} 
-                  />
+                <div key={p.id} className={`flex ${isTabletOrMobile ? 'justify-center' : 'justify-start'}`}>
+                  <div className="w-full aspect-[3/4]">
+                    <ProductPreview 
+                      product={p} 
+                      region={region} 
+                      categoryTitle={categoryTitle} 
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -126,22 +128,24 @@ export default function PaginatedProducts({
         
         {products.length > 8 && (
           <>
-            <div className={`${isMobile ? 'h-8' : 'h-24'}`}></div> {/* Разделитель между секциями */}
+            <div className={`${isTabletOrMobile ? 'h-8' : 'h-24'}`}></div> {/* Разделитель между секциями */}
             <div className={`
               grid
-              ${isMobile ? 'grid-cols-2 gap-x-4 gap-y-6' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
+              ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
               w-full
               justify-start
             `}>
               {products.slice(8).map((p, index) => {
                 const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
                 return (
-                  <div key={p.id} className={`flex ${isMobile ? 'justify-center' : 'justify-start'}`}>
-                    <ProductPreview 
-                      product={p} 
-                      region={region} 
-                      categoryTitle={categoryTitle} 
-                    />
+                  <div key={p.id} className={`flex ${isTabletOrMobile ? 'justify-center' : 'justify-start'}`}>
+                    <div className="w-full aspect-[3/4]">
+                      <ProductPreview 
+                        product={p} 
+                        region={region} 
+                        categoryTitle={categoryTitle} 
+                      />
+                    </div>
                   </div>
                 );
               })}
