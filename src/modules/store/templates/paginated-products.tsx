@@ -117,7 +117,8 @@ export default function PaginatedProducts({
                     <ProductPreview 
                       product={p} 
                       region={region} 
-                      categoryTitle={categoryTitle} 
+                      categoryTitle={categoryTitle}
+                      firstInRow={isTabletOrMobile && index % 2 === 0}
                     />
                   </div>
                 </div>
@@ -144,6 +145,7 @@ export default function PaginatedProducts({
                         product={p} 
                         region={region} 
                         categoryTitle={categoryTitle} 
+                        firstInRow={isTabletOrMobile && index % 2 === 0}
                       />
                     </div>
                   </div>

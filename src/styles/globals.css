@@ -135,6 +135,15 @@
   display: none; /* Chrome, Safari и Opera */
 }
 
+/* Дополнительный класс для скрытия полосы прокрутки */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE и Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari и Opera */
+}
+
 /* Проверяю существующий файл и добавляю новую анимацию */
 
 .shadow-elevation-card-rest {

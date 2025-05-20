@@ -81,6 +81,8 @@ type ProductPreviewProps = {
   textAlign?: "left" | "right";
   // Тип флажка: new, hit или none
   badgeType?: "new" | "hit" | "none";
+  // Признак первой карточки в ряду для мобильной версии
+  firstInRow?: boolean;
 };
 
 // Иконки-заглушки из примера
@@ -99,6 +101,8 @@ export default function ProductPreview({
   textAlign = "left",
   // Тип флажка: new, hit или none
   badgeType = "none",
+  // Первая карточка в ряду
+  firstInRow = false,
 }: ProductPreviewProps) {
   // Get price information
   const { cheapestPrice } = getProductPrice({
@@ -323,19 +327,19 @@ export default function ProductPreview({
       <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
         
         {secondaryTitle && (
-          <div className={`text-[11px] sm:text-[11px] px-2 sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight`}>
+          <div className={`text-[11px] sm:text-[11px] ${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight`}>
             {secondaryTitle}
           </div>
         )}
         
         
-        <h3 className={`text-base sm:text-[20px] font-medium px-2 sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
+        <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
           {product.title}
         </h3>
         
         
         {cheapestPrice && (
-          <div className="px-2 sm:px-3 w-full">
+          <div className={`${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 w-full`}>
             <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : ""}`}>
               <span className={`text-base sm:text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
                 {cheapestPrice.calculated_price}

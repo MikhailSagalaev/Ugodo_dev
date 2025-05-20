@@ -65,7 +65,7 @@ export default function MarketplaceBestsellers({
           {/* Название по центру */}
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title.toLowerCase()}</h2>
           
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-2">
             {isTabletOrMobile && (
               <div className="w-full order-1 mb-6 block md:hidden">
                 <LocalizedClientLink href="/collections/bestsellers" className="relative block overflow-hidden rounded-md group h-full">
@@ -100,8 +100,8 @@ export default function MarketplaceBestsellers({
             {isTabletOrMobile ? (
               <>
                 {/* Слайдер товаров внизу для мобильной версии */}
-                <div className="w-full flex flex-row gap-[20px] overflow-x-auto hide-scrollbar -mx-[10px] px-[10px] order-2">
-                  {products.map((product) => {
+                <div className="w-full flex flex-row gap-5 overflow-x-auto pl-[10px] pr-[20px] order-2 scrollbar-hide">
+                  {products.map((product, index) => {
                     const categoryTitle = product.type?.value || 
                       (product.categories && product.categories.length > 0 ? 
                         product.categories[0].name : undefined);
@@ -114,6 +114,7 @@ export default function MarketplaceBestsellers({
                             categoryTitle={categoryTitle}
                             badgeType="hit"
                             textAlign="left"
+                            firstInRow={index === 0}
                           />
                         </div>
                       </div>

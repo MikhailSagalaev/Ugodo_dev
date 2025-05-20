@@ -38,7 +38,7 @@ export default function CategoryShowcase({
       slidesToScroll: 1,
     },
     [
-      Autoplay({ delay: 6000, stopOnInteraction: false }) // Different delay to avoid synchronization
+      Autoplay({ delay: 6000, stopOnInteraction: false })
     ]
   )
 
@@ -65,42 +65,43 @@ export default function CategoryShowcase({
           {/* Название по центру */}
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title.toLowerCase()}</h2>
           
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Баннер слева */}
-            <div className="w-full md:w-2/3 lg:w-3/4">
-              <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
-                <div className="relative w-full aspect-[16/9] md:aspect-[3/4]">
-                  <Image 
-                    src="/images/banners/banner.png" 
-                    alt="Дом и сад"
-                    fill
-                    priority
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    quality={90}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-0"></div>
-                  <div className="absolute inset-0 z-10 flex flex-col justify-center items-start p-8 md:p-12">
-                    <div className="max-w-lg text-white">
-                      <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 leading-tight">
-                        Дом и сад
-                      </h3>
-                      <p className="mb-4 md:mb-6 text-white/90 text-lg">
-                        Создайте уютное пространство для жизни с нашей коллекцией товаров для дома и сада
-                      </p>
-                      <div className="inline-block bg-white hover:bg-gray-100 text-black px-6 py-3 rounded-md font-medium transition-colors">
-                        Смотреть коллекцию
+          <div className="flex flex-col md:flex-row gap-2">
+            {isTabletOrMobile && (
+              <div className="w-full order-1 mb-6 block md:hidden">
+                <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
+                  <div className="relative w-full aspect-[16/9]">
+                    <Image 
+                      src="/images/banners/banner.png" 
+                      alt="Дом и сад"
+                      fill
+                      priority
+                      className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                      sizes="100vw"
+                      quality={90}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-0"></div>
+                    <div className="absolute inset-0 z-10 flex flex-col justify-center items-start p-6">
+                      <div className="max-w-lg text-white">
+                        <h3 className="text-2xl sm:text-3xl font-bold mb-2 leading-tight">
+                          Дом и сад
+                        </h3>
+                        <p className="mb-4 text-white/90 text-sm">
+                          Создайте уютное пространство для жизни с нашей коллекцией
+                        </p>
+                        <div className="inline-block bg-white hover:bg-gray-100 text-black px-4 py-2 rounded-md font-medium transition-colors text-sm">
+                          Смотреть коллекцию
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </LocalizedClientLink>
-            </div>
+                </LocalizedClientLink>
+              </div>
+            )}
             
             {/* Карточки товаров: горизонтальный скролл на моб/планшетах, вертикальные карусели на десктопе */}
             {isTabletOrMobile ? (
-              <div className="w-full flex flex-row gap-[20px] overflow-x-auto hide-scrollbar -mx-[10px] px-[10px]">
-                {products.map((product) => {
+              <div className="w-full flex flex-row gap-5 overflow-x-auto pl-[10px] pr-[20px] order-2 scrollbar-hide">
+                {products.map((product, index) => {
                   const categoryTitle = product.type?.value || 
                     (product.categories && product.categories.length > 0 ? 
                       product.categories[0].name : undefined);
@@ -113,6 +114,7 @@ export default function CategoryShowcase({
                           categoryTitle={categoryTitle}
                           badgeType="none"
                           textAlign="left"
+                          firstInRow={index === 0}
                         />
                       </div>
                     </div>
@@ -120,7 +122,7 @@ export default function CategoryShowcase({
                 })}
               </div>
             ) : (
-              <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
+              <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6 order-2 md:order-1">
                 {/* Верхняя карусель */}
                 <div className="relative h-1/2">
                   <div className="overflow-hidden h-full" ref={topEmblaRef}>
@@ -179,6 +181,37 @@ export default function CategoryShowcase({
                 </div>
               </div>
             )}
+            
+            {/* Баннер справа (только для десктопа и планшета) */}
+            <div className="w-full md:w-2/3 lg:w-3/4 hidden md:block order-1 md:order-2">
+              <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
+                <div className="relative w-full aspect-[3/4]">
+                  <Image 
+                    src="/images/banners/banner.png" 
+                    alt="Дом и сад"
+                    fill
+                    priority
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    quality={90}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-0"></div>
+                  <div className="absolute inset-0 z-10 flex flex-col justify-center items-start p-8 md:p-12">
+                    <div className="max-w-lg text-white">
+                      <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 leading-tight">
+                        Дом и сад
+                      </h3>
+                      <p className="mb-4 md:mb-6 text-white/90 text-lg">
+                        Создайте уютное пространство для жизни с нашей коллекцией товаров для дома и сада
+                      </p>
+                      <div className="inline-block bg-white hover:bg-gray-100 text-black px-6 py-3 rounded-md font-medium transition-colors">
+                        Смотреть коллекцию
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </LocalizedClientLink>
+            </div>
           </div>
         </div>
       </div>

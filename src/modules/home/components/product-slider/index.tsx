@@ -17,17 +17,11 @@ export default function ProductSlider({
   products, 
   region
 }: ProductSliderProps) {
-  // Определяем разные настройки для мобильной и десктопной версий
-  const [isMobile, setIsMobile] = useState(false)
-  
-  // Инициализируем Embla Carousel с разными опциями в зависимости от устройства
+  // Инициализируем Embla Carousel только для десктопной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,
-    slidesToScroll: isMobile ? 'auto' : 1,
-    startIndex: 1,
-    containScroll: isMobile ? 'trimSnaps' : undefined,
-    dragFree: isMobile
+    slidesToScroll: 1,
   })
 
   // Определяем тип флажка в зависимости от заголовка блока
@@ -45,16 +39,15 @@ export default function ProductSlider({
 
   // Определяем количество карточек в группе в зависимости от размера экрана
   const [itemsPerGroup, setItemsPerGroup] = useState(4);
+  const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
   
   useEffect(() => {
-    // Функция для определения количества карточек и типа устройства
+    // Функция для определения типа устройства
     const handleResize = () => {
-      const mobile = window.innerWidth < 640;
-      setIsMobile(mobile);
+      const tabletOrMobile = window.innerWidth < 1024;
+      setIsTabletOrMobile(tabletOrMobile);
       
-      if (mobile) {
-        setItemsPerGroup(1); // Мобильные устройства - 1 карточка
-      } else if (window.innerWidth < 1024) {
+      if (window.innerWidth < 1024) {
         setItemsPerGroup(2); // Планшеты - 2 карточки
       } else if (window.innerWidth < 1280) {
         setItemsPerGroup(3); // Маленькие десктопы - 3 карточки
@@ -85,7 +78,7 @@ export default function ProductSlider({
           <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
           
           {/* Навигационные стрелки только для десктопа */}
-          {!isMobile && (
+          {!isTabletOrMobile && (
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => emblaApi?.scrollPrev()}
@@ -109,33 +102,36 @@ export default function ProductSlider({
           )}
         </div>
 
-        <div className="overflow-hidden" ref={emblaRef}>
-          {isMobile ? (
-            // Мобильная версия - индивидуальные карточки шириной 225px без группировки
-            <div className="flex pl-4 pr-4">
-              {products.map((product) => {
-                const categoryTitle = product.type?.value || 
-                  (product.categories && product.categories.length > 0 ? 
-                    product.categories[0].name : undefined);
-                
-                return (
-                  <div 
-                    key={product.id} 
-                    className="flex-[0_0_225px] mr-4 min-w-0"
-                  >
+        {isTabletOrMobile ? (
+          // Мобильная версия - просто горизонтальный скролл без Embla
+          <div className="w-full flex flex-row gap-5 overflow-x-auto pl-[10px] pr-[20px] scrollbar-hide">
+            {products.map((product, index) => {
+              const categoryTitle = product.type?.value || 
+                (product.categories && product.categories.length > 0 ? 
+                  product.categories[0].name : undefined);
+              
+              return (
+                <div 
+                  key={product.id} 
+                  className="flex-shrink-0 w-[225px]"
+                >
+                  <div className="aspect-[3/4] w-full">
                     <ProductPreview 
                       product={product} 
                       region={region} 
                       categoryTitle={categoryTitle}
                       badgeType={badgeType}
                       textAlign="left"
+                      firstInRow={index === 0}
                     />
                   </div>
-                )
-              })}
-            </div>
-          ) : (
-            // Десктопная версия - группы карточек с переключением
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          // Десктопная версия - группы карточек с переключением
+          <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex">
               {productGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
@@ -164,8 +160,8 @@ export default function ProductSlider({
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   )
