@@ -181,7 +181,7 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
               className="absolute right-4 w-12 h-12 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
               aria-label="Добавить в корзину"
               onClick={e => { e.preventDefault(); console.log('Add to cart clicked for product ID (client):', product.id); }}
-              style={{ pointerEvents: 'auto', bottom: '6rem' }}
+              style={{ pointerEvents: 'auto', bottom: '4px' }}
             >
               <Image
                 src="/images/cartIcon.svg"

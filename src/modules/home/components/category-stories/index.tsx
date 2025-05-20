@@ -304,30 +304,26 @@ const CategoryStories = () => {
     <div className="pt-0">
       <div 
         ref={containerRef}
-        className="flex justify-center overflow-x-auto scrollbar-hide py-4 space-x-4 w-full"
+        className="ugodo-stories-scroll flex overflow-x-auto flex-nowrap w-full px-4 py-4 space-x-4 scrollbar-hide md:justify-center md:overflow-x-visible md:flex-wrap"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
         {stories.map((story, index) => (
-          <div // Основной контейнер для одного элемента истории (кружок + текст под ним)
+          <div
             key={story.id}
-            className={`flex-shrink-0 w-16 flex flex-col items-center cursor-pointer group transform transition-all duration-300 ease-in-out mb-4`}
+            className="flex-shrink-0 w-16 flex flex-col items-center cursor-pointer group"
             onClick={() => openStory(story, index)}
             role="button"
             aria-label={`Открыть историю: ${story.title}`}
           >
-            <div // Контейнер для кружка
-              className={`w-16 h-16 rounded-full relative overflow-hidden border-2 border-white ring-1 ring-black group-hover:ring-[#C2E7DA] group-hover:border-[#C2E7DA] ${story.bgColor} ${story.textColor} flex items-center justify-center transition-all duration-200`}
-            >
+            <div className={`w-16 h-16 rounded-full relative overflow-hidden border-2 border-white ring-1 ring-black group-hover:ring-[#C2E7DA] group-hover:border-[#C2E7DA] ${story.bgColor} ${story.textColor} flex items-center justify-center transition-all duration-200`}>
               <span className="font-semibold text-center text-xs uppercase tracking-wider px-1">
                 NEW
               </span>
             </div>
-            {/* Текст под круглой историей */}
-            <span 
-              className="mt-2 text-xs font-medium text-center w-full text-gray-700 dark:text-gray-300 transition-opacity duration-300">
+            <span className="mt-2 text-xs font-medium text-center w-full text-gray-700 dark:text-gray-300 transition-opacity duration-300">
               {story.title}
             </span>
           </div>
@@ -388,7 +384,7 @@ const CategoryStories = () => {
               <div className="w-[540px] h-[72vh] hidden md:block flex-shrink-0" />
             )}
             {/* Центральная карточка */}
-            <div className="w-[636px] h-[85vh] bg-black rounded-lg overflow-hidden z-20 mx-auto flex-shrink-0 relative min-w-0 md:w-[636px] md:h-[85vh] w-full h-auto" style={{maxWidth: '100vw'}}>
+            <div className="w-full h-[80vh] md:w-[636px] md:h-[85vh] bg-black rounded-lg overflow-hidden z-20 mx-auto flex-shrink-0 relative min-w-0" style={{maxWidth: '95vw'}}>
               {/* Индикаторы прогресса для активной карточки */}
               <div className="absolute top-0 left-0 right-0 z-10 flex p-2 gap-1">
                 {activeStory.content?.length > 0 ? 
@@ -510,12 +506,12 @@ const CategoryStories = () => {
       
       {/* Добавляем CSS для скрытия полосы прокрутки */}
       <style jsx global>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE и Edge */
-          scrollbar-width: none;  /* Firefox */
+        .ugodo-stories-scroll::-webkit-scrollbar {
+          display: none;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;  /* Chrome, Safari и Opera */
+        .ugodo-stories-scroll {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>

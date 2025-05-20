@@ -201,7 +201,7 @@ export default function ProductPreview({
         href={`/products/${product?.handle}`}
         className="block relative w-full overflow-hidden bg-white"
       >
-        <div className="relative w-full aspect-square transition-transform duration-300 group-hover:scale-105">
+        <div className="relative w-full aspect-[3/4] transition-transform duration-300 group-hover:scale-105">
           <Image
             src={imageSrc}
             alt={product.title || "Product image"}
@@ -212,8 +212,6 @@ export default function ProductPreview({
             onLoad={handleImageLoad}
           />
         </div>
-        {/* Белый блок под фото для корзины */}
-        <div className="w-full h-3 lg:h-7 bg-white"></div>
 
         {badgeType === "new" && (
           <div className="absolute top-3 left-3 bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
@@ -263,12 +261,12 @@ export default function ProductPreview({
         )}
 
         {(isInStock && (isTabletOrMobile || isHovered)) && (
-          <div className={isTabletOrMobile ? "absolute bottom-0 right-3 z-10" : "absolute bottom-3 right-3 z-10"}>
+          <div className={isTabletOrMobile ? "absolute right-3 bottom-3 z-10" : "absolute bottom-5 right-5 z-10"}>
             <button
               onClick={handleAddToCart}
               className={
                 isTabletOrMobile
-                  ? `w-[35px] h-[35px] flex items-center justify-center bg-black transition-colors duration-200 rounded-md`
+                  ? `w-[35px] h-[35px] flex items-center justify-center bg-black transition-colors duration-200 rounded-md border border-transparent`
                   : `w-11 h-11 flex items-center justify-center transition-colors duration-200 ${isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-black hover:bg-[#C2E7DA]'} rounded-md`
               }
               aria-label="Добавить в корзину"
@@ -299,19 +297,19 @@ export default function ProductPreview({
       </LocalizedClientLink>
 
       {hasColors && (
-        <div className="flex space-x-2 mt-3 mr-3 justify-end w-full">
+        <div className="flex flex-nowrap overflow-x-auto py-1 mt-2 px-2 justify-end w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
           {colors.slice(0, 3).map((color, idx) => {
             const colorValue = getColorValue(color.value);
             return (
-            <div 
-              key={idx} 
-                className="w-5 h-5 rounded-sm border border-gray-300 flex-shrink-0 shadow-sm" 
-              style={{ 
+              <div
+                key={idx}
+                className="w-4 sm:w-5 h-4 sm:h-5 rounded-sm border border-gray-300 flex-shrink-0 shadow-sm mr-1.5"
+                style={{
                   backgroundColor: colorValue,
                   boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-              }}
-              title={color.value}
-            />
+                }}
+                title={color.value}
+              />
             );
           })}
           {colors.length > 3 && (

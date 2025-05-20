@@ -22,44 +22,65 @@ const SafeImage = ({
   startWithPlaceholder = false,
   ...rest 
 }: SafeImageProps) => {
-  // Начинаем с заглушки или с реального изображения в зависимости от настроек
-  const [imgSrc, setImgSrc] = useState(src)
+  // Инициализируем источник изображения
+  const [imgSrc, setImgSrc] = useState<string>(startWithPlaceholder ? fallbackSrc : (src as string))
   const [hadError, setHadError] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Если мы начинаем с заглушки, пытаемся загрузить реальное изображение
+  const [isLoading, setIsLoading] = useState(startWithPlaceholder)
+  
+  // Обновляем источник при изменении src
   useEffect(() => {
-    if (startWithPlaceholder && src) {
-      setIsLoading(true);
-      
-      const img = new window.Image();
-      img.src = src as string;
-      
-      img.onload = () => {
-        setImgSrc(src);
-        setIsLoading(false);
-      };
-      
-      img.onerror = () => {
-        setImgSrc(fallbackSrc);
-        setHadError(true);
-        setIsLoading(false);
-      };
+    if (!src || hadError) return
+    
+    // Если не начинаем с заглушки или уже был один запрос, сразу обновляем src
+    if (!startWithPlaceholder || imgSrc !== fallbackSrc) {
+      setImgSrc(src as string)
+      return
     }
-  }, [src, startWithPlaceholder, fallbackSrc]);
-
+    
+    // Пытаемся предзагрузить изображение, только если начинаем с заглушки
+    if (startWithPlaceholder && src && imgSrc === fallbackSrc) {
+      setIsLoading(true)
+      
+      const img = new window.Image()
+      img.src = src as string
+      
+      const handleLoad = () => {
+        setImgSrc(src as string)
+        setIsLoading(false)
+        img.removeEventListener('load', handleLoad)
+        img.removeEventListener('error', handleError)
+      }
+      
+      const handleError = () => {
+        setImgSrc(fallbackSrc)
+        setHadError(true)
+        setIsLoading(false)
+        img.removeEventListener('load', handleLoad)
+        img.removeEventListener('error', handleError)
+      }
+      
+      img.addEventListener('load', handleLoad)
+      img.addEventListener('error', handleError)
+      
+      return () => {
+        img.removeEventListener('load', handleLoad)
+        img.removeEventListener('error', handleError)
+      }
+    }
+  }, [src, fallbackSrc, startWithPlaceholder, hadError, imgSrc])
+  
   // Обработчик ошибок для случая, когда мы начинаем с реального изображения
   const handleError = () => {
     if (!hadError) {
-      setImgSrc(fallbackSrc);
-      setHadError(true);
+      setImgSrc(fallbackSrc)
+      setHadError(true)
     }
   }
 
   return (
     <Image
       {...rest}
-      src={imgSrc}
+      src={imgSrc || fallbackSrc}
       alt={alt || "Product image"}
       onError={handleError}
       className={`${rest.className || ''} ${isLoading ? 'opacity-70' : ''}`}

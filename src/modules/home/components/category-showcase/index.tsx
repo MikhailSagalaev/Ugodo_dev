@@ -69,7 +69,7 @@ export default function CategoryShowcase({
             {/* Баннер слева */}
             <div className="w-full md:w-2/3 lg:w-3/4">
               <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
-                <div className="relative w-full h-full" style={{ minHeight: '500px' }}>
+                <div className="relative w-full aspect-[16/9] md:aspect-[3/4]">
                   <Image 
                     src="/images/banners/banner.png" 
                     alt="Дом и сад"
