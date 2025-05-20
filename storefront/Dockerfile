@@ -5,8 +5,9 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 # Install dependencies only when needed
-COPY package.json yarn.lock ./
-RUN yarn install --production --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -21,7 +22,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Build application
-RUN yarn build
+RUN npm run build
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
@@ -34,20 +35,20 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=8000
 
 # Copy only necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Switch to non-root user
 USER nextjs
 
 # Expose port
-EXPOSE 8000
+EXPOSE 3000
 
 # Set hostname
+ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["yarn", "start", "-p", "8000"] 
+CMD ["node", "server.js"] 

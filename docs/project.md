@@ -22,7 +22,8 @@ graph TD
         C -- Управление данными --> D[PostgreSQL]
         C -- Поиск --> E[MeiliSearch]
         C -- Платежи --> F[Не определено/Stripe - требует уточнения]
-        C -- Загрузка файлов --> G[MinIO / Локальное хранилище]
+        C -- Загрузка файлов --> G[MinIO (S3-совместимое хранилище, публичный bucket, CORS, интеграция через @medusajs/file-s3)]
+        C -- Кеширование/Сессии --> M[Redis]
         C -- Уведомления --> K[Email/SMS (плагины)]
         C -- Программа лояльности --> L[Кастомный модуль/Плагин]
     end
@@ -70,7 +71,8 @@ graph TD
     - **Платежная система**: Текущий статус не ясен (в `project.md` было пусто, ранее упоминался Stripe). Требуется интеграция (например, Stripe, YooKassa).
     - **Поиск**: Интеграция с MeiliSearch (`medusa-plugin-meilisearch`).
     - **Отзывы о товарах**: Плагины `@appateam/medusa-plugin-product-reviews` и/или `medusa-plugin-reviews`.
-    - **Файловое хранилище**: `medusa-plugin-minio` или `@medusajs/file-local`.
+    - **Файловое хранилище**: MinIO (S3-совместимое, публичный bucket, CORS, интеграция через @medusajs/file-s3, bucket: medusa-uploads, endpoint: http://localhost:9000, forcePathStyle: true)
+    - **Кеширование/Сессии**: Redis (интеграция через модуль @medusajs/cache-redis и переменные окружения)
     - **Уведомления**: Требуется настройка плагинов для email (SendGrid, Mailchimp) и, возможно, SMS.
     - **Список желаний (Wishlist)**: Может требовать кастомной реализации или поиска плагина.
     - **Программа лояльности**: Бонусы, скидки – вероятно, потребует кастомной разработки или специализированного плагина.
@@ -102,12 +104,12 @@ graph TD
     - Поиск: MeiliSearch
     - Платежи: (Не определено/Stripe - требует уточнения)
     - Отзывы: `@appateam/medusa-plugin-product-reviews`, `medusa-plugin-reviews`
-    - Файловое хранилище: MinIO / Local
+    - Файловое хранилище: MinIO (S3-совместимое, публичный bucket, CORS, интеграция через @medusajs/file-s3, bucket: medusa-uploads, endpoint: http://localhost:9000, forcePathStyle: true)
+    - Кеширование/Сессии: Redis (интеграция через модуль @medusajs/cache-redis и переменные окружения)
 - **Инструменты сборки и разработки**:
     - Менеджер пакетов: Yarn
     - Линтинг: ESLint
     - Форматирование: Prettier
-    - Контейнеризация: Docker
 - **Другие используемые технологии**:
     - API документация: Swagger/OpenAPI (генерируется Medusa)
 
@@ -118,9 +120,9 @@ graph TD
 - Коммиты: Conventional Commits.
 
 ## 6. Развертывание
-- Docker (`docker-compose.yml`).
 - PM2 (через `ecosystem.config.js`) для Node.js.
 - Потенциально Vercel для фронтенда, Medusa Cloud для бэкенда.
+- Все локальные настройки Redis и MinIO должны быть упакованы в Docker для удобства развертывания и масштабирования (см. задачи в tasktracker.md).
 
 ## 7. Диаграммы (Mermaid)
 (Основная архитектурная диаграмма приведена выше)
@@ -191,4 +193,39 @@ graph TD
 *   **Адаптивность**: Все блоки должны корректно отображаться на мобильных устройствах, планшетах и десктопах.
 *   **Производительность**: Оптимизация изображений, ленивая загрузка (lazy loading) для контента ниже первого экрана.
 *   **Доступность (A11y)**: Соблюдение стандартов доступности.
-*   **Единый стиль**: Соответствие общему дизайну и UI-киту (`@medusajs/ui` и Tailwind CSS). 
+*   **Единый стиль**: Соответствие общему дизайну и UI-киту (`@medusajs/ui` и Tailwind CSS).
+
+## 10. Docker-инфраструктура (production)
+
+```mermaid
+graph TD
+    subgraph Docker Compose
+        medusa[MedusaJS Backend]
+        nextjs[Next.js Frontend]
+        postgres[(PostgreSQL)]
+        redis[(Redis)]
+        minio[(MinIO S3)]
+    end
+    medusa -- API --> nextjs
+    medusa -- DB --> postgres
+    medusa -- Cache/Sessions --> redis
+    medusa -- S3 Storage --> minio
+    nextjs -- API --> medusa
+```
+
+- Все сервисы запускаются одной командой: `docker compose up -d`
+- Используются только production-конфигурации (без dev/hot-reload)
+- Переменные окружения для каждого сервиса описаны в `.env` и пробрасываются в контейнеры
+- Для хранения данных используются volume (Postgres, MinIO)
+- MinIO доступен по порту 9000 (API) и 9001 (консоль)
+- Next.js и Medusa доступны на портах 3000 и 9000 соответственно (может быть изменено в compose)
+
+### Файловое хранилище (MinIO + S3)
+- Для хранения изображений и других файлов используется MinIO, развернутый локально (http://localhost:9001/browser/medusa-uploads).
+- Интеграция с MedusaJS реализована через модуль @medusajs/file-s3 с параметрами:
+  - bucket: medusa-uploads
+  - endpoint: http://localhost:9000
+  - region: us-east-1
+  - access_key_id/secret_access_key: minioadmin/minioadmin (по умолчанию для локального Minio)
+  - additional_client_config.forcePathStyle: true (обязательно для Minio)
+- Такой подход обеспечивает совместимость с AWS S3 API, возможность масштабирования и переносимости между облачными и on-premise решениями. 

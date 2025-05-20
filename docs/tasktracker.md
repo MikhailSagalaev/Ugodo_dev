@@ -226,3 +226,91 @@
   - [ ] Проверить корректность работы JWT токенов и CORS настроек (связано с первым пунктом)
   - [ ] Протестировать приложение после исправлений
 - **Зависимости**: - 
+
+## Задача: Упаковка проекта Ugodo в Docker (production)
+- **Статус**: В процессе
+- **Описание**: Подготовить production-окружение на базе Docker Compose для сервисов MedusaJS (backend), Next.js (frontend), PostgreSQL, Redis, MinIO. Все сервисы должны запускаться одной командой, использовать production-конфигурации и переменные окружения. Dev-режим и hot-reload не реализуются.
+- **Шаги выполнения**:
+  - [x] Составить план упаковки и архитектуру docker-инфраструктуры
+  - [x] Зафиксировать задачу и обновить changelog
+  - [x] Создать docker-compose.yml с сервисами: medusa, nextjs, postgres, redis, minio
+  - [x] Создать Dockerfile для medusa (production)
+  - [x] Создать Dockerfile для nextjs (production)
+  - [x] Описать volumes, сети, переменные окружения
+  - [x] Исправить проброс env для Next.js на этапе build
+  - [ ] Протестировать запуск всех сервисов
+  - [ ] Провести code review и актуализировать документацию
+- **Зависимости**: docker, nextjs, medusajs, postgresql, redis, minio
+
+## Задача: Оптимизация Docker-конфигурации
+- **Статус**: Завершена
+- **Описание**: Оптимизация Docker-конфигурации для production и development окружений
+- **Шаги выполнения**:
+  - [x] Создание multi-stage Dockerfile для frontend
+  - [x] Создание multi-stage Dockerfile для backend
+  - [x] Оптимизация docker-compose.yml
+  - [x] Настройка Traefik как reverse proxy
+  - [x] Настройка ресурсных лимитов
+  - [x] Оптимизация кэширования
+  - [x] Настройка безопасности
+  - [x] Создание docker-compose.override.yml
+  - [x] Добавление Docker-скриптов
+  - [x] Обновление документации
+- **Зависимости**: 
+  - Medusa.js backend
+  - Next.js frontend
+  - PostgreSQL
+  - Redis
+  - MinIO
+- **Результаты**:
+  - Уменьшен размер образов
+  - Улучшена безопасность
+  - Оптимизирована производительность
+  - Настроено development окружение
+  - Добавлены удобные скрипты управления
+
+## Задача: Проверка конфигурации MedusaJS и подключения к БД
+- **Статус**: Завершена (Redis и MinIO запущены, остальное удалено из Docker)
+- **Описание**: По запросу пользователя конфигурация Docker была упрощена. Удалены сервисы `backend` и `postgres`. Сервис `frontend` закомментирован. Устранены конфликты портов. Запущены только `redis` и `minio`.
+- **Шаги выполнения**:
+  - [x] Получить актуальную дату
+  - [x] Инициализировать/обновить файлы документации (tasktracker.md, changelog.md)
+  - [x] Найти документацию MedusaJS по подключению к БД и запуску
+  - [x] Проверить файл `medusa-config.ts` на корректность настроек БД
+  - [x] Найти `docker-compose.yml` и проанализировать конфигурацию сервисов
+  - [x] Определить переменные окружения для `.env`
+  - [x] Удалить модуль `@medusajs/stock-location` из `medusa-config.ts`
+  - [x] Удалить зависимость `@medusajs/stock-location` из `medusa/package.json`
+  - [x] Попытка запустить `docker-compose up --build -d`
+  - [x] Анализ логов `backend`, выявление проблем с переменными окружения и модулем `Stock_location`.
+  - [x] Возврат `@medusajs/stock-location` в `package.json` и `medusa-config.ts`
+  - [x] Закомментирован сервис `frontend` в `docker-compose.yml` для упрощения.
+  - [x] Удалены `@medusajs/inventory` и `@medusajs/stock-location` из `medusa-config.ts`.
+  - [x] Обновлен `docker-compose.yml` для явного указания `env_file: ./medusa/.env` для сервиса `backend` и переопределения `DATABASE_URL` и `REDIS_URL` для Docker.
+  - [x] Анализ логов после изменений `docker-compose.yml` - ошибки `relation "public.country" does not exist` и другие.
+  - [x] Проверить наличие скрипта `seed` в `medusa/package.json`.
+  - [x] Изменен `CMD` в `medusa/Dockerfile` на `sh -c "printenv && yarn medusa db:migrate && yarn seed && yarn dev"`.
+  - [x] Удалены сервисы `backend` и `postgres` из `docker-compose.yml`.
+  - [x] Удалены сервисы `backend` и `postgres` из `docker-compose.override.yml`.
+  - [x] Закомментирован сервис `frontend` в `docker-compose.override.yml`.
+  - [x] Изменен порт для `minio` в `docker-compose.override.yml` для устранения конфликта.
+  - [x] Успешно запущены сервисы `redis` и `minio`.
+  - [ ] Проверить корректность всех переменных в `medusa/.env` и корневом `.env` (если используется для `postgres` и `redis`).
+- **Зависимости**: Корректные переменные окружения в `.env` файлах.
+
+## Задача: Интеграция Minio через S3-провайдер в MedusaJS
+- **Статус**: В процессе
+- **Описание**: Настроить файловый провайдер MedusaJS для работы с Minio (http://localhost:9001/browser/medusa-uploads) через модуль @medusajs/file-s3. Обеспечить загрузку и хранение файлов в Minio, корректную работу с публичными и приватными файлами.
+- **Шаги выполнения**:
+  - [x] Изучить документацию MedusaJS по настройке S3-провайдера и особенностям Minio (forcePathStyle, endpoint, credentials).
+  - [x] Проверить наличие и версию пакета @medusajs/file-s3 в package.json и node_modules.
+  - [x] Зафиксировать начало задачи в changelog.md и tasktracker.md.
+  - [x] Добавить и настроить провайдер @medusajs/file-s3 в medusa-config.ts с параметрами для Minio.
+  - [x] Скорректировать `endpoint` на `http://localhost:9000` и удалить `public_url` в `medusa-config.ts` для S3-провайдера Minio.
+  - [x] Перевести конфигурацию S3-провайдера на использование переменных окружения (`S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`).
+  - [x] Добавить параметр `file_url` (через `S3_FILE_URL`) в конфигурацию S3-провайдера.
+  - [ ] Убедиться, что все необходимые S3-переменные окружения (`S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_FILE_URL`) корректно заданы в файле `.env`.
+  - [ ] Протестировать загрузку файлов через MedusaJS (API, админка).
+  - [ ] Проверить отображение загруженных изображений в админке Medusa.
+  - [ ] Описать изменения в документации (`project.md`).
+- **Зависимости**: Развернутый и доступный Minio. Корректно настроенные переменные окружения в `.env`.

@@ -1,48 +1,67 @@
-version: '3'
+version: '3.8'
 
 services:
-  medusa:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "9000:9000"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/medusa-db
-      - STORE_CORS=http://localhost:8000,http://89.108.110.26:8000,https://ugodo.ru
-      - ADMIN_CORS=http://localhost:9000,http://89.108.110.26:9000,https://ugodo.ru
-      - AUTH_CORS=http://localhost:9000,http://89.108.110.26:9000,http://localhost:8000,http://89.108.110.26:8000,https://ugodo.ru
-      - MEDUSA_BACKEND_URL=https://ugodo.ru
-      - JWT_SECRET=supersecret
-      - COOKIE_SECRET=supersecret
-    depends_on:
-      - postgres
-    volumes:
-      - ./medusa:/app
-    working_dir: /app
-    # Запускаем Medusa сервер напрямую из монтированного каталога
-    command: sh -c "yarn install && yarn build && yarn start"
-    restart: unless-stopped
-    networks:
-      - medusa-network
-      
-  postgres:
-    image: postgres:14
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=medusa-db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - medusa-network
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: runner
+  #   environment:
+  #     - NODE_ENV=production
+  #     - NEXT_PUBLIC_MEDUSA_BACKEND_URL=${MEDUSA_URL}
+  #     - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+  #     - PORT=8000
+  #   networks:
+  #     - medusa-network
+  #   depends_on:
+  #     - backend
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '1'
+  #         memory: 1G
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
 
-volumes:
-  postgres_data:
-  
+  redis:
+    image: redis:7.4.3
+    container_name: ugodo_dev-redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio
+    container_name: ugodo_dev-minio-1
+    ports:
+      - 9100:9000
+      - 9101:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
 networks:
   medusa-network:
-    driver: bridge 
+    name: medusa-network
+
+volumes:
+  # postgres-data: # Том удален, так как сервис postgres удален
+  redis-data:
+  minio-data: 

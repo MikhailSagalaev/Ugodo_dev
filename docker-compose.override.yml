@@ -1,15 +1,24 @@
-version: '3'
-
 services:
-  medusa:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: deps
+  #   command: npm run dev
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   environment:
+  #     - NODE_ENV=development
+    
+  redis:
     ports:
-      - "9000:9000"
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - ./medusa/src:/app/src
-      - ./medusa/medusa-config.ts:/app/medusa-config.ts
-    command: npm run dev 
+      - "6379:6379"
+
+  minio:
+    ports:
+      - "9102:9000"
+      - "9001:9001" 

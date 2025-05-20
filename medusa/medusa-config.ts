@@ -12,7 +12,7 @@ module.exports = defineConfig({
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
-    redis_url: null
+    redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
   },
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
@@ -30,10 +30,18 @@ module.exports = defineConfig({
       options: {
         providers: [
           {
-            resolve: "@medusajs/medusa/file-local",
-            id: "local",
+            resolve: "@medusajs/file-s3",
+            id: "s3",
             options: {
-              upload_dir: "uploads",
+              file_url: process.env.S3_URL,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              region: "us-east-1",
+              bucket: process.env.S3_BUCKET,
+              endpoint: process.env.S3_ENDPOINT,
+              additional_client_config: {
+                forcePathStyle: true,
+              },
             },
           },
         ],

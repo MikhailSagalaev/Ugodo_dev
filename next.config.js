@@ -1,10 +1,6 @@
 const checkEnvVariables = require("./check-env-variables")
 
-checkEnvVariables()
-
-/**
- * @type {import('next').NextConfig}
- */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   logging: {
@@ -19,12 +15,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    turbo: {
-      // настройки turbo здесь
-    },
+    turbo: {},
     optimizeCss: true,
     scrollRestoration: true,
   },
+  output: 'standalone',
+  poweredByHeader: false,
+  compress: true,
   images: {
     remotePatterns: [
       {
@@ -56,7 +53,28 @@ const nextConfig = {
         hostname: "via.placeholder.com",
       },
     ],
+    minimumCacheTTL: 60,
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Не включаем cloudflare:sockets на клиенте
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        "cloudflare:sockets": false,
+      }
+    }
+    
+    // Оптимизация бандла
+    config.optimization = {
+      ...config.optimization,
+      moduleIds: 'deterministic',
+      chunkIds: 'deterministic',
+    }
+    
+    return config
   },
 }
+
+checkEnvVariables()
 
 module.exports = nextConfig

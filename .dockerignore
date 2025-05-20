@@ -1,15 +1,56 @@
+# Dependencies
 node_modules
-.git
-.github
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Next.js
 .next
+out
+
+# Environment
+.env*
+!.env.example
+
+# IDE
+.idea
+.vscode
+
+# Git
+.git
+.gitignore
+
+# Build
+dist
+build
+
+# Logs
+logs
+*.log
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+
+# Temp files
+*.swp
+*.swo
+*~
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker
+
+.github
 dist
 .medusa-uploads
-.env*
-!.env.template
 README.md
 README-DEPLOYMENT.md
 **/.DS_Store
 **/node_modules
-.vscode
-.idea
 tmp 
