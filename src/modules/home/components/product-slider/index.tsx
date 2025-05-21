@@ -17,7 +17,7 @@ export default function ProductSlider({
   products, 
   region
 }: ProductSliderProps) {
-  // Инициализируем Embla Carousel только для десктопной версии
+ 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     loop: true,

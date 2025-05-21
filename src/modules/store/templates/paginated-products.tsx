@@ -160,7 +160,7 @@ export default function PaginatedProducts({
         <div className="flex justify-center mt-16">
           <Button 
             variant="secondary" 
-            className="w-full max-w-xs bg-black text-white uppercase hover:bg-black/80 py-4 text-sm font-medium"
+            className="w-full max-w-xs bg-[#1A1341] text-white uppercase hover:bg-black/80 py-4 text-sm font-medium"
             onClick={loadMoreProducts}
             isLoading={isLoading}
             disabled={isLoading}

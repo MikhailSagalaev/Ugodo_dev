@@ -270,8 +270,8 @@ export default function ProductPreview({
               onClick={handleAddToCart}
               className={
                 isTabletOrMobile
-                  ? `w-[35px] h-[35px] flex items-center justify-center bg-black transition-colors duration-200 rounded-md border border-transparent`
-                  : `w-11 h-11 flex items-center justify-center transition-colors duration-200 ${isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-black hover:bg-[#C2E7DA]'} rounded-md`
+                  ? `w-[35px] h-[35px] flex items-center justify-center bg-[#1A1341] transition-colors duration-200 rounded-md border border-transparent`
+                  : `w-11 h-11 flex items-center justify-center transition-colors duration-200 ${isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'} rounded-md`
               }
               aria-label="Добавить в корзину"
               disabled={isAddingToCart}
