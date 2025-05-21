@@ -11,7 +11,7 @@ import { HttpTypes } from "@medusajs/types"
 import { clx } from "@medusajs/ui"
 import Image from "next/image"
 
-export default function CartButton({ isScrolled = false }: { isScrolled?: boolean }) {
+export default function CartButton({ isScrolled = false, isHome = false }: { isScrolled?: boolean, isHome?: boolean }) {
   // Используем HttpTypes.StoreCart | null для типа состояния
   const [cart, setCart] = useState<HttpTypes.StoreCart | null>(null)
   const [loading, setLoading] = useState(true)
@@ -67,7 +67,7 @@ export default function CartButton({ isScrolled = false }: { isScrolled?: boolea
           height="22" 
           viewBox="0 0 22 22" 
           fill="none" 
-          stroke={!isScrolled ? "white" : "black"}
+          stroke={isHome && !isScrolled ? "white" : "black"}
           className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
           xmlns="http://www.w3.org/2000/svg"
         >

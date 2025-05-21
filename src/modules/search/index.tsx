@@ -23,9 +23,10 @@ interface Product {
 
 interface SearchProps {
   isScrolled?: boolean
+  isHome?: boolean
 }
 
-const Search = ({ isScrolled = false }: SearchProps) => {
+const Search = ({ isScrolled = false, isHome = false }: SearchProps) => {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Product[]>([])
@@ -106,7 +107,7 @@ const Search = ({ isScrolled = false }: SearchProps) => {
           height="22" 
           viewBox="0 0 22 22" 
           fill="none" 
-          stroke={!isScrolled ? "white" : "black"}
+          stroke={isHome && !isScrolled ? "white" : "black"}
           className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
           xmlns="http://www.w3.org/2000/svg"
         >

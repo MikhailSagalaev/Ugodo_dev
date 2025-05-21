@@ -230,7 +230,7 @@ export default function ProductActions({
             <div className="flex flex-col gap-y-4 items-start">
               {(product.options || []).map((option) => {
                 return (
-                  <div key={option.id}>
+                  <div key={option.id} className="w-full">
                     <OptionSelect
                       option={option}
                       current={options[option.id]}
@@ -242,13 +242,23 @@ export default function ProductActions({
                   </div>
                 )
               })}
-              <Divider />
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-x-4 mt-4">
-          <div className="flex items-center gap-x-3">
+        {/* Блок авторизации и бонусов */}
+        <div className="flex items-center gap-2 mt-4 mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="black" strokeWidth="2"/>
+            <path d="M12 8v8M8 12h8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <div className="text-sm">
+            <a href="/account/login" className="font-bold underline">авторизуйся</a> и получай бонусы
+          </div>
+        </div>
+
+        {/* Кнопки добавления в корзину и избранное */}
+        <div className="flex w-full gap-2 mb-6">
           <Button
             onClick={handleAddToCart}
             disabled={
@@ -259,7 +269,7 @@ export default function ProductActions({
               !isValidVariant
             }
             variant="primary"
-            className="w-full h-10"
+            className="flex-1 h-12 bg-black !text-white text-sm uppercase font-medium"
             isLoading={isAdding}
             data-testid="add-product-button"
           >
@@ -272,7 +282,7 @@ export default function ProductActions({
           
           <Button
             variant="secondary"
-            className={`min-w-[40px] h-10 !px-2 relative ${isLoadingCustomer || !customer || isLoadingWishlist ? 'cursor-wait' : ''}`}
+            className={`w-16 h-12 !px-2 border border-gray-300 relative ${isLoadingCustomer || !customer || isLoadingWishlist ? 'cursor-wait' : ''}`}
             onClick={handleWishlistToggle}
             disabled={isLoadingCustomer || !customer || isLoadingWishlist}
             aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
@@ -289,18 +299,17 @@ export default function ProductActions({
           </Button>
         </div>
 
-          <div className="flex flex-col gap-y-2">
-            {product && (
-              <ProductPrice
-                product={product}
-                variant={selectedVariant}
-                region={region}
-              />
-            )}
-          </div>
+        {/* Наличие в магазинах */}
+        <div className="w-full">
+          <a href="#" className="flex items-center text-sm font-medium">
+            <span>Наличие в магазинах</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1">
+              <path d="M9 18l6-6-6-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
         </div>
 
-        {/* @ts-ignore */}
+        {/* Мобильные действия */}
         <MobileActions
           product={product}
           variant={selectedVariant}
