@@ -52,6 +52,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "via.placeholder.com",
       },
+      {
+        protocol: 'https',
+        hostname: 'api.ugodo.ru',
+        port: '', // Если используется стандартный порт 443, можно оставить пустым
+        pathname: '/files/medusa-uploads/**', // Разрешаем все пути внутри /files/medusa-uploads/
+      },
     ],
     minimumCacheTTL: 60,
   },
