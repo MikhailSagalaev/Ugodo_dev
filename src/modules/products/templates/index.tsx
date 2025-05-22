@@ -17,6 +17,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import { addToCart } from "@lib/data/cart"
 import { useParams } from "next/navigation"
 import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer"
+import SafeImage from "@modules/common/components/safe-image"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -39,6 +40,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedTab, setSelectedTab] = useState("ОПИСАНИЕ");
   const params = useParams();
+  
+  // Индекс выбранного изображения для галереи
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  // Индекс первой видимой миниатюры в списке (для скроллинга)
+  const [visibleThumbStartIndex, setVisibleThumbStartIndex] = useState(0);
   
   // Флаги для отслеживания состояния загрузки данных
   const [customerLoaded, setCustomerLoaded] = useState(false);
@@ -139,9 +145,29 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   };
 
+  // Функции для навигации по миниатюрам
+  const scrollThumbnailsUp = () => {
+    if (visibleThumbStartIndex > 0) {
+      setVisibleThumbStartIndex(visibleThumbStartIndex - 1);
+    }
+  };
+  
+  const scrollThumbnailsDown = () => {
+    if (product.images && visibleThumbStartIndex < product.images.length - 4) {
+      setVisibleThumbStartIndex(visibleThumbStartIndex + 1);
+    }
+  };
+
   if (!product || !product.id) {
     return notFound()
   }
+
+  // Отладка структуры объекта product
+  console.log("Product structure:", {
+    id: product.id,
+    title: product.title,
+    categories: product.categories
+  })
 
   // Формируем хлебные крошки на основе категорий продукта
   const breadcrumbItems: BreadcrumbItem[] = []
@@ -154,12 +180,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     })
   }
   
-  // Получаем категорию продукта из данных API
-  const productCategory = product.categories?.[0]?.name || "Косметичка"
+  // Используем заглушку для категории, пока не добавим API запрос к product_category
+  const productCategory = "Shirts" // Заглушка - первая категория из скриншота БД
   // Получаем название продукта
-  const productTitle = product.title || "LUVINE papain & zink"
-  // Получаем подзаголовок или тип продукта
-  const productSubtitle = product.subtitle || "cosmetic bag"
+  const productTitle = product.title || ""
+  // Получаем подзаголовок или тип продукта - если нет, не отображаем
+  const productSubtitle = product.subtitle || ""
   // Получаем варианты продукта для отображения объема/размера/количества
   const variants = product.variants || []
   // Проверяем, есть ли бирка NEW у продукта
@@ -196,10 +222,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     <div className="pb-16 mt-[100px]">
       {/* Верхний блок с хлебными крошками, категорией и названием - смещен вправо от центра */}
       <div className="content-container flex items-start mt-4 mb-6">
-        {/* Блок с контентом смещен вправо от центра на 20px */}
-        <div className="flex flex-col w-full" style={{ paddingLeft: "calc(50% + 20px)" }}>
+        <div className="flex w-1/2 items-center self-center justify-start">
+          <Breadcrumbs items={breadcrumbItems} />
+        </div>
+        
+        <div className="flex flex-col w-1/2" style={{ paddingLeft: "20px" }}>
           <div className="flex items-center mb-3">
-            {/* Рейтинг и отзывы */}
             <div className="flex items-center">
               <span className="text-lg">★★★★☆</span>
             </div>
@@ -208,10 +236,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
             
           <div className="flex items-center mb-2">
-            {/* Хлебные крошки и категория на одном уровне */}
-            <Breadcrumbs items={breadcrumbItems} className="text-sm mr-4" />
-            
-            <div className="uppercase text-xs tracking-widest"
+            <div className="uppercase"
                 style={{
                   fontSize: "11px",
                   fontWeight: 500,
@@ -249,15 +274,72 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       {/* Основная информация о продукте - галерея и опции */}
       <div className="content-container flex justify-center mb-16">
         <div className="flex relative">
-          {/* Миниатюры слева от основной фотографии с отступом 60px */}
+          {/* Миниатюры слева от основной фотографии - выровнены по центру */}
           {product.images && product.images.length > 1 && (
-            <div className="absolute" style={{ right: "calc(100% + 60px)" }}>
-              <ProductGallery 
-                images={product.images} 
-                mainImageSize={{ width: 989, height: 674 }}
-                thumbnailSize={{ width: 70, height: 70 }}
-                thumbnailsOnly={true}
-              />
+            <div className="absolute top-1/2 transform -translate-y-1/2" style={{ right: "calc(100% + 60px)" }}>
+              <div className="flex flex-col items-center">
+                {/* Стрелка вверх */}
+                <button 
+                  onClick={scrollThumbnailsUp}
+                  className="mb-2 focus:outline-none"
+                  disabled={visibleThumbStartIndex === 0}
+                >
+                  <svg 
+                    width="15" 
+                    height="15" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ color: visibleThumbStartIndex === 0 ? '#CCCCCC' : '#000000' }}
+                  >
+                    <path d="M18 15l-6-6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                
+                {/* Отображаем только 4 миниатюры */}
+                <div className="flex flex-col">
+                  {product.images
+                    .slice(visibleThumbStartIndex, visibleThumbStartIndex + 4)
+                    .map((image, index) => {
+                      const actualIndex = index + visibleThumbStartIndex;
+                      return (
+                        <div 
+                          key={image.id}
+                          onClick={() => setSelectedImageIndex(actualIndex)}
+                          className={`relative cursor-pointer my-2 transition-opacity ${selectedImageIndex === actualIndex ? 'opacity-100 ring-1 ring-black' : 'opacity-50'}`}
+                          style={{ width: "70px", height: "70px" }}
+                        >
+                          <SafeImage
+                            src={image.url}
+                            alt={`Thumbnail ${actualIndex + 1}`}
+                            fill
+                            sizes="70px"
+                            style={{ objectFit: "cover" }}
+                            className="absolute inset-0"
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+                
+                {/* Стрелка вниз */}
+                <button 
+                  onClick={scrollThumbnailsDown}
+                  className="mt-2 focus:outline-none"
+                  disabled={!product.images || visibleThumbStartIndex >= product.images.length - 4}
+                >
+                  <svg 
+                    width="15" 
+                    height="15" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ color: !product.images || visibleThumbStartIndex >= product.images.length - 4 ? '#CCCCCC' : '#000000' }}
+                  >
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           
@@ -269,11 +351,19 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   NEW
                 </div>
               )}
-              <ProductGallery 
-                images={product.images || []} 
-                mainImageSize={{ width: 989, height: 674 }}
-                mainImageOnly={true}
-              />
+              {/* Отображаем выбранное изображение */}
+              <div style={{ width: "989px", height: "674px", position: "relative" }}>
+                {product.images && product.images.length > 0 && (
+                  <SafeImage
+                    src={product.images[selectedImageIndex].url}
+                    alt={`Product image ${selectedImageIndex + 1}`}
+                    fill
+                    priority
+                    sizes="989px"
+                    style={{ objectFit: "cover" }}
+                  />
+                )}
+              </div>
             </div>
             
             {/* Блоки с гарантией и доставкой */}
@@ -311,8 +401,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
           </div>
           
-          {/* Блок с ценой и кнопками - отступ 90px и выровнен по вертикали */}
-          <div className="flex items-center" style={{ marginLeft: "90px" }}>
+          {/* Блок с ценой и кнопками - новые отступы: padding: 60px 90px 0 */}
+          <div style={{ padding: "60px 90px 0" }}>
             <div className="w-[400px]">
               {/* Всегда показываем блок с количеством */}
               <div className="mb-6">
@@ -560,103 +650,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       </div>
       
       {/* Блок "Рейтинг и отзывы" */}
-      <div className="content-container my-16">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-medium">рейтинг и отзывы</h2>
-          <div className="flex items-center">
-            <span>смотреть все</span>
-            <span className="ml-1">→</span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-12 mb-12">
-          <div className="md:w-1/3 flex items-center">
-            <div className="text-7xl font-bold mr-4">4.2</div>
-            <div className="flex flex-col">
-              <div className="flex">★★★★☆</div>
-              <div className="text-sm text-gray-500">оценка товара</div>
-            </div>
-          </div>
-          
-          <div className="md:w-1/3 flex items-center">
-            <div className="text-7xl font-bold mr-4">66<span className="text-2xl">%</span></div>
-            <div className="text-sm text-gray-500">покупателей<br/>рекомендуют</div>
-          </div>
-          
-          <div className="md:w-1/3 flex items-center">
-            <div className="text-7xl font-bold mr-4">6</div>
-            <div className="text-sm text-gray-500">отзывов</div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <div className="flex items-center mb-2">
-              <div className="w-8 text-right mr-4">5 ★</div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                <div className="bg-black h-full w-[66%]"></div>
-              </div>
-              <div className="ml-2 text-sm text-gray-500 w-10">66%</div>
-            </div>
-            <div className="flex items-center mb-2">
-              <div className="w-8 text-right mr-4">4 ★</div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                <div className="bg-black h-full w-0"></div>
-              </div>
-              <div className="ml-2 text-sm text-gray-500 w-10">0%</div>
-            </div>
-            <div className="flex items-center mb-2">
-              <div className="w-8 text-right mr-4">3 ★</div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                <div className="bg-black h-full w-[17%]"></div>
-              </div>
-              <div className="ml-2 text-sm text-gray-500 w-10">17%</div>
-            </div>
-            <div className="flex items-center mb-2">
-              <div className="w-8 text-right mr-4">2 ★</div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                <div className="bg-black h-full w-[17%]"></div>
-              </div>
-              <div className="ml-2 text-sm text-gray-500 w-10">17%</div>
-            </div>
-            <div className="flex items-center mb-2">
-              <div className="w-8 text-right mr-4">1 ★</div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                <div className="bg-black h-full w-0"></div>
-              </div>
-              <div className="ml-2 text-sm text-gray-500 w-10">0%</div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="mb-8">
-              <div className="flex justify-between mb-2">
-                <div className="font-medium">Александра Л.</div>
-                <div>★★☆☆☆</div>
-              </div>
-              <div className="text-xs text-gray-500 mb-2">4 недели назад</div>
-              <p className="text-sm">Не пенится вообще. Как тальк водичкой развела и получилась кашица. Отвратительно пахнет. Эффекта от умывания нет(</p>
-            </div>
-            
-            <div className="mb-8">
-              <div className="flex justify-between mb-2">
-                <div className="font-medium">Кадирова М.</div>
-                <div>★★★☆☆</div>
-              </div>
-              <div className="text-xs text-gray-500 mb-2">месяц назад</div>
-              <p className="text-sm">упаковка</p>
-            </div>
-            
-            <div>
-              <div className="flex justify-between mb-2">
-                <div className="font-medium">Элиф 350</div>
-                <div>★★★★★</div>
-              </div>
-              <div className="text-xs text-gray-500 mb-2">месяц назад</div>
-              <p className="text-sm">Он нежно очищает кожу лица</p>
-            </div>
-          </div>
-        </div>
+      <div className="content-container my-16 pt-16">
+        <ProductReviews productId={product.id} />
       </div>
       
       {/* Похожие товары */}

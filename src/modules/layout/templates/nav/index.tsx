@@ -41,11 +41,16 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
-      // Check if scrolled more than 100px to change header background
-      if (currentScrollY > 100) {
-        setIsScrolled(true)
+      if (isHome) {
+        // Только на главной странице меняем стиль шапки при скролле
+        if (currentScrollY > 100) {
+          setIsScrolled(true)
+        } else {
+          setIsScrolled(false)
+        }
       } else {
-        setIsScrolled(false)
+        // На всех остальных страницах шапка всегда как при наведении
+        setIsScrolled(true)
       }
       
       // Hide/show catalog nav based on scroll direction
@@ -66,7 +71,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     return () => {
       window.removeEventListener("scroll", handleScroll)
     }
-  }, [lastScrollY])
+  }, [lastScrollY, isHome])
 
   useEffect(() => {
     if (headerRef.current) {
@@ -76,7 +81,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
 
   // Determine icon color based on scroll state and group hover
   const getIconColor = () => {
-    if (isScrolled) return "black";
+    if (isScrolled || !isHome) return "black";
     return "white";
   }
 
@@ -89,15 +94,15 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
 
   return (
     <>
-      {!isHome && <div style={{ height: `${headerHeight}px` }} />}
+      {!isHome && <div style={{ height: `${headerHeight + 50}px` }} />}
       
       <div 
         ref={headerRef}
         className={clx(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group hover:bg-white",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group",
           {
-            "bg-transparent": !isScrolled,
-            "bg-white shadow-sm": isScrolled,
+            "bg-transparent hover:bg-white": isHome && !isScrolled,
+            "bg-white shadow-sm": isScrolled || !isHome,
           }
         )}
       >
@@ -119,7 +124,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                 className="text-xl"
               >
                 <Image
-                  src="/images/logo.svg"
+                  src="/images/logo/logo.png"
                   alt="Ugodo logo"
                   width={140}
                   height={40}
@@ -133,7 +138,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
               <div className="hidden small:flex items-center gap-x-8 h-full">
                 <div className="w-[22px] h-[22px] flex items-center justify-center">
                   <Suspense>
-                    <Search isScrolled={isScrolled} />
+                    <Search isScrolled={isScrolled || !isHome} />
                   </Suspense>
                 </div>
                 
@@ -147,7 +152,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     height="22" 
                     viewBox="0 0 22 22" 
                     fill="none" 
-                    stroke={!isScrolled ? "white" : "black"}
+                    stroke={!isHome || isScrolled ? "black" : "white"}
                     className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -165,7 +170,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     height="22" 
                     viewBox="0 0 22 22" 
                     fill="none" 
-                    stroke={!isScrolled ? "white" : "black"}
+                    stroke={!isHome || isScrolled ? "black" : "white"}
                     className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -185,7 +190,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                 </LocalizedClientLink>
                 
                 <div className="w-[22px] h-[22px] flex items-center justify-center relative z-[60]">
-                  <CartButton isScrolled={isScrolled} />
+                  <CartButton isScrolled={isScrolled || !isHome} />
                 </div>
               </div>
               <div className="flex small:hidden">
@@ -198,8 +203,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
         <div className={clx(
           "hidden small:block transition-all duration-300 transform-gpu overflow-hidden z-50",
           {
-            "bg-transparent group-hover:bg-white": !isScrolled,
-            "bg-white": isScrolled,
+            "bg-transparent group-hover:bg-white": isHome && !isScrolled,
+            "bg-white": isScrolled || !isHome,
             "max-h-14 opacity-100": showCatalogNav,
             "max-h-0 opacity-0": !showCatalogNav,
           }
@@ -213,8 +218,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -227,8 +232,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -241,8 +246,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -255,8 +260,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -269,8 +274,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -283,8 +288,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
@@ -297,8 +302,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
                       }
                     )}
                   >
