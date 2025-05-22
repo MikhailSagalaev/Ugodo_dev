@@ -4,10 +4,8 @@ import { sdk } from "@lib/config"
 import medusaError from "@lib/util/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 import { getCacheOptions } from "./cookies"
-import { cache } from "react"
 
 // Аварийный регион используем только если все методы получения регионов из API не сработали
-// @ts-ignore - Игнорируем проблемы с типом для аварийного региона
 const FALLBACK_REGION: HttpTypes.StoreRegion = {
   id: "reg_01JRHXWM9C58G2MBTFB717QEYC", // Используем реальный ID региона, если вы знаете его из админки
   name: "Россия",
@@ -18,17 +16,19 @@ const FALLBACK_REGION: HttpTypes.StoreRegion = {
       display_name: "Россия",
       iso_2: "ru",
       iso_3: "rus",
-      num_code: "643",
+      num_code: 643,
     }
   ],
   currency_code: "RUB",
+  tax_rate: 20,
+  tax_code: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }
 
 const regionMap = new Map<string, HttpTypes.StoreRegion>()
 
-export const listRegions = cache(async () => {
+export const listRegions = async () => {
   console.log("Запрашиваем список регионов из API (упрощенная версия)...");
   try {
     // Прямой fetch запрос без обертки sdk, если sdk.client.fetch вызывает проблемы
@@ -63,23 +63,17 @@ export const listRegions = cache(async () => {
             }
             
     console.warn("API вернуло пустой список регионов, используем аварийный регион.");
-    // Проверяем наличие стран перед доступом к элементу массива
-    if (FALLBACK_REGION.countries && FALLBACK_REGION.countries.length > 0 && FALLBACK_REGION.countries[0].iso_2) {
     regionMap.set(FALLBACK_REGION.countries[0].iso_2, FALLBACK_REGION);
-    }
             return [FALLBACK_REGION];
 
   } catch (error) {
     console.error("Критическая ошибка при запросе списка регионов:", error);
-    // Проверяем наличие стран перед доступом к элементу массива
-    if (FALLBACK_REGION.countries && FALLBACK_REGION.countries.length > 0 && FALLBACK_REGION.countries[0].iso_2) {
     regionMap.set(FALLBACK_REGION.countries[0].iso_2, FALLBACK_REGION);
-    }
     return [FALLBACK_REGION];
   }
-});
+};
 
-export const retrieveRegion = cache(async (id: string) => {
+export const retrieveRegion = async (id: string) => {
   try {
     console.log(`Запрашиваем регион с ID ${id} из API...`);
     const { region } = await sdk.client.fetch<{ region: HttpTypes.StoreRegion }>(
@@ -101,9 +95,9 @@ export const retrieveRegion = cache(async (id: string) => {
     console.warn(`Не удалось получить регион ${id}, используем аварийный`);
     return FALLBACK_REGION;
   }
-});
+};
 
-export const getRegion = cache(async (countryCode: string) => {
+export const getRegion = async (countryCode: string) => {
   try {
     // Проверяем кэш, если в нем есть нужный код страны
     if (regionMap.has(countryCode)) {
@@ -147,4 +141,4 @@ export const getRegion = cache(async (countryCode: string) => {
     console.log(`[getRegion] Ошибка при получении региона для ${countryCode}:`, error, `Используем аварийный регион: ${FALLBACK_REGION.name} (ID: ${FALLBACK_REGION.id})`);
     return FALLBACK_REGION;
   }
-});
+};

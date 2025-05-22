@@ -31,7 +31,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   return (
     <>
       <div
-        className="content-container flex flex-col small:flex-row small:items-start py-6 relative gap-x-6 px-4 small:px-0"
+        className="content-container flex flex-col small:flex-row small:items-start py-6 relative gap-x-6"
         data-testid="product-container"
       >
         {/* Левая колонка: Галерея */}
@@ -63,22 +63,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       </div>
 
       {/* Табы под основной информацией */}
-      <div className="content-container my-16 px-4 small:px-0" data-testid="product-tabs-container">
+      <div className="content-container my-16" data-testid="product-tabs-container">
         <ProductTabs product={product} />
       </div>
       
       {/* Баннер для связанных продуктов */}
-      <div className="content-container my-8 px-4 small:px-0">
+      <div className="content-container my-8">
         <ProductRelatedBanner />
       </div>
       
       {/* Блок отзывов */}
-      <div className="content-container my-16 px-4 small:px-0" data-testid="product-reviews-container">
+      <div className="content-container my-16" data-testid="product-reviews-container">
         <ProductReviews productId={product.id} />
       </div>
       
       <div
-        className="content-container my-16 small:my-32 px-4 small:px-0"
+        className="content-container my-16 small:my-32"
         data-testid="related-products-container"
       >
         <Suspense fallback={<SkeletonRelatedProducts />}>

@@ -39,6 +39,7 @@ type ProductData = {
 type ProductPreviewCardProps = {
   product: ProductData;
   isFeatured?: boolean;
+  badgeType?: "new" | "hit" | "none";
 };
 
 // Функция для рендеринга SVG (как в вашем примере)
@@ -46,7 +47,7 @@ const renderSvg = (svgHtml: string) => {
   return <div dangerouslySetInnerHTML={{ __html: svgHtml }} />;
 };
 
-function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
+function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductPreviewCardProps) {
   const discountBadge = product.badges.find(b => b.id === 'discount');
   const price = product.cheapestPrice;
   const [customer, setCustomer] = React.useState<HttpTypes.StoreCustomer | null>(null);
@@ -130,7 +131,7 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
   const cartIconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.66699 8.5H21.3337L20.3595 19.2112C20.3068 19.7909 20.0393 20.33 19.6096 20.7226C19.1798 21.1153 18.6188 21.3331 18.0367 21.3333H5.96399C5.38187 21.3331 4.82086 21.1153 4.39109 20.7226C3.96132 20.33 3.69384 19.7909 3.64116 19.2112L2.66699 8.5Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"></path> <path d="M7.33398 10.834V7.33402C7.33398 6.09635 7.82565 4.90936 8.70082 4.03419C9.57599 3.15902 10.763 2.66736 12.0007 2.66736C13.2383 2.66736 14.4253 3.15902 15.3005 4.03419C16.1757 4.90936 16.6673 6.09635 16.6673 7.33402V10.834" stroke="white" stroke-width="1.5" stroke-linecap="round"></path> </svg>`;
 
   return (
-    <div className="flex flex-col gap-4 w-full group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
+    <div className="flex flex-col w-[320px] group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
         <div className="relative aspect-[3/4] w-full overflow-hidden">
           <Thumbnail
@@ -140,8 +141,20 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
             isFeatured={isFeatured}
             className="absolute inset-0 size-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
-          {/* СКИДКА */}
-          {discountBadge && (
+          {/* Флажок NEW */}
+          {badgeType === "new" && (
+            <div className="absolute top-2 left-2 bg-[#BAFF29] text-black px-2 py-1 text-xs font-bold z-10 select-none">
+              NEW
+            </div>
+          )}
+          {/* Флажок HIT */}
+          {badgeType === "hit" && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs font-bold z-10 select-none">
+              HIT
+            </div>
+          )}
+          {/* СКИДКА - показываем только если нет флажка NEW или HIT */}
+          {badgeType !== "new" && badgeType !== "hit" && discountBadge && (
             <div className="absolute top-2 left-2 bg-[#CBF401] text-black px-2 py-1 text-xs font-bold z-10 select-none">
               -{discountBadge.text}
             </div>
@@ -168,7 +181,7 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
               className="absolute right-4 w-12 h-12 bg-black text-white rounded-md flex items-center justify-center hover:bg-gray-800 transition-colors z-10"
               aria-label="Добавить в корзину"
               onClick={e => { e.preventDefault(); console.log('Add to cart clicked for product ID (client):', product.id); }}
-              style={{ pointerEvents: 'auto', bottom: '6rem' }}
+              style={{ pointerEvents: 'auto', bottom: '4px' }}
             >
               <Image
                 src="/images/cartIcon.svg"
@@ -182,14 +195,14 @@ function ProductPreviewCard({ product, isFeatured }: ProductPreviewCardProps) {
           {/* Нет в наличии */}
           {!product.isInStock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-              <div className="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-md">
+              <div className="bg-black/80 backdrop-blur-sm px-3 sm:px-6 py-3 rounded-md">
                 <span className="text-white font-medium text-lg sm:text-xl">Нет в наличии</span>
               </div>
             </div>
           )}
         </div>
         {/* Блок с ценой, категорией и названием */}
-        <div className="flex flex-col gap-1 px-4 pt-2 pb-4">
+        <div className="flex flex-col gap-1 px-2 sm:px-4 pt-2 pb-4 text-left">
           {/* ЦЕНА и СТАРАЯ ЦЕНА */}
           {price && (
             <div className="flex items-end gap-2">

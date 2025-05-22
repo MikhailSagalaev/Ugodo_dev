@@ -1,6 +1,6 @@
 import { Button } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import Image from "next/image"
+import SafeImage from "@modules/common/components/safe-image"
 
 type PromoBannerProps = {
   title: string
@@ -48,12 +48,13 @@ const PromoBanner = ({
             <span className="text-white text-xl">Изображение баннера будет здесь</span>
           </div>
         ) : (
-          <Image
+          <SafeImage
             src={imageUrl}
             alt={title}
             fill
             className="object-cover object-center brightness-75"
             sizes="100vw"
+            startWithPlaceholder={true}
           />
         )}
         

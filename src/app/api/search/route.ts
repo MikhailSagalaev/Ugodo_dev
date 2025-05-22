@@ -1,44 +1,38 @@
-import { NextResponse } from 'next/server'
-// import { medusajs } from '@lib/config'; // Удаляем этот импорт
-import { HttpTypes } from '@medusajs/types';
-import { sdk } from '@lib/sdk'; // Импортируем sdk напрямую
+import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const query = searchParams.get('q')
-
-  if (!query) {
-    return NextResponse.json({ error: 'Query parameter "q" is required' }, { status: 400 })
-  }
-
-  // TODO: Определить, как получать region_id. 
-  // Пока что, для простоты, можно попробовать без него или использовать дефолтный, 
-  // если ваш Medusa настроен так.
-  // const regionId = searchParams.get('region_id'); 
-
+  const q = searchParams.get("q")
+  
   try {
-    // Используем Record<string, any> для params, чтобы обойти строгость типа StoreProductParams
-    // для параметра 'q', но сохраняем типизацию для известных параметров.
-    const params: Record<string, any> & Pick<HttpTypes.StoreProductParams, 'limit' | 'region_id'> = { 
-      q: query, 
-      limit: 10, // Лимит для выпадающего списка
-      // region_id: regionId || undefined, // Раскомментировать, если region_id будет передаваться
-    };
-    
-    if (!sdk || !sdk.store || !sdk.store.product) {
-        throw new Error('Medusa SDK or store.product API is not available.');
+    if (!q) {
+      return NextResponse.json({ products: [] })
     }
 
-    // sdk.store.product.list ожидает HttpTypes.StoreProductParams.
-    // Мы передаем объект, который совместим благодаря Record<string, any>,
-    // но для большей безопасности можно явно привести к нужному типу, если необходимо.
-    // Однако, Record<string, any> часто используется для таких случаев.
-    const { products } = await sdk.store.product.list(params as HttpTypes.StoreProductParams);
-
-    return NextResponse.json({ products })
+    const apiUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+    const apiKey = process.env.NEXT_PUBLIC_MEDUSA_API_KEY || "pk_c7d203b4eb02900c90763acebc5dbd649264953d2dc849de6424c65aae8614cf" 
+    
+    // Выполняем поиск продуктов напрямую через fetch
+    const response = await fetch(
+      `${apiUrl}/store/products?q=${encodeURIComponent(q)}&limit=10`,
+      {
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "x-publishable-api-key": apiKey
+        }
+      }
+    )
+    
+    if (!response.ok) {
+      throw new Error(`API вернул статус ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    return NextResponse.json({ products: data.products })
   } catch (error) {
-    console.error('Search API error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
-    return NextResponse.json({ error: 'Failed to fetch search results', details: errorMessage }, { status: 500 })
+    console.error("Ошибка при поиске продуктов:", error)
+    return NextResponse.json({ products: [] }, { status: 200 })
   }
 } 
