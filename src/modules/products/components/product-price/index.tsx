@@ -43,26 +43,25 @@ export default function ProductPrice({
                          product.variants.length > 1 && 
                          minPriceAmount !== maxPriceAmount;
 
+  // Формируем строку цены
+  const formattedPrice = selectedPrice.calculated_price.replace(/[^\d,]/g, '');
+  
   return (
-    <div className={clx("flex flex-col text-ui-fg-base", className)}>
+    <div className={clx("flex items-center", className)}>
       {/* Отображаем цену с правильным форматированием и префиксом "От" */}
       <span
-        className={clx("text-lg font-semibold", {
-          "text-ui-fg-interactive": selectedPrice.price_type === 'sale',
-        })}
+        className="text-4xl font-medium"
         data-testid="product-price"
       >
-        {showFromPrefix && "От "} {selectedPrice.calculated_price}
+        {formattedPrice} ₽
       </span>
       
       {/* Отображаем старую зачеркнутую цену рядом, если это распродажа и цена действительно отличается */}
       {selectedPrice.price_type === 'sale' && selectedPrice.original_amount && selectedPrice.original_amount > selectedPrice.calculated_amount && (
-        <span
-          className="line-through text-ui-fg-muted text-sm ml-2"
-          data-testid="original-price"
-        >
-          {selectedPrice.original_price} 
-        </span>
+        <div className="ml-3">
+          <span className="text-sm">{selectedPrice.original_price}</span>
+          <span className="text-xs text-gray-500 ml-1">по максимальной карте</span>
+        </div>
       )}
     </div>
   )
