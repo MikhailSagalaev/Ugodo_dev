@@ -99,35 +99,33 @@ export default function ProductSection({
 
   return (
     <div className={`w-full`}>
-      <div className="content-container">
-        <div className="flex flex-row justify-between items-center mb-8">
-          <div>
-            <Heading level="h2" className="text-2xl md:text-3xl font-semibold">
-              {title}
-            </Heading>
-            {variant === "colored" && (
-              <Text className="text-gray-600 mt-1 text-sm">
-                Специальные предложения и акции
-              </Text>
-            )}
-          </div>
-          
-          {link && (
-            <div className="md:ml-4">
-              <InteractiveLink href={`/collections/${link.href}`}>
-                {link.text}
-              </InteractiveLink>
-            </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <Heading level="h2" className="text-2xl md:text-3xl font-semibold">
+            {title}
+          </Heading>
+          {variant === "colored" && (
+            <Text className="text-gray-600 mt-1 text-sm">
+              Специальные предложения и акции
+            </Text>
           )}
         </div>
+        
+        {link && (
+          <div className="mt-8 text-center">
+            <InteractiveLink href={`/collections/${link.href}`}>
+              {link.text}
+            </InteractiveLink>
+          </div>
+        )}
       </div>
       
-      <div className="relative overflow-hidden">
+      <div className="relative">
         {showScrollButtons && (
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}
-            className={`hidden md:flex absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full items-center justify-center shadow-md transition-opacity duration-200 ${
+            className={`absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-opacity duration-200 ${
               canScrollLeft 
                 ? 'bg-white text-black opacity-90 hover:opacity-100' 
                 : 'bg-gray-100 text-gray-400 opacity-60 cursor-default'
@@ -140,23 +138,22 @@ export default function ProductSection({
         
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x snap-mandatory"
+          className="flex overflow-x-auto gap-6 pb-4 hide-scrollbar -mx-4 sm:px-4"
         >
-          {products.map((product, index) => {
+          {products.map((product) => {
             // Получаем название категории из type или categories
             const categoryTitle = product.type?.value 
                                   || (product.categories && product.categories.length > 0 ? product.categories[0].name : undefined);
             return (
               <div 
                 key={product.id} 
-                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)] snap-start"
+                className="transform transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-[calc(100%/7)]"
               >
-                {/* Передаем categoryTitle и isFirstInSlider в ProductPreview */}
+                {/* Передаем categoryTitle в ProductPreview */}
                 <ProductPreview 
                   product={product} 
                   region={region} 
                   categoryTitle={categoryTitle} 
-                  isFirstInSlider={index === 0}
                 />
               </div>
             )
@@ -167,7 +164,7 @@ export default function ProductSection({
           <button
             onClick={scrollRight}
             disabled={!canScrollRight}
-            className={`hidden md:flex absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full items-center justify-center shadow-md transition-opacity duration-200 ${
+            className={`absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-opacity duration-200 ${
               canScrollRight 
                 ? 'bg-white text-black opacity-90 hover:opacity-100' 
                 : 'bg-gray-100 text-gray-400 opacity-60 cursor-default'

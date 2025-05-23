@@ -8,14 +8,15 @@ import CartDropdown from "../cart-dropdown"
 // import type { Cart } from '@medusajs/medusa'
 // Импортируем HttpTypes
 import { HttpTypes } from "@medusajs/types"
+import { clx } from "@medusajs/ui"
+import Image from "next/image"
 
-export default function CartButton() {
+export default function CartButton({ isScrolled = false }: { isScrolled?: boolean }) {
   // Используем HttpTypes.StoreCart | null для типа состояния
   const [cart, setCart] = useState<HttpTypes.StoreCart | null>(null)
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Для таймаута скрытия
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -42,18 +43,11 @@ export default function CartButton() {
   
   // Обработчики наведения мыши для выпадающего меню
   const handleMouseEnter = () => {
-    if (leaveTimeoutRef.current) {
-      clearTimeout(leaveTimeoutRef.current)
-      leaveTimeoutRef.current = null
-    }
     setIsOpen(true)
   }
   
   const handleMouseLeave = () => {
-    // Устанавливаем таймаут для закрытия
-    leaveTimeoutRef.current = setTimeout(() => {
-      setIsOpen(false)
-    }, 300) // 300 мс задержки
+    setIsOpen(false)
   }
   
   return (
@@ -64,27 +58,23 @@ export default function CartButton() {
       onMouseLeave={handleMouseLeave}
     >
       <button 
-        className="flex items-center justify-center hover:text-ui-fg-base relative"
+        className="flex items-center justify-center relative"
         aria-label="Корзина"
-        onClick={() => {
-          if (leaveTimeoutRef.current) { // Если есть таймаут на закрытие, отменяем его
-            clearTimeout(leaveTimeoutRef.current)
-            leaveTimeoutRef.current = null
-          }
-          setIsOpen(!isOpen) // Переключаем состояние по клику
-        }}
+        onClick={() => setIsOpen(!isOpen)} // Добавляем обработчик клика для открытия/закрытия
       >
         <svg 
-          className="w-5 h-5" 
+          width="22" 
+          height="22" 
+          viewBox="0 0 22 22" 
           fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24" 
+          stroke={isScrolled ? "black" : "white"}
+          className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
           xmlns="http://www.w3.org/2000/svg"
         >
           <path 
             strokeLinecap="round" 
             strokeLinejoin="round" 
-            strokeWidth="2" 
+            strokeWidth="1.5" 
             d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
           />
         </svg>

@@ -51,7 +51,7 @@
 
 @layer components {
   .content-container {
-    @apply max-w-[1440px] w-full mx-auto px-0 sm:px-6;
+    @apply max-w-[1440px] w-full mx-auto px-6;
   }
 
   .contrast-btn {
@@ -135,8 +135,32 @@
   display: none; /* Chrome, Safari и Opera */
 }
 
+/* Дополнительный класс для скрытия полосы прокрутки */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE и Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari и Opera */
+}
+
 /* Проверяю существующий файл и добавляю новую анимацию */
 
 .shadow-elevation-card-rest {
   box-shadow: none !important;
+}
+
+/* Стили для карточек товаров */
+@media (max-width: 640px) {
+  /* Убираем горизонтальные отступы в мобильной версии */
+  div[class*="shadow-elevation-card-rest"][class*="bg-ui-bg-base"][class*="w-full"][class*="rounded-lg"][class*="px-6"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* Убираем горизонтальные отступы во всех карточках с px-6 */
+  div[class*="px-6"][class*="py-4"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 }

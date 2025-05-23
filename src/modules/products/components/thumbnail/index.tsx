@@ -1,8 +1,8 @@
 import { Container, clx } from "@medusajs/ui"
-import Image from "next/image"
 import React from "react"
 
 import PlaceholderImage from "@modules/common/icons/placeholder-image"
+import SafeImage from "@modules/common/components/safe-image"
 
 type ThumbnailProps = {
   thumbnail?: string | null
@@ -30,8 +30,7 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
         "relative w-full overflow-hidden p-4 bg-ui-bg-subtle rounded-large group-hover:shadow-elevation-card-hover transition-shadow ease-in-out duration-150",
         className,
         {
-          "aspect-[11/14]": isFeatured,
-          "aspect-[9/16]": !isFeatured && size !== "square",
+          "aspect-[3/4]": isFeatured || size !== "square",
           "aspect-[1/1]": size === "square",
           "w-[180px]": size === "small",
           "w-[290px]": size === "medium",
@@ -51,7 +50,7 @@ const ImageOrPlaceholder = ({
   size,
 }: Pick<ThumbnailProps, "size"> & { image?: string }) => {
   return image ? (
-    <Image
+    <SafeImage
       src={image}
       alt="Thumbnail"
       className="absolute inset-0 object-cover object-center"
@@ -59,6 +58,7 @@ const ImageOrPlaceholder = ({
       quality={50}
       sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
       fill
+      startWithPlaceholder={true}
     />
   ) : (
     <div className="w-full h-full absolute inset-0 flex items-center justify-center">
