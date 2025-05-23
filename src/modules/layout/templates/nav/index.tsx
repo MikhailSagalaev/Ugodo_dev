@@ -16,7 +16,7 @@ import Search from "@modules/search"
 import { User } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 
-const NAV_ICON_SIZE = 22; // Единый размер для всех иконок
+const NAV_ICON_SIZE = 22;
 
 const Nav = ({ isHome = false }: { isHome?: boolean }) => {
   const pathName = usePathname()
@@ -42,23 +42,18 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
       const currentScrollY = window.scrollY
       
       if (isHome) {
-        // Только на главной странице меняем стиль шапки при скролле
         if (currentScrollY > 100) {
           setIsScrolled(true)
         } else {
           setIsScrolled(false)
         }
       } else {
-        // На всех остальных страницах шапка всегда как при наведении
         setIsScrolled(true)
       }
       
-      // Hide/show catalog nav based on scroll direction
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down - hide catalog nav
         setShowCatalogNav(false)
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show catalog nav
         setShowCatalogNav(true)
       }
       
@@ -79,7 +74,6 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     }
   }, [])
 
-  // Determine icon color based on scroll state and group hover
   const getIconColor = () => {
     if (isScrolled || !isHome) return "black";
     return "white";
@@ -94,7 +88,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
 
   return (
     <>
-      {!isHome && <div style={{ height: `${headerHeight + 50}px` }} />}
+      {!isHome && <div style={{ height: "180px" }} />}
       
       <div 
         ref={headerRef}
@@ -314,6 +308,22 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
             </nav>
           </div>
         </div>
+        
+        {!isHome && (
+          <div className="bg-[#BAFF29] h-[45px] flex items-center justify-center transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer">
+            <div className="flex items-center justify-center w-full">
+              <span 
+                className="text-black transition-colors duration-200"
+                style={{ 
+                  fontSize: "13px",
+                  fontWeight: 500
+                }}
+              >
+                дополнительная скидка -25% по промокоду ВМЕСТЕ
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

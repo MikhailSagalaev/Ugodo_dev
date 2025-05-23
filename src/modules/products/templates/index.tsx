@@ -18,6 +18,7 @@ import { addToCart } from "@lib/data/cart"
 import { useParams } from "next/navigation"
 import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer"
 import SafeImage from "@modules/common/components/safe-image"
+import ColorSelector from "@modules/common/components/color-selector"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -30,7 +31,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   region,
   countryCode,
 }) => {
-  // Состояния для функциональности кнопок
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
   const [customer, setCustomer] = useState<HttpTypes.StoreCustomer | null>(null);
@@ -41,16 +41,17 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [selectedTab, setSelectedTab] = useState("ОПИСАНИЕ");
   const params = useParams();
   
-  // Индекс выбранного изображения для галереи
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  // Индекс первой видимой миниатюры в списке (для скроллинга)
   const [visibleThumbStartIndex, setVisibleThumbStartIndex] = useState(0);
   
-  // Флаги для отслеживания состояния загрузки данных
   const [customerLoaded, setCustomerLoaded] = useState(false);
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
   
-  // Загрузка данных клиента только один раз при монтировании компонента
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  
   useEffect(() => {
     async function fetchData() {
       if (customerLoaded) return;
@@ -69,7 +70,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     fetchData();
   }, [customerLoaded]);
   
-  // Отдельный эффект для загрузки избранного (только если клиент авторизован)
   useEffect(() => {
     async function fetchWishlist() {
       if (!customer || wishlistLoaded) return;
@@ -94,7 +94,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     fetchWishlist();
   }, [customer, product.id, wishlistLoaded]);
 
-  // Функция добавления в корзину
   const handleAddToCart = async () => {
     if (!product.variants || product.variants.length === 0) return;
     
@@ -107,7 +106,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       });
       setAddSuccess(true);
       
-      // Сбросить сообщение об успехе через 2 секунды
       setTimeout(() => {
         setAddSuccess(false);
       }, 2000);
@@ -118,7 +116,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   };
 
-  // Функция управления избранным
   const handleWishlistToggle = async () => {
     if (!customer) return;
     
@@ -145,7 +142,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   };
 
-  // Функции для навигации по миниатюрам
   const scrollThumbnailsUp = () => {
     if (visibleThumbStartIndex > 0) {
       setVisibleThumbStartIndex(visibleThumbStartIndex - 1);
@@ -158,21 +154,39 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   };
 
+  const handleOptionChange = (optionId: string, value: string) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [optionId]: value
+    }));
+  };
+
+  const scrollToImage = (index: number) => {
+    const imageElement = document.getElementById(`modal-image-${index}`);
+    if (imageElement) {
+      imageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setSelectedImageIndex(index);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   if (!product || !product.id) {
     return notFound()
   }
 
-  // Отладка структуры объекта product
   console.log("Product structure:", {
     id: product.id,
     title: product.title,
     categories: product.categories
   })
 
-  // Формируем хлебные крошки на основе категорий продукта
   const breadcrumbItems: BreadcrumbItem[] = []
   
-  // В реальном приложении берем данные из product
   if (product.collection) {
     breadcrumbItems.push({
       name: product.collection.title || "Категория",
@@ -180,48 +194,70 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     })
   }
   
-  // Используем заглушку для категории, пока не добавим API запрос к product_category
-  const productCategory = "Shirts" // Заглушка - первая категория из скриншота БД
-  // Получаем название продукта
+  const productCategory = "Shirts"
   const productTitle = product.title || ""
-  // Получаем подзаголовок или тип продукта - если нет, не отображаем
   const productSubtitle = product.subtitle || ""
-  // Получаем варианты продукта для отображения объема/размера/количества
   const variants = product.variants || []
-  // Проверяем, есть ли бирка NEW у продукта
-  const isNew = product.metadata?.is_new === "true" || false // Берем из метаданных продукта
-  // Артикул продукта
+  const isNew = product.metadata?.is_new === "true" || false
+  const isHit = product.metadata?.is_hit === "true" || false
+  const discountPercentage = product.metadata?.discount_percentage as string || null
+  
   const articleNumber = product.metadata?.article as string || "99000048271"
 
-  // Получаем город доставки или устанавливаем значение по умолчанию
-  const deliveryCity = product.metadata?.delivery_city as string || "Челябинск"
-  // Получаем дату доставки или устанавливаем значение по умолчанию
-  const deliveryDate = product.metadata?.delivery_date as string || "28 мая"
-
-  // В реальном приложении эти значения будут получены из API
   const tabContent: Record<string, string> = {
     "ОПИСАНИЕ": product.description || "Пудра обогащена витаминами, регулирует работу сальных желез, способствует увлажнению и питанию изнутри. Этот продукт для лица поможет решить проблемы с воспалениями, избытком себума, забиванием пор, а также поможет уменьшить появление акне и сделает следы постакне менее заметными. Регулярное использование этого продукта позволит достичь ровного тонуса кожи и естественного сияния.\n\nНежная пудра для умывания мягко удаляет омертвевшие клетки, не вызывая шелушения. Умывалка для лица бережно и эффективно очистит кожу от загрязнений и остатков макияжа. Этот уход активизирует процесс обновления кожных клеток, борется со старением, помогает разгладить морщины и неровности, а также уменьшает пигментацию.\n\nСпециальный комплекс активных компонентов в составе пудры смягчает и матирует кожный покров, делая его чистым, свежим и привлекательным. Наш пилинг порошок подходит для жирной, нормальной, проблемной и чувствительной кожи.",
-    "ПРИМЕНЕНИЕ": "Нанесите пудру на влажную кожу, добавьте немного воды и аккуратно помассируйте лицо круговыми движениями, избегая области вокруг глаз. Затем смойте теплой водой.",
-    "СОСТАВ": "Aqua, Sodium Laureth Sulfate, Cocamidopropyl Betaine, Glycerin, Sodium Chloride, Papain, Zinc PCA, Citric Acid, Parfum, Phenoxyethanol, Ethylhexylglycerin.",
-    "БРЕНД": "LUVINE - российский бренд косметики, специализирующийся на средствах для ухода за кожей. Продукция бренда сочетает натуральные ингредиенты и инновационные технологии.",
-    "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ": "Срок годности: 24 месяца с даты изготовления. Хранить в сухом, защищенном от прямых солнечных лучей месте при температуре от +5°C до +25°C."
+    "СОСТАВ": product.metadata?.composition as string || "состава пока нет",
+    "БРЕНД": product.metadata?.brand_info as string || "бренд угодо",
+    "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ": product.metadata?.additional_info as string || "пока нет"
   };
 
-  // Характеристики продукта (в идеале брать из метаданных)
-  const productSpecs = [
-    { name: "тип продукта", value: "пудра энзимная" },
-    { name: "для кого", value: "унисекс" },
-    { name: "назначение", value: "очищение, выравнивание тона, матирование, против акне" },
-    { name: "тип кожи", value: "для всех типов кожи" },
-    { name: "область применения", value: "лицо" },
-    { name: "возраст", value: "от 14 лет" },
-    { name: "объём", value: "100 мл" }
-  ];
+  const productSpecs = product.metadata?.product_type || 
+                      product.metadata?.target_audience || 
+                      product.metadata?.purpose || 
+                      product.metadata?.skin_type || 
+                      product.metadata?.application_area || 
+                      product.metadata?.age_range || 
+                      product.metadata?.volume
+    ? [
+        { name: "тип продукта", value: product.metadata?.product_type as string || "" },
+        { name: "для кого", value: product.metadata?.target_audience as string || "" },
+        { name: "назначение", value: product.metadata?.purpose as string || "" },
+        { name: "тип кожи", value: product.metadata?.skin_type as string || "" },
+        { name: "область применения", value: product.metadata?.application_area as string || "" },
+        { name: "возраст", value: product.metadata?.age_range as string || "" },
+        { name: "объём", value: product.metadata?.volume as string || "" }
+      ].filter(spec => spec.value.trim() !== "")
+    : [{ name: "тип продукта", value: productCategory }];
+
+  const nextImage = () => {
+    if (product.images && selectedImageIndex < product.images.length - 1) {
+      setSelectedImageIndex(selectedImageIndex + 1);
+    } else if (product.images) {
+      setSelectedImageIndex(0);
+    }
+  };
+
+  const prevImage = () => {
+    if (selectedImageIndex > 0) {
+      setSelectedImageIndex(selectedImageIndex - 1);
+    } else if (product.images) {
+      setSelectedImageIndex(product.images.length - 1);
+    }
+  };
+
+  const openImageModal = () => {
+    setIsImageModalOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    document.body.style.overflow = 'unset';
+  };
 
   return (
-    <div className="pb-16 mt-[100px]">
-      {/* Верхний блок с хлебными крошками, категорией и названием - смещен вправо от центра */}
-      <div className="content-container flex items-start mt-4 mb-6">
+    <div className="pb-16">
+      <div className="content-container flex items-start mb-4">
         <div className="flex w-1/2 items-center self-center justify-start">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
@@ -271,14 +307,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         </div>
       </div>
       
-      {/* Основная информация о продукте - галерея и опции */}
-      <div className="content-container flex justify-center mb-16">
+      <div className="content-container flex justify-center">
         <div className="flex relative">
-          {/* Миниатюры слева от основной фотографии - выровнены по центру */}
           {product.images && product.images.length > 1 && (
             <div className="absolute top-1/2 transform -translate-y-1/2" style={{ right: "calc(100% + 60px)" }}>
               <div className="flex flex-col items-center">
-                {/* Стрелка вверх */}
                 <button 
                   onClick={scrollThumbnailsUp}
                   className="mb-2 focus:outline-none"
@@ -296,7 +329,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   </svg>
                 </button>
                 
-                {/* Отображаем только 4 миниатюры */}
                 <div className="flex flex-col">
                   {product.images
                     .slice(visibleThumbStartIndex, visibleThumbStartIndex + 4)
@@ -306,7 +338,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         <div 
                           key={image.id}
                           onClick={() => setSelectedImageIndex(actualIndex)}
-                          className={`relative cursor-pointer my-2 transition-opacity ${selectedImageIndex === actualIndex ? 'opacity-100 ring-1 ring-black' : 'opacity-50'}`}
+                          className={`relative cursor-pointer my-2 transition-all duration-200 ${selectedImageIndex === actualIndex ? 'opacity-100 ring-2 ring-black' : 'opacity-50 hover:opacity-75'}`}
                           style={{ width: "70px", height: "70px" }}
                         >
                           <SafeImage
@@ -322,7 +354,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     })}
                 </div>
                 
-                {/* Стрелка вниз */}
                 <button 
                   onClick={scrollThumbnailsDown}
                   className="mt-2 focus:outline-none"
@@ -343,16 +374,25 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
           )}
           
-          {/* Основная фотография */}
           <div className="relative flex flex-col">
             <div className="relative">
               {isNew && (
-                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#D0FD3E] text-xs font-medium">
+                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
                   NEW
                 </div>
               )}
-              {/* Отображаем выбранное изображение */}
-              <div style={{ width: "989px", height: "674px", position: "relative" }}>
+              {isHit && !isNew && (
+                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
+                  HIT
+                </div>
+              )}
+              {!isNew && !isHit && discountPercentage && (
+                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
+                  -{discountPercentage}%
+                </div>
+              )}
+              
+              <div style={{ width: "989px", height: "674px", position: "relative" }} className="group">
                 {product.images && product.images.length > 0 && (
                   <SafeImage
                     src={product.images[selectedImageIndex].url}
@@ -363,16 +403,35 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     style={{ objectFit: "cover" }}
                   />
                 )}
+                
+                {product.images && product.images.length > 1 && (
+                  <>
+                    <div
+                      onClick={prevImage}
+                      className="absolute left-0 top-0 w-1/4 h-full z-10"
+                      style={{ cursor: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"black\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg>') 12 12, auto" }}
+                    />
+                    
+                    <div
+                      onClick={nextImage}
+                      className="absolute right-0 top-0 w-1/4 h-full z-10"
+                      style={{ cursor: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"black\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18l6-6-6-6\"/></svg>') 12 12, auto" }}
+                    />
+                  </>
+                )}
+                
+                <div
+                  onClick={openImageModal}
+                  className="absolute left-1/4 top-0 w-1/2 h-full z-10 cursor-pointer"
+                />
               </div>
             </div>
             
-            {/* Блоки с гарантией и доставкой */}
-            <div className="grid grid-cols-3 gap-4 mt-8">
-              <div className="flex items-center border border-gray-200 p-3 rounded-full">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M14.31 8l5.39 9.333A9.953 9.953 0 0122 12c0-5.523-4.477-10-10-10a9.953 9.953 0 00-5.333 1.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <div className="flex mt-8 gap-10">
+              <div className="flex items-center p-3" style={{ width: "190px", height: "40px" }}>
+                <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <div className="text-xs">
@@ -380,8 +439,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   <div>продукции</div>
                 </div>
               </div>
-              <div className="flex items-center border border-gray-200 p-3 rounded-full">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+              <div className="flex items-center p-3" style={{ width: "190px", height: "40px" }}>
+                <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
                   <span className="font-bold">₽</span>
                 </div>
                 <div className="text-xs">
@@ -389,8 +448,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   <div>1500 ₽</div>
                 </div>
               </div>
-              <div className="flex items-center border border-gray-200 p-3 rounded-full">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+              <div className="flex items-center p-3" style={{ width: "190px", height: "40px" }}>
+                <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
                   <span className="font-bold">RU</span>
                 </div>
                 <div className="text-xs">
@@ -401,13 +460,20 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
           </div>
           
-          {/* Блок с ценой и кнопками - новые отступы: padding: 60px 90px 0 */}
           <div style={{ padding: "60px 90px 0" }}>
             <div className="w-[400px]">
-              {/* Всегда показываем блок с количеством */}
               <div className="mb-6">
                 <div className="flex items-center">
-                  <div className="text-sm text-gray-500 uppercase mr-6">
+                  <div 
+                    className="text-gray-500 uppercase mr-6"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      letterSpacing: "1.4px",
+                      lineHeight: 1.5,
+                      textTransform: "uppercase"
+                    }}
+                  >
                     КОЛИЧЕСТВО / ШТ
                   </div>
                   <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
@@ -421,47 +487,101 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   </div>
                 </div>
               </div>
+
+              {product.options?.some(option => 
+                option.title.toLowerCase().includes('цвет') || 
+                option.title.toLowerCase().includes('color')
+              ) && (
+                <div className="mb-6">
+                  <ColorSelector 
+                    product={product}
+                    selectedOptions={selectedOptions}
+                    onOptionChange={handleOptionChange}
+                  />
+                </div>
+              )}
               
-              {/* Цена */}
               <div className="mb-6">
-                <div className="text-4xl font-medium">
+                <div 
+                  className="font-medium"
+                  style={{ fontSize: "30px" }}
+                >
                   <ProductPrice 
                     product={product} 
                     region={region} 
                     variant={product.variants?.[0]}
                   />
                 </div>
-                
-                {/* Промокод */}
-                <div className="inline-flex items-center bg-[#D0FD3E] text-xs px-2 py-1 mt-3">
-                  <span className="font-medium">ВМЕСТЕ | -25%</span>
-                  <span className="ml-2">по промокоду →</span>
-                </div>
-                
-                {/* Авторизация для бонусов */}
-                <div className="flex items-center mt-3 text-sm">
-                  <div className="rounded-full w-4 h-4 bg-gray-200 flex items-center justify-center mr-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <LocalizedClientLink href="/account/login" className="font-medium underline">авторизуйся</LocalizedClientLink>
-                  <span className="ml-1">и получай бонусы</span>
-                </div>
               </div>
               
-              {/* Кнопки действий */}
-              <div className="flex mb-6">
+              <div className="flex items-center mb-6 group cursor-pointer">
+                <div 
+                  className="bg-[#BAFF29] flex items-center justify-center relative" 
+                  style={{ 
+                    width: "118px", 
+                    height: "26px",
+                    clipPath: "polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)"
+                  }}
+                >
+                  <span 
+                    className="text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      textTransform: "uppercase",
+                      lineHeight: "12.1px"
+                    }}
+                  >
+                    ВМЕСТЕ | -25%
+                  </span>
+                </div>
+                <span 
+                  className="ml-2 text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: 1.1,
+                    fontWeight: 400,
+                    fontStyle: "italic"
+                  }}
+                >
+                  по промокоду
+                </span>
+                <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              
+              <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA]" style={{ fontSize: "14px" }}>
+                <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
+                  <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+                </div>
+                <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
+                <span className="ml-1">и получай бонусы</span>
+              </div>
+              
+              <div className="flex mb-6 gap-2">
                 <button 
-                  className={`flex-grow ${addSuccess ? 'bg-green-600' : 'bg-black'} text-white py-4 uppercase text-sm font-medium`}
+                  className={`${addSuccess ? 'bg-[#C2E7DA]' : 'bg-black'} text-white uppercase font-medium transition-colors duration-200 hover:bg-[#C2E7DA] hover:text-black`}
+                  style={{
+                    width: "305px",
+                    height: "50px",
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    letterSpacing: "1.4px",
+                    lineHeight: 1.5,
+                    textTransform: "uppercase"
+                  }}
                   onClick={handleAddToCart}
                   disabled={isAddingToCart}
                 >
                   {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : 'Добавить в корзину'}
                 </button>
                 <button 
-                  className="ml-2 w-16 h-16 border border-gray-300 flex items-center justify-center"
+                  className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
+                  style={{
+                    width: "55px",
+                    height: "50px"
+                  }}
                   onClick={handleWishlistToggle}
                   disabled={isLoadingWishlist || !customer}
                 >
@@ -469,23 +589,35 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     width="24" 
                     height="24" 
                     viewBox="0 0 24 24" 
-                    fill={isInWishlist ? "black" : "none"} 
+                    fill={isInWishlist ? "white" : "none"} 
+                    stroke="white"
+                    className="transition-colors duration-200 hover:stroke-black"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="black" strokeWidth="1.5"/>
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeWidth="1.5"/>
                   </svg>
                 </button>
               </div>
               
-              {/* Наличие в магазинах */}
-              <div className="flex items-center text-sm font-medium">
-                <span>Наличие в магазинах</span>
-                <span className="ml-1">►</span>
+              <div className="flex items-center font-medium transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer">
+                <span 
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    letterSpacing: "1.4px",
+                    lineHeight: 1.5,
+                    textTransform: "uppercase"
+                  }}
+                >
+                  Наличие в магазинах
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="ml-1">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
           </div>
           
-          {/* Скрытый блок с действиями с продуктом для сохранения функциональности */}
           <div className="hidden">
             <Suspense
               fallback={
@@ -502,26 +634,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         </div>
       </div>
 
-      {/* Содержимое с ограничением ширины */}
       <div className="mx-auto" style={{ maxWidth: "760px" }}>
-        {/* Блок с выбором города и информацией о доставке - перемещен перед описанием */}
-        <div className="mb-8">
-          <div className="flex items-center">
-            <div className="font-medium">{deliveryCity}</div>
-            <span className="ml-2">▼</span>
-          </div>
-          <div className="border-b border-gray-200 my-2"></div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">курьер</span>
-            <span>{deliveryDate}</span>
-          </div>
-          <div className="border-b border-gray-200 my-2"></div>
-          <div className="text-center text-sm">
-            <a href="#" className="text-gray-500 underline">подробнее о доставке</a>
-          </div>
-        </div>
-
-        {/* Табы с дополнительной информацией */}
         <div className="my-8">
           <div className="flex border-b border-gray-200 overflow-x-auto">
             {Object.keys(tabContent).map(tab => (
@@ -572,110 +685,278 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
         </div>
         
-        {/* Характеристики продукта */}
-        <div className="my-8">
-          <h2 className="text-lg mb-6" style={{
-            fontWeight: 500,
-            lineHeight: 1.5,
-            textTransform: "lowercase",
-            fontSize: "16px"
-          }}>
-            подробные характеристики
-          </h2>
-          <div className="grid grid-cols-1 gap-y-4">
-            {productSpecs.map((spec, index) => (
-              <div key={index} className="flex border-b border-gray-200 pb-2">
-                <div className="w-1/3 text-gray-500" style={{
-                  color: "#7f7f7f",
-                  fontSize: "14px",
-                  lineHeight: 1.4
-                }}>
-                  {spec.name}
+        {productSpecs.length > 0 && (
+          <div className="my-8">
+            <h2 className="text-lg mb-6" style={{
+              fontWeight: 500,
+              lineHeight: 1.5,
+              textTransform: "lowercase",
+              fontSize: "16px"
+            }}>
+              подробные характеристики
+            </h2>
+            <div className="grid grid-cols-1 gap-y-4">
+              {productSpecs.map((spec, index) => (
+                <div key={index} className="flex border-b border-gray-200 pb-2">
+                  <div className="w-1/3 text-gray-500" style={{
+                    color: "#7f7f7f",
+                    fontSize: "14px",
+                    lineHeight: 1.4
+                  }}>
+                    {spec.name}
+                  </div>
+                  <div className="w-2/3" style={{
+                    fontSize: "14px",
+                    lineHeight: 1.4
+                  }}>
+                    {spec.value}
+                  </div>
                 </div>
-                <div className="w-2/3" style={{
-                  fontSize: "14px",
-                  lineHeight: 1.4
-                }}>
-                  {spec.value}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         
-        {/* Служба поддержки */}
-        <div className="flex justify-center items-center my-12">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-gray-300 mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+        <div className="flex justify-center items-center my-4">
+          <div className="flex items-center cursor-pointer" onClick={() => setIsSupportModalOpen(true)}>
+            <div className="w-[106px] h-[106px] mr-4">
+              <SafeImage
+                src="/images/logo/logo3.png"
+                alt="Логотип"
+                width={106}
+                height={106}
+                style={{ objectFit: "contain" }}
+              />
             </div>
-            <div className="text-sm text-gray-500">нужна помощь?</div>
-            <div className="font-medium">служба поддержки</div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Блок "Посмотрите еще" */}
-      <div className="content-container my-16">
-        <h2 className="text-2xl font-medium mb-8">посмотрите ещё</h2>
-        <div className="flex overflow-x-auto pb-4 gap-4">
-          <div className="flex-shrink-0 h-16 bg-[#D6FF32] rounded-full flex items-center px-6">
-            <div className="text-4xl font-bold mr-4">L</div>
-            <div className="font-medium">Luvine</div>
-          </div>
-          <div className="flex-shrink-0 h-16 bg-white rounded-full flex items-center px-6 border border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-pink-200 mr-4"></div>
-            <div>
-              <div className="font-medium">очищение</div>
-              <div className="text-sm">и демакияж Luvine</div>
-            </div>
-          </div>
-          <div className="flex-shrink-0 h-16 bg-white rounded-full flex items-center px-6 border border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-pink-200 mr-4"></div>
-            <div>
-              <div className="font-medium">очищение</div>
-              <div className="text-sm">и демакияж</div>
-            </div>
-          </div>
-          <div className="flex-shrink-0 h-16 bg-white rounded-full flex items-center px-6 border border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-yellow-200 mr-4"></div>
-            <div>
-              <div className="font-medium">уход</div>
-              <div className="text-sm">за лицом</div>
+            <div className="flex flex-col">
+              <div 
+                className="text-[#7f7f7f]"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 400,
+                  lineHeight: 1.1
+                }}
+              >
+                нужна помощь?
+              </div>
+              <div 
+                className="font-medium"
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 400
+                }}
+              >
+                служба поддержки
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Блок "Рейтинг и отзывы" */}
-      <div className="content-container my-16 pt-16">
+      <div className="content-container my-8" style={{ marginTop: "40px" }}>
         <ProductReviews productId={product.id} />
       </div>
       
-      {/* Похожие товары */}
-      <div className="content-container my-16">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold">похожие товары</h2>
-          <div className="flex space-x-2">
-            <button className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <div className="content-container my-8">
+        <Suspense fallback={<SkeletonRelatedProducts />}>
+          <RelatedProducts product={product} countryCode={countryCode} title="похожие товары" />
+        </Suspense>
+      </div>
+      
+      <div className="content-container my-8">
+        <Suspense fallback={<SkeletonRelatedProducts />}>
+          <RelatedProducts product={product} countryCode={countryCode} title="вам может понравиться" showAllProducts={true} />
+        </Suspense>
+      </div>
+      
+      {isImageModalOpen && (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
+          <div className="relative bg-white flex-shrink-0" style={{ height: "200px" }}>
+            <div className="absolute top-8 left-1/2 transform -translate-x-1/2 translate-x-10 px-4 py-2">
+              <div className="uppercase mb-2" style={{
+                fontSize: "11px",
+                fontWeight: 500,
+                letterSpacing: "1.4px",
+                lineHeight: 1.5,
+                textTransform: "uppercase"
+              }}>
+                {productCategory}
+              </div>
+              <h1 className="text-3xl font-medium" style={{
+                fontSize: "50px",
+                fontWeight: 500,
+                letterSpacing: "-0.2px",
+                lineHeight: 1.1
+              }}>
+                {productTitle}
+                {productSubtitle && (
+                  <div className="text-3xl font-medium" style={{
+                    fontSize: "50px",
+                    fontWeight: 500,
+                    letterSpacing: "-0.2px",
+                    lineHeight: 1.1
+                  }}>
+                    {productSubtitle}
+                  </div>
+                )}
+              </h1>
+            </div>
+            
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
+
+          <div className="relative flex-1 overflow-hidden">
+            {product.images && product.images.length > 1 && (
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10" style={{ width: "120px" }}>
+                <div className="flex flex-col items-center">
+                  <button 
+                    onClick={scrollThumbnailsUp}
+                    className="mb-2 focus:outline-none"
+                    disabled={visibleThumbStartIndex === 0}
+                  >
+                    <svg 
+                      width="15" 
+                      height="15" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: visibleThumbStartIndex === 0 ? '#CCCCCC' : '#000000' }}
+                    >
+                      <path d="M18 15l-6-6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  
+                  <div className="flex flex-col gap-2">
+                    {product.images
+                      ?.slice(visibleThumbStartIndex, visibleThumbStartIndex + 4)
+                      .map((image, index) => {
+                        const actualIndex = index + visibleThumbStartIndex;
+                        return (
+                          <div
+                            key={image.id}
+                            onClick={() => scrollToImage(actualIndex)}
+                            className={`relative cursor-pointer transition-all duration-200 ${selectedImageIndex === actualIndex ? 'opacity-100 ring-2 ring-black' : 'opacity-50 hover:opacity-75'}`}
+                            style={{ width: "80px", height: "80px" }}
+                          >
+                            <SafeImage
+                              src={image.url}
+                              alt={`Thumbnail ${actualIndex + 1}`}
+                              fill
+                              sizes="80px"
+                              style={{ objectFit: "cover" }}
+                              className="absolute inset-0"
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                  
+                  <button 
+                    onClick={scrollThumbnailsDown}
+                    className="mt-2 focus:outline-none"
+                    disabled={!product.images || visibleThumbStartIndex >= product.images.length - 4}
+                  >
+                    <svg 
+                      width="15" 
+                      height="15" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: !product.images || visibleThumbStartIndex >= product.images.length - 4 ? '#CCCCCC' : '#000000' }}
+                    >
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <div className="h-full overflow-y-auto" style={{ paddingLeft: "140px" }}>
+              {product.images?.map((image, index) => (
+                <div key={image.id} id={`modal-image-${index}`} className="flex items-center justify-center p-8">
+                  <div className="relative" style={{ width: "1530px", height: "1040px", maxWidth: "90vw", maxHeight: "90vh" }}>
+                    <SafeImage
+                      src={image.url}
+                      alt={`Product image ${index + 1}`}
+                      fill
+                      sizes="1530px"
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        
-        <Suspense fallback={<SkeletonRelatedProducts />}>
-          <RelatedProducts product={product} countryCode={countryCode} />
-        </Suspense>
-      </div>
+      )}
+      
+      {isSupportModalOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            className="flex-1 bg-black bg-opacity-50"
+            onClick={() => setIsSupportModalOpen(false)}
+          />
+          
+          <div className="w-[520px] bg-white h-full flex flex-col">
+            <button
+              onClick={() => setIsSupportModalOpen(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="flex-1 flex flex-col" style={{ paddingLeft: "80px", paddingRight: "80px", paddingTop: "120px", paddingBottom: "60px" }}>
+              <h2 className="text-2xl font-medium mb-4">напишите нам</h2>
+              
+              <p className="text-gray-600 mb-8">
+                Выберите мессенджер – мы ответим на ваши вопросы в онлайн-чате.
+              </p>
+              
+              <div className="space-y-4 flex-1">
+                <button className="w-full flex items-center p-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-8 h-8 mr-4 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.63" fill="#25D366"/>
+                    </svg>
+                  </div>
+                  <span className="font-medium">WhatsApp</span>
+                </button>
+                
+                <button className="w-full flex items-center p-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-8 h-8 mr-4 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 8.16c-.169 1.858-.896 6.728-.896 6.728-.378 2.618-1.408 3.089-2.377 3.089-.818 0-1.447-.613-1.447-1.448 0-.896.896-8.96.896-8.96.169-1.79.896-2.377 2.208-2.377.896 0 1.617.613 1.617 1.448v1.52z" fill="#0088cc"/>
+                    </svg>
+                  </div>
+                  <span className="font-medium">Telegram</span>
+                </button>
+              </div>
+              
+              <button 
+                onClick={() => setIsSupportModalOpen(false)}
+                className="w-full bg-black text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors uppercase mt-8"
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  letterSpacing: "1.4px",
+                  lineHeight: 1.5
+                }}
+              >
+                закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

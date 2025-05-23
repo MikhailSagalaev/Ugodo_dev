@@ -1,69 +1,124 @@
+'use client'
+
+import React, { useState, useEffect } from "react"
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import { HttpTypes } from "@medusajs/types"
-import Product from "../product-preview"
+import { Heading } from "@medusajs/ui"
+import ProductPreview from "../product-preview"
 
 type RelatedProductsProps = {
   product: HttpTypes.StoreProduct
   countryCode: string
+  title?: string
+  showAllProducts?: boolean
 }
 
-export default async function RelatedProducts({
+export default function RelatedProducts({
   product,
   countryCode,
+  title = "похожие товары",
+  showAllProducts = false
 }: RelatedProductsProps) {
-  const region = await getRegion(countryCode)
+  const [products, setProducts] = useState<HttpTypes.StoreProduct[]>([])
+  const [region, setRegion] = useState<HttpTypes.StoreRegion | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!region) {
-    return null
-  }
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const regionData = await getRegion(countryCode)
+        if (!regionData) {
+          setLoading(false)
+          return
+        }
+        setRegion(regionData)
 
-  // edit this function to define your related products logic
-  const queryParams: HttpTypes.StoreProductParams = {}
-  if (region?.id) {
-    queryParams.region_id = region.id
-  }
-  if (product.collection_id) {
-    queryParams.collection_id = [product.collection_id]
-  }
-  if (product.tags) {
-    queryParams.tag_id = product.tags
-      .map((t) => t.id)
-      .filter(Boolean) as string[]
-  }
-  queryParams.is_giftcard = false
+        let queryParams: Record<string, any> = {}
+        
+        if (regionData?.id) {
+          queryParams.region_id = regionData.id
+        }
+        
+        if (!showAllProducts) {
+          if (product.categories && product.categories.length > 0) {
+            queryParams.category_id = product.categories.map(cat => cat.id)
+          } else {
+            setLoading(false)
+            return
+          }
+        }
+        
+        queryParams.is_giftcard = false
 
-  const products = await listProducts({
-    queryParams,
-    countryCode,
-  }).then(({ response }) => {
-    return response.products.filter(
-      (responseProduct) => responseProduct.id !== product.id
+        const { response } = await listProducts({
+          queryParams: queryParams as HttpTypes.StoreProductParams,
+          countryCode,
+        })
+
+        const filteredProducts = response.products.filter(
+          (responseProduct) => responseProduct.id !== product.id
+        )
+
+        setProducts(filteredProducts)
+      } catch (error) {
+        console.error("Error loading related products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProducts()
+  }, [product.id, countryCode, showAllProducts])
+
+  if (loading) {
+    return (
+      <section className="py-6 md:py-8">
+        <div className="content-container px-0 sm:px-4 md:px-8 relative">
+          <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
+            <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="w-full aspect-[3/4] bg-gray-200 animate-pulse rounded"></div>
+            ))}
+          </div>
+        </div>
+      </section>
     )
-  })
+  }
 
-  if (!products.length) {
+  if (!products.length || !region) {
     return null
   }
 
   return (
-    <div className="product-page-constraint">
-      <div className="flex flex-col items-center text-center mb-16">
-        <span className="text-base-regular text-gray-600 mb-6">
-          Похожие товары
-        </span>
-        <p className="text-2xl-regular text-ui-fg-base max-w-lg">
-          Возможно, вас также заинтересуют эти товары.
-        </p>
-      </div>
+    <section className="py-6 md:py-8">
+      <div className="content-container px-0 sm:px-4 md:px-8 relative">
+        <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
+          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
+        </div>
 
-      <ul className="grid grid-cols-2 small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8">
-        {products.map((product) => (
-          <li key={product.id}>
-            <Product region={region} product={product} />
-          </li>
-        ))}
-      </ul>
-    </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+          {products.slice(0, 4).map((product) => {
+            const categoryTitle = product.type?.value || 
+              (product.categories && product.categories.length > 0 ? 
+                product.categories[0].name : undefined);
+            
+            return (
+              <div key={product.id} className="w-full">
+                <ProductPreview 
+                  product={product} 
+                  region={region} 
+                  categoryTitle={categoryTitle}
+                  badgeType="none"
+                  textAlign="left"
+                />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
   )
 }
