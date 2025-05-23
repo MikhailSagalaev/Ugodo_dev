@@ -3,7 +3,7 @@
 import { addToCart } from "@lib/data/cart"
 import { useIntersection } from "@lib/hooks/use-in-view"
 import { HttpTypes } from "@medusajs/types"
-import { Button } from "@medusajs/ui"
+import { Button, Text } from "@medusajs/ui"
 import Divider from "@modules/common/components/divider"
 import OptionSelect from "@modules/products/components/product-actions/option-select"
 import { isEqual } from "lodash"
@@ -300,7 +300,6 @@ export default function ProductActions({
           </div>
         </div>
 
-        {/* @ts-ignore */}
         <MobileActions
           product={product}
           variant={selectedVariant}
@@ -311,13 +310,16 @@ export default function ProductActions({
           handleAddToCart={handleAddToCart}
           isAdding={isAdding}
           show={!inView}
-          optionsDisabled={!!disabled || isAdding || isLoadingCustomer}
-          customer={customer}
-          isLoadingCustomer={isLoadingCustomer}
-          isInWishlist={isInWishlist}
-          isLoadingWishlist={isLoadingWishlist}
-          handleWishlistToggle={handleWishlistToggle}
+          optionsDisabled={!!disabled || isAdding}
         />
+
+        {/* ---- Информационное сообщение о Tiered Pricing ---- */}
+        {product && ( 
+            <Text className="text-sm text-ui-fg-subtle mt-1" data-testid="tiered-pricing-info">
+                Цена может быть ниже при покупке нескольких штук. Финальная цена будет рассчитана в корзине.
+            </Text>
+        )}
+        {/* ---- Конец сообщения ---- */}
       </div>
     </>
   )
