@@ -58,13 +58,21 @@ const CartDropdown = ({
   useEffect(() => {
     if (itemRef.current !== totalItems && !pathname.includes("/cart")) {
       setIsOpen(true)
+      timedClose()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalItems, itemRef.current])
 
   return (
-    <div className="h-full z-50">
+    <div className="h-full z-[100]">
       <Popover className="relative h-full">
+        <PopoverButton 
+          className="flex items-center justify-center"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Показать корзину"
+        >
+          <span className="sr-only">Показать корзину</span>
+        </PopoverButton>
         <Transition
           show={isOpen}
           as={Fragment}
@@ -77,7 +85,7 @@ const CartDropdown = ({
         >
           <PopoverPanel
             static
-            className="hidden small:block absolute top-[calc(100%+1px)] right-0 bg-white border-x border-b border-gray-200 w-[420px] text-ui-fg-base shadow-lg rounded-lg"
+            className="hidden small:block absolute top-[calc(100%+1px)] right-0 bg-white border-x border-b border-gray-200 w-[420px] text-ui-fg-base shadow-lg rounded-lg z-[100]"
             data-testid="nav-cart-dropdown"
           >
             <div className="p-4 flex items-center justify-center border-b border-gray-200">

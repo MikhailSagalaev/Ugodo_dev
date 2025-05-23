@@ -59,7 +59,6 @@ const Hero = () => {
 
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
-  const [progressBars, setProgressBars] = useState<JSX.Element[]>([]); // Для хранения элементов прогресс-баров
 
   const scrollTo = useCallback((index: number) => {
     emblaApi?.scrollTo(index);
@@ -71,46 +70,7 @@ const Hero = () => {
 
   const onSelect = useCallback((emblaApi: any) => {
     setSelectedIndex(emblaApi.selectedScrollSnap())
-     // Перезапускаем анимацию прогресс-бара при каждом выборе слайда
-     setProgressBars(createProgressBars(emblaApi.scrollSnapList().length, emblaApi.selectedScrollSnap(), autoplayDelay));
-  }, [autoplayDelay]) // Добавляем autoplayDelay в зависимости
-
-   // Функция для создания прогресс-баров с анимацией
-   const createProgressBars = (count: number, currentIndex: number, duration: number): JSX.Element[] => {
-    return Array.from({ length: count }).map((_, index) => {
-      let progressWidth = '0%';
-      let animationClass = '';
-      let animationDur = '0ms';
-
-      if (index < currentIndex) {
-        progressWidth = '100%';
-      } else if (index === currentIndex) {
-        animationClass = 'animate-progress';
-        animationDur = `${duration}ms`;
-        // Ширина будет управляться анимацией
-      } 
-      // Для index > currentIndex ширина остается '0%'
-
-      return (
-        <div 
-          key={index} 
-          className="flex-1 h-1 bg-white/30 overflow-hidden rounded-full cursor-pointer" 
-          onClick={() => scrollTo(index)} 
-          aria-label={`Перейти к слайду ${index + 1}`}
-        >
-          <div 
-            key={`${index}-${currentIndex}`} // Оставляем динамический ключ для сброса состояния
-            className={`h-full bg-white rounded-full ${animationClass}`}
-            style={{
-              // Устанавливаем ширину для неактивных слайдов
-              width: index !== currentIndex ? progressWidth : undefined,
-              animationDuration: animationDur,
-            }}
-          ></div>
-        </div>
-      );
-    });
-  };
+  }, [])
 
   useEffect(() => {
     if (!emblaApi) return
@@ -121,15 +81,12 @@ const Hero = () => {
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
 
-     // Инициализируем прогресс-бары при монтировании
-     setProgressBars(createProgressBars(emblaApi.scrollSnapList().length, emblaApi.selectedScrollSnap(), autoplayDelay));
-
     return () => {
       emblaApi.off('reInit', onInit)
       emblaApi.off('reInit', onSelect)
       emblaApi.off('select', onSelect)
     }
-  }, [emblaApi, onInit, onSelect, autoplayDelay]) // Добавляем autoplayDelay
+  }, [emblaApi, onInit, onSelect])
 
   return (
     <div className="w-full relative overflow-hidden embla"> 
@@ -138,7 +95,7 @@ const Hero = () => {
           {slides.map((slide) => (
             <div 
               key={slide.id} 
-              className="flex-[0_0_100%] min-w-0 relative h-[40vh] lg:h-[70vh]"
+              className="flex-[0_0_100%] min-w-0 relative h-[75vh] md:h-[80vh]" 
             >
               {/* Фоновое изображение */}
               <Image 
@@ -156,20 +113,20 @@ const Hero = () => {
               
               {/* Контент */}
               <div className="relative z-10 h-full flex items-center">
-                <div className="container ml-5 mr-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
+                <div className="container mx-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
                   <div className="max-w-md">
-                    <Text className="text-white/90 text-[14px] mb-2 font-light tracking-wide">
+                    <Text className="text-white/90 text-lg md:text-xl mb-2 font-light tracking-wide">
                       {slide.headline}
                     </Text>
                     <Heading 
                       level="h1" 
-                      className="text-[30px] font-bold mb-6 text-white leading-tight tracking-tight"
+                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight tracking-tight"
                     >
                       {slide.title}
                     </Heading>
                     <LocalizedClientLink href={slide.cta.link}>
                       <Button 
-                        className="bg-black hover:bg-gray-800 text-white min-w-32 h-12 px-6 shadow-none rounded-none"
+                        className="bg-black hover:bg-gray-800 text-white min-w-32 h-12 px-6"
                         size="large"
                       >
                         {slide.cta.text}
@@ -183,10 +140,22 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Новые индикаторы слайдов (прогресс-бары) */}
-      <div className="absolute bottom-8 left-0 right-0 z-20 px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-3 justify-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
-          {progressBars} {/* Отображаем созданные прогресс-бары */} 
+      {/* Dot indicators */}
+      <div className="absolute bottom-8 left-0 right-0 z-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center gap-1">
+            {scrollSnaps.map((_, index) => (
+              <div
+                key={index}
+                onClick={() => scrollTo(index)}
+                className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-200 
+                  ${index === selectedIndex 
+                    ? 'bg-black' 
+                    : 'bg-white border border-black hover:bg-gray-300'}`}
+                aria-label={`Перейти к слайду ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

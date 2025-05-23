@@ -5,6 +5,7 @@ import React, { Fragment, useMemo } from "react"
 import useToggleState from "@lib/hooks/use-toggle-state"
 import ChevronDown from "@modules/common/icons/chevron-down"
 import X from "@modules/common/icons/x"
+import { Heart } from "lucide-react"
 
 import { getProductPrice } from "@lib/util/get-product-price"
 import OptionSelect from "./option-select"
@@ -22,6 +23,11 @@ type MobileActionsProps = {
   isAdding?: boolean
   show: boolean
   optionsDisabled: boolean
+  customer?: HttpTypes.StoreCustomer | null
+  isLoadingCustomer?: boolean
+  isInWishlist?: boolean
+  isLoadingWishlist?: boolean
+  handleWishlistToggle?: (e: React.MouseEvent<HTMLButtonElement>) => Promise<void>
 }
 
 const MobileActions: React.FC<MobileActionsProps> = ({
@@ -35,6 +41,11 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   isAdding,
   show,
   optionsDisabled,
+  customer,
+  isLoadingCustomer,
+  isInWishlist,
+  isLoadingWishlist,
+  handleWishlistToggle
 }) => {
   const { state, open, close } = useToggleState()
 
@@ -101,37 +112,58 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                 <div></div>
               )}
             </div>
-            <div className={clx("grid grid-cols-2 w-full gap-x-4", {
-              "!grid-cols-1": isSimple
-            })}>
-              {!isSimple && <Button
-                onClick={open}
-                variant="secondary"
-                className="w-full"
-                data-testid="mobile-actions-button"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span>
-                    {variant
-                      ? Object.values(options).join(" / ")
-                      : "Select Options"}
-                  </span>
-                  <ChevronDown />
-                </div>
-              </Button>}
+            <div className="flex w-full gap-x-2">
+              {!isSimple && (
+                <Button
+                  onClick={open}
+                  variant="secondary"
+                  className="flex-1"
+                  data-testid="mobile-actions-button"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>
+                      {variant
+                        ? Object.values(options).join(" / ")
+                        : "Выбрать опции"}
+                    </span>
+                    <ChevronDown />
+                  </div>
+                </Button>
+              )}
               <Button
                 onClick={handleAddToCart}
                 disabled={!inStock || !variant}
-                className="w-full"
+                className="flex-1 bg-black !text-white uppercase font-medium"
                 isLoading={isAdding}
                 data-testid="mobile-cart-button"
               >
                 {!variant
-                  ? "Select variant"
+                  ? "Выбрать вариант"
                   : !inStock
-                  ? "Out of stock"
-                  : "Add to cart"}
+                  ? "Нет в наличии"
+                  : "Добавить в корзину"}
               </Button>
+              
+              {handleWishlistToggle && (
+                <Button
+                  variant="secondary"
+                  className={`w-12 !px-0 border border-gray-300 relative ${isLoadingCustomer || !customer || isLoadingWishlist ? 'cursor-wait' : ''}`}
+                  onClick={handleWishlistToggle}
+                  disabled={isLoadingCustomer || !customer || isLoadingWishlist}
+                  aria-label={isInWishlist ? "Удалить из избранного" : "Добавить в избранное"}
+                  title={!customer ? "Войдите, чтобы добавить в избранное" : (isInWishlist ? "Удалить из избранного" : "Добавить в избранное")}
+                >
+                  <Heart 
+                    className={`transition-all ${isInWishlist ? 'fill-rose-500 text-rose-500' : 'text-gray-700'}`}
+                    size={20}
+                  />
+                  {(isLoadingWishlist || isLoadingCustomer) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-md">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    </div>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </Transition>

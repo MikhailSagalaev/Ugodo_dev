@@ -6,7 +6,7 @@ function WishlistDiscountBanner() {
   const imageUrl = "/images/banners/gift.png"; 
 
   return (
-    <div className="relative w-full mt-10 md:mt-20 overflow-hidden h-[300px] lg:h-[50vh]">
+    <div className="relative w-full mt-10 md:mt-20 overflow-hidden">
       
       {/* Фоновое изображение с явными размерами */}
       <Image
@@ -17,16 +17,16 @@ function WishlistDiscountBanner() {
         priority={false} 
         loading="lazy"
         quality={85}
-        className="block w-full h-full object-cover"
+        className="block w-full h-auto object-cover"
       />
 
       {/* Контейнер для текста (оверлей) - выравнивание по левому краю */}
-      <div className="absolute inset-0 z-10 flex flex-col items-start justify-end p-6 md:p-10 lg:p-16 text-left">
+      <div className="absolute inset-0 z-10 flex flex-col items-start justify-center p-6 md:p-10 lg:p-16 text-left"> 
         <div className="text-black max-w-sm"> 
-          <span className="block text-lg md:text-xl lg:text-2xl leading-tight mb-1">
+          <span className="block text-xl md:text-2xl lg:text-3xl leading-tight mb-1">
             Из вишлиста
           </span>
-          <span className="block text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
+          <span className="block text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
             со скидками до −50%
           </span>
         </div>
