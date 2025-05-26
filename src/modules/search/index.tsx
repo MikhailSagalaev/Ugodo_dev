@@ -102,8 +102,8 @@ const Search = ({ isScrolled = false }: SearchProps) => {
         aria-label="Поиск"
       >
         <svg 
-          width="22" 
-          height="22" 
+          width="25" 
+          height="25" 
           viewBox="0 0 22 22" 
           fill="none" 
           stroke={isScrolled ? "black" : "white"}
