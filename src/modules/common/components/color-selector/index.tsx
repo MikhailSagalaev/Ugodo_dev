@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { HttpTypes } from "@medusajs/types"
 
 type ColorSelectorProps = {
@@ -56,6 +56,16 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   onOptionChange
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const colorOption = product.options?.find(option => 
     option.title.toLowerCase().includes('цвет') || 
@@ -70,10 +80,10 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   const selectedColor = colorOption.values.find(v => v.value === selectedValue)
   
   return (
-    <div className="relative w-[360px]">
+    <div className="relative" style={{ width: isMobile ? "100%" : "360px" }}>
       <div 
         className="border-b border-gray-300 pb-3"
-        style={{ width: "360px", height: "50px" }}
+        style={{ width: isMobile ? "100%" : "360px", height: "50px" }}
       >
         <div className="flex items-center h-full">
           <div className="relative flex-1">

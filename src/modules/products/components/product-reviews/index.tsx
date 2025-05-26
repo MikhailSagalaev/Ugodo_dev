@@ -92,6 +92,16 @@ function Review({ review }: { review: StoreProductReview }) {
 
 export default function ProductReviews({ productId }: ProductReviewsProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -121,82 +131,94 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
   return (
     <div className="py-8 md:py-12">
-      <div className="flex items-center justify-between mb-8">
-        <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">
-          рейтинг и отзывы
-        </Heading>
-        
-        <button 
-          className="flex items-center gap-2 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer"
-          style={{
-            fontSize: "11px",
-            fontWeight: 500,
-            letterSpacing: "1.4px",
-            textTransform: "uppercase"
-          }}
-        >
-          смотреть всё
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="transition-colors duration-200">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-8">
+          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">
+            рейтинг и отзывы
+          </Heading>
+          
+          <button 
+            className="flex items-center gap-2 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              letterSpacing: "1.4px",
+              textTransform: "uppercase"
+            }}
+          >
+            смотреть всё
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="transition-colors duration-200">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
 
-      <div className="flex items-start justify-center gap-8 mb-8">
-        <div style={{ maxHeight: "49px", width: "170px" }}>
-          <div className="flex items-start gap-2">
+      <div className={`flex items-start ${isMobile ? 'gap-6' : 'justify-center gap-8'} mb-8`}>
+        <div style={{ width: isMobile ? "auto" : "170px" }}>
+          <div className="flex flex-col items-start">
             <div style={{ 
-              fontSize: "45px", 
+              fontSize: isMobile ? "55px" : "45px", 
               fontWeight: 500, 
               fontStyle: "italic", 
-              lineHeight: 1.1
+              lineHeight: 1.1,
+              letterSpacing: isMobile ? "-0.2px" : "0",
+              marginBottom: "4px"
             }}>
               {averageRating}
             </div>
-            <div className="flex items-end" style={{ height: "49px" }}>
-              <div className="flex flex-col items-start">
-                <div className="flex gap-1 items-center mb-1">
-                  {[1, 2, 3, 4, 5].map((rate) => (
-                    <span key={rate}>
-                      {rate <= fullStars ? (
-                        <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
-                      ) : rate === fullStars + 1 && hasHalfStar ? (
-                        <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
-                      ) : (
-                        <Star className="text-black" style={{ width: "15px", height: "15px" }} />
-                      )}
-                    </span>
-                  ))}
-                </div>
-                <div style={{ fontSize: "14px", color: "#666" }}>
-                  оценка товара
-                </div>
-              </div>
+            <div className="flex gap-1 items-center mb-1">
+              {[1, 2, 3, 4, 5].map((rate) => (
+                <span key={rate}>
+                  {rate <= fullStars ? (
+                    <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
+                  ) : rate === fullStars + 1 && hasHalfStar ? (
+                    <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
+                  ) : (
+                    <Star className="text-black" style={{ width: "15px", height: "15px" }} />
+                  )}
+                </span>
+              ))}
+            </div>
+            <div style={{ fontSize: "14px", color: "#666" }}>
+              оценка товара
             </div>
           </div>
         </div>
-
-        <div style={{ maxHeight: "49px", width: "170px" }}>
-          <div className="flex items-start gap-2">
+        
+        {isMobile && (
+          <div className="flex flex-col items-end flex-1">
+            <div className="flex items-center" style={{ height: "55px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="flex items-center" style={{ height: "19px" }}>
+              <div style={{ 
+                fontSize: "16px", 
+                fontWeight: 500, 
+                fontStyle: "italic", 
+                lineHeight: 1.1
+              }}>
+                {totalReviews}
+              </div>
+            </div>
             <div style={{ 
-              fontSize: "45px", 
-              fontWeight: 500, 
-              fontStyle: "italic", 
-              lineHeight: 1.1
+              fontSize: "14px", 
+              color: "#666",
+              fontStyle: "normal",
+              fontWeight: 400,
+              lineHeight: 1.4,
+              whiteSpace: "nowrap"
             }}>
-              {totalReviews}
-            </div>
-            <div className="flex items-end" style={{ height: "49px" }}>
-              <div style={{ fontSize: "14px", color: "#666" }}>
-                отзывов
-              </div>
+              отзывов
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="flex" style={{ gap: "80px" }}>
-        <div className="flex-shrink-0" style={{ width: "300px" }}>
+      <div className={`flex ${isMobile ? 'flex-col gap-8' : ''}`} style={{ gap: isMobile ? undefined : "80px" }}>
+        <div className="flex-shrink-0" style={{ width: isMobile ? "100%" : "300px" }}>
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((stars) => (
               <div key={stars} className="flex items-center gap-2">
@@ -204,7 +226,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                 <svg width="11" height="11" viewBox="0 0 15 15" fill="currentColor" className="text-black flex-shrink-0">
                   <path d="M7.5 0L9.18 5.18H15L10.41 8.36L12.09 13.54L7.5 10.36L2.91 13.54L4.59 8.36L0 5.18H5.82L7.5 0Z"/>
                 </svg>
-                <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[200px]">
+                <div className="flex-1 bg-gray-200 rounded-full h-2" style={{ maxWidth: isMobile ? "none" : "200px" }}>
                   <div 
                     className="bg-black h-2 rounded-full" 
                     style={{ width: `${mockStarStats[stars as keyof typeof mockStarStats]}%` }}
@@ -218,12 +240,22 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           </div>
         </div>
 
-        <div style={{ maxWidth: "760px", flex: 1 }}>
-          <div className="space-y-0">
-            {reviews.map((review) => (
-              <Review key={review.id} review={review} />
-            ))}
-          </div>
+        <div style={{ maxWidth: isMobile ? "100%" : "760px", flex: 1 }}>
+          {isMobile ? (
+            <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar">
+              {reviews.map((review) => (
+                <div key={review.id} className="flex-shrink-0 bg-white border border-gray-200 rounded-lg p-4" style={{ width: "280px" }}>
+                  <Review review={review} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {reviews.map((review) => (
+                <Review key={review.id} review={review} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

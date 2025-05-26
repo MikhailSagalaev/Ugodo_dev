@@ -63,8 +63,8 @@ export default function CartButton({ isScrolled = false }: { isScrolled?: boolea
         onClick={() => setIsOpen(!isOpen)} // Добавляем обработчик клика для открытия/закрытия
       >
         <svg 
-          width="22" 
-          height="22" 
+          width="25" 
+          height="25" 
           viewBox="0 0 22 22" 
           fill="none" 
           stroke={isScrolled ? "black" : "white"}
