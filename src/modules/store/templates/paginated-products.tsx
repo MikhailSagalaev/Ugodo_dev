@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { listProductsWithSort } from "@lib/data/products"
+import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
-import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import { Button } from "@medusajs/ui"
 
 const PRODUCT_LIMIT = 16
@@ -14,11 +13,9 @@ type PaginatedProductsParams = {
   collection_id?: string[]
   category_id?: string[]
   id?: string[]
-  order?: string
 }
 
 export default function PaginatedProducts({
-  sortBy,
   initialProducts,
   totalCount,
   collectionId,
@@ -27,7 +24,6 @@ export default function PaginatedProducts({
   countryCode,
   region,
 }: {
-  sortBy?: SortOptions
   initialProducts: any[]
   totalCount: number
   collectionId?: string
@@ -43,12 +39,10 @@ export default function PaginatedProducts({
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   
   useEffect(() => {
-    // Функция для определения типа устройства
     const handleResize = () => {
       setIsTabletOrMobile(window.innerWidth < 1024);
     };
     
-    // Вызываем функцию при монтировании и изменении размера окна
     handleResize();
     window.addEventListener('resize', handleResize);
     
@@ -77,15 +71,10 @@ export default function PaginatedProducts({
     queryParams["id"] = productsIds
   }
 
-  if (sortBy === "created_at") {
-    queryParams["order"] = "created_at"
-  }
-
     try {
-      const { response } = await listProductsWithSort({
-        page: nextPage,
+      const { response } = await listProducts({
+        pageParam: nextPage,
     queryParams,
-    sortBy,
     countryCode,
   })
 
@@ -105,11 +94,11 @@ export default function PaginatedProducts({
         {products.length > 0 && (
           <div className={`
             grid
-            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
+            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-4 gap-x-8 gap-y-12'}
             w-full
             justify-start
           `}>
-            {products.slice(0, 8).map((p, index) => {
+            {products.map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
               return (
                 <div key={p.id} className={`flex ${isTabletOrMobile ? 'justify-center' : 'justify-start'}`}>
@@ -125,34 +114,6 @@ export default function PaginatedProducts({
               );
             })}
           </div>
-        )}
-        
-        {products.length > 8 && (
-          <>
-            <div className={`${isTabletOrMobile ? 'h-8' : 'h-24'}`}></div> {/* Разделитель между секциями */}
-            <div className={`
-              grid
-              ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-16 gap-y-14'}
-              w-full
-              justify-start
-            `}>
-              {products.slice(8).map((p, index) => {
-                const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
-                return (
-                  <div key={p.id} className={`flex ${isTabletOrMobile ? 'justify-center' : 'justify-start'}`}>
-                    <div className="w-full aspect-[3/4]">
-                      <ProductPreview 
-                        product={p} 
-                        region={region} 
-                        categoryTitle={categoryTitle} 
-                        firstInRow={isTabletOrMobile && index % 2 === 0}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
         )}
       </div>
       

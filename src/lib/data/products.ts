@@ -63,7 +63,7 @@ export const listProducts = async ({
           offset,
           region_id: region?.id,
           fields:
-            "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags,+prices,+categories,+type",
+            "id,title,subtitle,description,handle,status,thumbnail,weight,length,height,width,hs_code,mid_code,material,collection_id,type_id,discountable,external_id,created_at,updated_at,deleted_at,metadata,*variants.calculated_price,*variants.inventory_quantity,*variants.prices,*variants.options,*variants.metadata,*images.id,*images.url,*images.metadata,*options,*tags,*type,*collection,*categories.id,*categories.name,*categories.handle",
           ...queryParams,
         },
         headers,
@@ -72,6 +72,16 @@ export const listProducts = async ({
       }
     )
     .then(({ products, count }) => {
+      console.log('🛍️ Загружено товаров:', products.length)
+      if (products.length > 0) {
+        console.log('📸 Изображения первого товара:', {
+          id: products[0].id,
+          title: products[0].title,
+          images_count: products[0].images?.length || 0,
+          images: products[0].images?.map(img => ({ id: img.id, url: img.url })) || []
+        })
+      }
+      
       const nextPage = count > offset + limit ? pageParam + 1 : null
 
       return {
@@ -135,12 +145,18 @@ export const listProductsWithSort = async ({
   }
 }
 
-// Тип для отзыва (адаптируйте под фактические поля вашего плагина)
-export interface StoreProductReview extends HttpTypes.StoreProductReview {
-  // Добавьте поля, если они отличаются от стандартных Medusa HttpTypes
-  // Например, если плагин возвращает имена пользователя:
-  // first_name?: string;
-  // last_name?: string;
+// Тип для отзыва (создаем собственный интерфейс)
+export interface StoreProductReview {
+  id: string
+  product_id: string
+  customer_id?: string
+  rating: number
+  title?: string
+  content: string
+  status?: string
+  created_at: string
+  updated_at: string
+  metadata?: Record<string, any>
 }
 
 // Функция для получения отзывов

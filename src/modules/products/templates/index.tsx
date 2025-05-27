@@ -8,7 +8,6 @@ import RelatedProducts from "@modules/products/components/related-products"
 import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { notFound } from "next/navigation"
-import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
 import ProductReviews from "@modules/products/components/product-reviews"
 import Breadcrumbs, { BreadcrumbItem } from "@modules/common/components/breadcrumbs"
@@ -21,6 +20,8 @@ import SafeImage from "@modules/common/components/safe-image"
 import ColorSelector from "@modules/common/components/color-selector"
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft } from 'lucide-react'
+import ProductRating from "@modules/products/components/product-rating"
+import QuantitySelector from "@modules/products/components/quantity-selector"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -55,6 +56,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   
   const [isMobile, setIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Карусель для мобильной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -79,6 +81,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   }, [emblaApi])
 
   useEffect(() => {
+    setIsClient(true)
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -246,23 +249,47 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ": product.metadata?.additional_info as string || "пока нет"
   };
 
-  const productSpecs = product.metadata?.product_type || 
-                      product.metadata?.target_audience || 
-                      product.metadata?.purpose || 
-                      product.metadata?.skin_type || 
-                      product.metadata?.application_area || 
-                      product.metadata?.age_range || 
-                      product.metadata?.volume
-    ? [
-        { name: "тип продукта", value: product.metadata?.product_type as string || "" },
-        { name: "для кого", value: product.metadata?.target_audience as string || "" },
-        { name: "назначение", value: product.metadata?.purpose as string || "" },
-        { name: "тип кожи", value: product.metadata?.skin_type as string || "" },
-        { name: "область применения", value: product.metadata?.application_area as string || "" },
-        { name: "возраст", value: product.metadata?.age_range as string || "" },
-        { name: "объём", value: product.metadata?.volume as string || "" }
-      ].filter(spec => spec.value.trim() !== "")
-    : [{ name: "тип продукта", value: productCategory }];
+  const productSpecs = (() => {
+    const metadata = product.metadata || {};
+    const specs = [];
+    
+    // Добавляем все метаданные, исключая служебные поля
+    Object.entries(metadata).forEach(([key, value]) => {
+      if (
+        value && 
+        value !== "" && 
+        value !== "-" && 
+        !key.startsWith("_") && 
+        !["discount_percentage", "is_new", "is_hit", "article", "composition", "brand_info", "additional_info"].includes(key)
+      ) {
+        const formattedKey = key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, char => char.toUpperCase());
+        specs.push({ name: formattedKey, value: String(value) });
+      }
+    });
+    
+    // Если нет метаданных, добавляем базовые характеристики
+    if (specs.length === 0) {
+      if (product.type?.value) {
+        specs.push({ name: "Тип продукта", value: product.type.value });
+      }
+      if (product.categories && product.categories.length > 0) {
+        specs.push({ name: "Категория", value: product.categories[0].name });
+      }
+      if (product.weight) {
+        specs.push({ name: "Вес", value: `${product.weight} г` });
+      }
+      if (product.material) {
+        specs.push({ name: "Материал", value: product.material });
+      }
+      if (product.origin_country) {
+        specs.push({ name: "Страна производства", value: product.origin_country });
+      }
+    }
+    
+    return specs;
+  })();
 
   const nextImage = () => {
     if (product.images && selectedImageIndex < product.images.length - 1) {
@@ -289,6 +316,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     setIsImageModalOpen(false);
     document.body.style.overflow = 'unset';
   };
+
+  // Предотвращаем проблемы с гидратацией
+  if (!isClient) {
+    return (
+      <div className="pb-16">
+        <div className="content-container">
+          <div style={{ height: "600px" }} className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+              <p className="text-gray-500">Загрузка...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`pb-16 ${isMobile ? 'pb-20' : ''}`}>
@@ -320,7 +363,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
             
             <div className="flex items-center">
-              <span className="text-lg">★★★★☆</span>
+              <ProductRating productId={product.id} showCount={true} size="lg" />
             </div>
           </div>
 
@@ -430,26 +473,37 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
 
           <div className="mb-6 px-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-500 uppercase" style={{
-                fontSize: "11px",
-                fontWeight: 500,
-                letterSpacing: "1.4px",
-                lineHeight: 1.5,
-                textTransform: "uppercase"
-              }}>
-                КОЛИЧЕСТВО / ШТ
+            {product.metadata?.bulk_discount === "true" ? (
+              <QuantitySelector
+                product={product}
+                region={region}
+                onQuantityChange={(newQuantity, newPrice) => {
+                  setQuantity(newQuantity)
+                }}
+                selectedQuantity={quantity}
+              />
+            ) : (
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-gray-500 uppercase" style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  letterSpacing: "1.4px",
+                  lineHeight: 1.5,
+                  textTransform: "uppercase"
+                }}>
+                  КОЛИЧЕСТВО / ШТ
+                </div>
+                <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    className="w-full h-full text-center outline-none"
+                  />
+                </div>
               </div>
-              <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  className="w-full h-full text-center outline-none"
-                />
-              </div>
-            </div>
+            )}
 
             {product.options?.some(option => 
               option.title.toLowerCase().includes('цвет') || 
@@ -645,7 +699,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex flex-col w-1/2" style={{ paddingLeft: "20px" }}>
               <div className="flex items-center mb-3">
                 <div className="flex items-center">
-                  <span className="text-lg">★★★★☆</span>
+                  <ProductRating productId={product.id} showCount={true} size="lg" />
                 </div>
                 <span className="mx-2">•</span>
                 <span className="text-sm">6 отзывов</span>
@@ -843,29 +897,37 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <div style={{ padding: "60px 90px 0" }}>
                 <div className="w-[400px]">
                   <div className="mb-6">
-                    <div className="flex items-center">
-                      <div 
-                        className="text-gray-500 uppercase mr-6"
-                        style={{
+                    {product.metadata?.bulk_discount === "true" ? (
+                      <QuantitySelector
+                        product={product}
+                        region={region}
+                        onQuantityChange={(newQuantity, newPrice) => {
+                          setQuantity(newQuantity)
+                        }}
+                        selectedQuantity={quantity}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="text-gray-500 uppercase" style={{
                           fontSize: "11px",
                           fontWeight: 500,
                           letterSpacing: "1.4px",
                           lineHeight: 1.5,
                           textTransform: "uppercase"
-                        }}
-                      >
-                        КОЛИЧЕСТВО / ШТ
+                        }}>
+                          КОЛИЧЕСТВО / ШТ
+                        </div>
+                        <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
+                          <input 
+                            type="number" 
+                            min="1" 
+                            value={quantity} 
+                            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                            className="w-full h-full text-center outline-none"
+                          />
+                        </div>
                       </div>
-                      <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
-                        <input 
-                          type="number" 
-                          min="1" 
-                          value={quantity} 
-                          onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                          className="w-full h-full text-center outline-none"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {product.options?.some(option => 
@@ -1001,17 +1063,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
           
           <div className="hidden">
-            <Suspense
-              fallback={
-                <ProductActions
-                  disabled={true}
-                  product={product}
-                  region={region}
-                />
-              }
-            >
-              <ProductActionsWrapper id={product.id} region={region} />
-            </Suspense>
+            <div></div>
           </div>
         </>
       )}
@@ -1142,7 +1194,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       </div>
       
       <div className={`content-container my-8 ${isMobile ? 'px-4' : ''}`} style={{ marginTop: "40px" }}>
-        <ProductReviews productId={product.id} />
+        <ProductReviews productId={product.id} product={product} />
       </div>
       
       <div className={`content-container my-8 ${isMobile ? 'px-4' : ''}`}>

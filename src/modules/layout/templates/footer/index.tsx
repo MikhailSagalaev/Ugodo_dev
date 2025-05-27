@@ -3,7 +3,7 @@ import * as React from "react";
 
 function Footer() {
   return (
-    <div className="flex flex-col pt-16 mt-20 w-full bg-[#1A1341] max-md:mt-10 max-md:max-w-full">
+    <div className="flex flex-col pt-16 mt-20 w-full bg-black max-md:mt-10 max-md:max-w-full">
       <div className="flex flex-wrap gap-10 justify-between items-start self-center px-5 w-full max-w-[1120px] max-md:max-w-full">
         <div className="w-[200px] mb-10 md:mb-0">
           <div className="w-full">
