@@ -1,180 +1,279 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { getProductReviews } from "@lib/data/reviews"
+import { useState, useEffect } from "react"
 import { StoreProductReview } from "../../../../types/reviews"
 import { Star, StarSolid } from "@medusajs/icons"
-import { Button, Heading, Skeleton } from "@medusajs/ui"
-import ProductReviewsForm from "./form"
+import { Heading } from "@medusajs/ui"
 import dayjs from 'dayjs'
-import 'dayjs/locale/ru' // Импортируем русскую локаль
-dayjs.locale('ru') // Устанавливаем русскую локаль
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/ru'
+
+dayjs.extend(relativeTime)
+dayjs.locale('ru')
 
 type ProductReviewsProps = {
   productId: string
 }
 
-// Компонент для отображения одного отзыва
+const mockReviews: StoreProductReview[] = [
+  {
+    id: "mock-review-1",
+    rating: 5,
+    title: "Отличный продукт!",
+    content: "Очень довольна покупкой! Качество превосходное, упаковка красивая. Рекомендую всем! Буду заказывать еще.",
+    first_name: "Владена",
+    last_name: "А.",
+    customer_id: null,
+    created_at: "2024-12-15T10:30:00Z"
+  },
+  {
+    id: "mock-review-2", 
+    rating: 5,
+    title: null,
+    content: "Хорошая пигментация, стойкие тени",
+    first_name: "Анастасия",
+    last_name: "К.",
+    customer_id: null,
+    created_at: "2024-11-20T14:20:00Z"
+  },
+  {
+    id: "mock-review-3",
+    rating: 5,
+    title: null,
+    content: "очень классные тени ❤️",
+    first_name: "Майя",
+    last_name: "Б.",
+    customer_id: null,
+    created_at: "2024-11-10T16:45:00Z"
+  }
+]
+
+const mockStarStats = {
+  5: 82,
+  4: 9,
+  3: 2,
+  2: 7,
+  1: 0
+}
+
 function Review({ review }: { review: StoreProductReview }) {
-  const reviewDate = dayjs(review.created_at).format('D MMMM YYYY') // Форматируем дату
+  const timeAgo = dayjs(review.created_at).fromNow()
   const authorName = `${review.first_name || ''} ${review.last_name || ''}`.trim() || 'Аноним'
 
   return (
-    <div className="flex flex-col gap-y-2 text-base-regular text-ui-fg-base border-b border-ui-border-base pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-x-1 items-center">
+    <div className="border-b border-gray-200 last:border-b-0" style={{ minHeight: "115px", paddingBottom: "40px", marginBottom: "40px" }}>
+      <div className="flex items-center gap-3" style={{ marginBottom: "2px" }}>
+        <span style={{ fontSize: "16px", lineHeight: 1.4 }}>{authorName}</span>
+        <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((rate) => (
             <span key={rate}>
               {rate <= review.rating ? (
-                <StarSolid className="w-5 h-5 text-ui-tag-orange-icon" />
+                <StarSolid className="text-black" style={{ width: "14px", height: "14px" }} />
               ) : (
-                <Star className="w-5 h-5 text-ui-fg-muted" />
+                <Star className="text-black" style={{ width: "14px", height: "14px" }} />
               )}
             </span>
           ))}
         </div>
-        <span className="text-gray-500 text-sm-regular">{reviewDate}</span>
       </div>
-      {review.title && <Heading level="h3" className="text-md font-semibold mt-1">{review.title}</Heading>}
-      <p className="text-md leading-relaxed mt-1">{review.content}</p>
-      <p className="text-gray-600 text-sm-regular mt-2">{authorName}</p>
+      
+      <div style={{ marginBottom: "2px" }}>
+        <span className="text-[#7f7f7f]" style={{ fontSize: "13px", lineHeight: 1.1 }}>
+          {timeAgo}
+        </span>
+      </div>
+      
+      <p style={{ fontSize: "14px", lineHeight: 1.6, margin: 0, paddingTop: "15px" }}>
+        {review.content}
+      </p>
     </div>
   )
 }
 
-// Основной компонент
 export default function ProductReviews({ productId }: ProductReviewsProps) {
-  const [page, setPage] = useState(1)
-  const defaultLimit = 5 // Показывать по 5 отзывов за раз
-  const [reviews, setReviews] = useState<StoreProductReview[]>([])
-  const [averageRating, setAverageRating] = useState(0)
-  const [hasMoreReviews, setHasMoreReviews] = useState(true) // Изначально предполагаем, что есть еще
-  const [count, setCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
-  // Функция для загрузки отзывов
-  const fetchReviews = useCallback((currentPage: number) => {
-    setIsLoading(true)
-    setError(null)
-    getProductReviews({
-      productId,
-      limit: defaultLimit,
-      offset: (currentPage - 1) * defaultLimit,
-    }).then(({ reviews: paginatedReviews, average_rating, count, limit }) => {
-      setReviews((prev) => {
-        const existingIds = new Set(prev.map(r => r.id))
-        const newReviews = paginatedReviews.filter(review => !existingIds.has(review.id));
-        return currentPage === 1 ? paginatedReviews : [...prev, ...newReviews]
-      })
-      setAverageRating(average_rating) // API должен возвращать средний рейтинг
-      setCount(count) // API должен возвращать общее количество
-      setHasMoreReviews(count > currentPage * limit)
-    }).catch(err => {
-      console.error("Ошибка загрузки отзывов:", err)
-      setError("Не удалось загрузить отзывы.")
-      // Если ошибка на первой странице, обнуляем все
-      if (currentPage === 1) {
-         setReviews([])
-         setAverageRating(0)
-         setCount(0)
-      }
-      setHasMoreReviews(false) // Считаем, что больше нет
-    }).finally(() => {
-      setIsLoading(false)
-    })
-  }, [productId])
-
-  // Загружаем первую страницу при монтировании
   useEffect(() => {
-    fetchReviews(1)
-  }, [fetchReviews])
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
-  // Обработчик загрузки следующей страницы
-  const loadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchReviews(nextPage)
+  const reviews = mockReviews
+  const totalReviews = 46
+  const averageRating = 4.7
+  
+  const fullStars = Math.floor(averageRating)
+  const hasHalfStar = averageRating % 1 >= 0.5
+
+  if (isLoading) {
+    return (
+      <div className="py-8 md:py-12">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+          <div className="h-32 bg-gray-200 rounded mb-8"></div>
+        </div>
+      </div>
+    )
   }
-
-  // Функция для перезагрузки отзывов (например, после отправки нового)
-  const refreshReviews = useCallback(() => {
-     setPage(1) // Сбрасываем на первую страницу
-     setReviews([]) // Очищаем текущий список
-     // Задержка перед перезагрузкой, чтобы дать время API обновиться
-     setTimeout(() => fetchReviews(1), 300); 
-  }, [fetchReviews])
 
   return (
     <div className="py-8 md:py-12">
-      <div className="flex flex-col items-center text-center mb-10">
-        <Heading level="h2" className="text-2xl md:text-3xl font-semibold mb-4">
-          Отзывы покупателей
-        </Heading>
-        {/* Показываем рейтинг только если он больше 0 и загрузка завершена */} 
-        {!isLoading && count > 0 && (
-          <div className="flex gap-x-2 justify-center items-center">
-            <div className="flex gap-x-1">
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-8">
+          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">
+            рейтинг и отзывы
+          </Heading>
+          
+          <button 
+            className="flex items-center gap-2 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              letterSpacing: "1.4px",
+              textTransform: "uppercase"
+            }}
+          >
+            смотреть всё
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="transition-colors duration-200">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className={`flex items-start ${isMobile ? 'gap-6' : 'justify-center gap-8'} mb-8`}>
+        <div style={{ width: isMobile ? "auto" : "170px" }}>
+          <div className="flex flex-col items-start">
+            <div style={{ 
+              fontSize: isMobile ? "55px" : "45px", 
+              fontWeight: 500, 
+              fontStyle: "italic", 
+              lineHeight: 1.1,
+              letterSpacing: isMobile ? "-0.2px" : "0",
+              marginBottom: "4px"
+            }}>
+              {averageRating}
+            </div>
+            <div className="flex gap-1 items-center mb-1">
               {[1, 2, 3, 4, 5].map((rate) => (
                 <span key={rate}>
-                  {rate <= Math.round(averageRating) ? (
-                    <StarSolid className="w-6 h-6 text-ui-tag-orange-icon" />
+                  {rate <= fullStars ? (
+                    <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
+                  ) : rate === fullStars + 1 && hasHalfStar ? (
+                    <StarSolid className="text-black" style={{ width: "15px", height: "15px" }} />
                   ) : (
-                    <Star className="w-6 h-6 text-ui-fg-muted" />
+                    <Star className="text-black" style={{ width: "15px", height: "15px" }} />
                   )}
                 </span>
               ))}
             </div>
-            <span className="text-base-regular text-gray-600">
-              ({count} {count === 1 ? 'отзыв' : (count > 1 && count < 5) ? 'отзыва' : 'отзывов'}) - ср. {averageRating.toFixed(1)}
-            </span>
+            <div style={{ fontSize: "14px", color: "#666" }}>
+              оценка товара
+            </div>
+          </div>
+        </div>
+        
+        {isMobile && (
+          <div className="flex flex-col items-end flex-1">
+            <div className="flex items-center" style={{ height: "55px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="flex items-center" style={{ height: "19px" }}>
+              <div style={{ 
+                fontSize: "16px", 
+                fontWeight: 500, 
+                fontStyle: "italic", 
+                lineHeight: 1.1
+              }}>
+                {totalReviews}
+              </div>
+            </div>
+            <div style={{ 
+              fontSize: "14px", 
+              color: "#666",
+              fontStyle: "normal",
+              fontWeight: 400,
+              lineHeight: 1.4,
+              whiteSpace: "nowrap"
+            }}>
+              отзывов
+            </div>
           </div>
         )}
       </div>
 
-      {/* Отображение скелетона при загрузке */} 
-      {isLoading && page === 1 && (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            {[...Array(defaultLimit)].map((_, i) => (
-              <div key={i} className="border-b border-ui-border-base pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0 animate-pulse">
-                  <Skeleton className="w-24 h-5 mb-2 rounded" />
-                  <Skeleton className="w-3/4 h-6 mb-3 rounded" />
-                  <Skeleton className="w-full h-16 mb-3 rounded" />
-                  <Skeleton className="w-1/3 h-4 rounded" />
+      <div className={`flex ${isMobile ? 'flex-col gap-8' : ''}`} style={{ gap: isMobile ? undefined : "80px" }}>
+        <div className="flex-shrink-0" style={{ width: isMobile ? "100%" : "300px" }}>
+          <div className="space-y-2">
+            {[5, 4, 3, 2, 1].map((stars) => (
+              <div key={stars} className="flex items-center gap-2">
+                <span className="text-sm w-2">{stars}</span>
+                <svg width="11" height="11" viewBox="0 0 15 15" fill="currentColor" className="text-black flex-shrink-0">
+                  <path d="M7.5 0L9.18 5.18H15L10.41 8.36L12.09 13.54L7.5 10.36L2.91 13.54L4.59 8.36L0 5.18H5.82L7.5 0Z"/>
+                </svg>
+                <div className="flex-1 bg-gray-200 rounded-full h-2" style={{ maxWidth: isMobile ? "none" : "200px" }}>
+                  <div 
+                    className="bg-black h-2 rounded-full" 
+                    style={{ width: `${mockStarStats[stars as keyof typeof mockStarStats]}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-gray-600 w-8 text-right">
+                  {mockStarStats[stars as keyof typeof mockStarStats]}%
+                </span>
               </div>
             ))}
           </div>
-      )}
-      
-      {/* Отображение ошибки */} 
-      {error && page === 1 && !isLoading && (
-        <div className="text-center text-rose-500 bg-rose-50 p-4 rounded-md">{error}</div>
-      )}
-      
-      {/* Отображение списка отзывов */} 
-      {!isLoading && reviews.length === 0 && count === 0 && page === 1 && (
-        <div className="text-center text-gray-500 py-8">Для этого товара пока нет отзывов.</div>
-      )}
-
-      {reviews.length > 0 && (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          {reviews.map((review) => (
-            <Review key={review.id} review={review} />
-          ))}
         </div>
-      )}
 
-      {/* Кнопка "Загрузить еще" */} 
-      {hasMoreReviews && !isLoading && (
+        <div style={{ maxWidth: isMobile ? "100%" : "760px", flex: 1 }}>
+          {isMobile ? (
+            <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar">
+              {reviews.map((review) => (
+                <div key={review.id} className="flex-shrink-0 bg-white border border-gray-200 rounded-lg p-4" style={{ width: "280px" }}>
+                  <Review review={review} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {reviews.map((review) => (
+                <Review key={review.id} review={review} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {false && (
         <div className="flex justify-center mt-8">
-          <Button variant="secondary" onClick={loadMore} isLoading={isLoading && page > 1}>
-            {isLoading && page > 1 ? 'Загрузка...' : 'Загрузить еще отзывы'}
-          </Button>
+          <button 
+            className="border border-gray-300 px-6 py-3 hover:bg-[#C2E7DA] transition-colors duration-200"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              letterSpacing: "1.4px",
+              textTransform: "uppercase"
+            }}
+          >
+            оценить продукт
+          </button>
         </div>
       )}
-
-      {/* Форма добавления отзыва */} 
-      <ProductReviewsForm productId={productId} onReviewSubmitted={refreshReviews} />
     </div>
   )
 } 

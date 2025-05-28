@@ -36,7 +36,7 @@ const ProductInfoTab = ({ product }: ProductTabsProps) => {
 // Информация о доставке и возвратах
 const ShippingInfoTab = () => {
   return (
-    <div className="text-base py-8"> { /* Увеличим шрифт */}
+    <div className="text-base py-8">
       <div className="grid grid-cols-1 gap-y-8">
         <div className="flex items-start gap-x-2">
           <FastDelivery />
@@ -74,9 +74,7 @@ const ShippingInfoTab = () => {
 const BrandTab = ({ product }: ProductTabsProps) => {
   return (
     <div className="py-8 text-base">
-      {product.collection?.title 
-        ? `Товар принадлежит бренду: ${product.collection.title}`
-        : "Информация о бренде отсутствует."}
+      бренд угодо
     </div>
   )
 }
@@ -85,7 +83,7 @@ const BrandTab = ({ product }: ProductTabsProps) => {
 const AdditionalInfoTab = () => {
   return (
     <div className="py-8 text-base">
-      Дополнительная информация пока отсутствует.
+      пока нет
     </div>
   )
 }
@@ -103,14 +101,21 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
       component: <ShippingInfoTab />,
     },
     {
-      label: "Бренд",
+      label: "СОСТАВ", 
+      component: (
+        <div className="py-8 text-base">
+          состава пока нет
+        </div>
+      ),
+    },
+    {
+      label: "БРЕНД",
       component: <BrandTab product={product} />,
     },
-    // УДАЛЯЕМ ТАБ "Дополнительная информация"
-    // {
-    //   label: "Дополнительная информация",
-    //   component: <AdditionalInfoTab />,
-    // },
+    {
+      label: "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ",
+      component: <AdditionalInfoTab />,
+    },
   ]
 
   // Если табы пусты, не рендерим компонент
@@ -130,7 +135,7 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
             className={`px-6 py-3 text-base focus:outline-none transition-all duration-200 ${
               activeTab === tab.label
                 ? "text-black border-b-2 border-yellow-400"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-gray-500 hover:text-blue-500"
             }`}
           >
             {tab.label}
