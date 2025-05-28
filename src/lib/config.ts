@@ -1,7 +1,6 @@
 import Medusa from "@medusajs/js-sdk"
 
-// Defaults to standard port for Medusa server
-export let MEDUSA_BACKEND_URL = "http://localhost:9000"
+export let MEDUSA_BACKEND_URL = "https://api.ugodo.ru"
 
 if (process.env.MEDUSA_BACKEND_URL) {
   MEDUSA_BACKEND_URL = process.env.MEDUSA_BACKEND_URL

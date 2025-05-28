@@ -2,9 +2,15 @@ import { Button, Container, Text } from "@medusajs/ui"
 import { cookies as nextCookies } from "next/headers"
 
 async function ProductOnboardingCta() {
-  const cookies = await nextCookies()
-
-  const isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
+  let isOnboarding = false;
+  
+  try {
+    const cookies = await nextCookies()
+    isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
+  } catch (error) {
+    console.warn("Не удалось получить cookies в ProductOnboardingCta:", error);
+    return null;
+  }
 
   if (!isOnboarding) {
     return null

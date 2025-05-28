@@ -31,7 +31,7 @@ const LoginSMS = ({ setCurrentView }: Props) => {
     setMessage(null)
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
       const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
 
       const headers: HeadersInit = {
@@ -72,7 +72,7 @@ const LoginSMS = ({ setCurrentView }: Props) => {
     setMessage(null)
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
       const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
 
       const defaultHeaders: HeadersInit = {

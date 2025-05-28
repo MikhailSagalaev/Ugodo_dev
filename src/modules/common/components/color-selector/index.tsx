@@ -72,12 +72,27 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
     option.title.toLowerCase().includes('color')
   )
   
-  if (!colorOption || !colorOption.values || colorOption.values.length === 0) {
+  if (!colorOption) {
+    return null
+  }
+
+  // Получаем все уникальные значения цветов из вариантов
+  const colorValues = new Set<string>()
+  product.variants?.forEach(variant => {
+    variant.options?.forEach(optionValue => {
+      if (optionValue.option_id === colorOption.id) {
+        colorValues.add(optionValue.value)
+      }
+    })
+  })
+
+  const colorValuesArray = Array.from(colorValues)
+  
+  if (colorValuesArray.length === 0) {
     return null
   }
   
-  const selectedValue = selectedOptions[colorOption.id] || colorOption.values[0]?.value || ''
-  const selectedColor = colorOption.values.find(v => v.value === selectedValue)
+  const selectedValue = selectedOptions[colorOption.id] || colorValuesArray[0] || ''
   
   return (
     <div className="relative" style={{ width: isMobile ? "100%" : "360px" }}>
@@ -106,7 +121,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
                     textTransform: "uppercase"
                   }}
                 >
-                  {selectedColor?.value || 'Выберите цвет'}
+                  {selectedValue || 'Выберите цвет'}
                 </span>
               </div>
               <svg 
@@ -121,18 +136,18 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
             
             {isOpen && (
               <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 border-t-0 z-50 max-h-48 overflow-y-auto">
-                {colorOption.values.map((colorValue) => (
+                {colorValuesArray.map((colorValue) => (
                   <button
-                    key={colorValue.value}
+                    key={colorValue}
                     onClick={() => {
-                      onOptionChange(colorOption.id, colorValue.value)
+                      onOptionChange(colorOption.id, colorValue)
                       setIsOpen(false)
                     }}
                     className="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-left transition-colors duration-200 hover:text-[#C2E7DA]"
                   >
                     <div 
                       className="w-4 h-4 mr-3"
-                      style={getColorStyle(colorValue.value)}
+                      style={getColorStyle(colorValue)}
                     />
                     <span 
                       style={{
@@ -143,7 +158,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
                         textTransform: "uppercase"
                       }}
                     >
-                      {colorValue.value}
+                      {colorValue}
                     </span>
                   </button>
                 ))}

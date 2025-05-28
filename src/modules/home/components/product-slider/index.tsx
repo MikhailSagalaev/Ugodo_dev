@@ -42,21 +42,13 @@ export default function ProductSlider({
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
   
   useEffect(() => {
-    // Функция для определения типа устройства
     const handleResize = () => {
-      const tabletOrMobile = window.innerWidth < 1024;
+      const tabletOrMobile = window.innerWidth <= 1119;
       setIsTabletOrMobile(tabletOrMobile);
       
-      if (window.innerWidth < 1024) {
-        setItemsPerGroup(2); // Планшеты - 2 карточки
-      } else if (window.innerWidth < 1280) {
-        setItemsPerGroup(3); // Маленькие десктопы - 3 карточки
-      } else {
-        setItemsPerGroup(4); // Большие десктопы - 4 карточки
-      }
+      setItemsPerGroup(4); // Всегда 4 карточки в группе для десктопа
     };
     
-    // Вызываем функцию при монтировании и изменении размера окна
     handleResize();
     window.addEventListener('resize', handleResize);
     
@@ -77,7 +69,6 @@ export default function ProductSlider({
         <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
           <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
           
-          {/* Навигационные стрелки только для десктопа */}
           {!isTabletOrMobile && (
             <div className="flex items-center space-x-2">
               <button 
@@ -103,7 +94,6 @@ export default function ProductSlider({
         </div>
 
         {isTabletOrMobile ? (
-          // Мобильная версия - просто горизонтальный скролл без Embla
           <div className="w-full flex flex-row gap-5 overflow-x-auto pl-[10px] pr-[20px] scrollbar-hide">
             {products.map((product, index) => {
               const categoryTitle = product.type?.value || 
@@ -113,7 +103,7 @@ export default function ProductSlider({
               return (
                 <div 
                   key={product.id} 
-                  className="flex-shrink-0 w-[225px]"
+                  className="flex-shrink-0 w-[200px]"
                 >
                   <div className="aspect-[3/4] w-full">
                     <ProductPreview 
@@ -130,12 +120,11 @@ export default function ProductSlider({
             })}
           </div>
         ) : (
-          // Десктопная версия - группы карточек с переключением
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex">
               {productGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                  <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
+                  <div className="flex justify-center" style={{ gap: 'clamp(24px, 3vw, 60px)' }}>
                     {group.map((product) => {
                       const categoryTitle = product.type?.value || 
                         (product.categories && product.categories.length > 0 ? 
@@ -144,7 +133,10 @@ export default function ProductSlider({
                       return (
                         <div 
                           key={product.id} 
-                          className="flex justify-center w-full sm:w-[calc(50%-12px)] md:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)] xl:w-[calc(25%-24px)]"
+                          className="flex justify-center"
+                          style={{ 
+                            width: 'clamp(220px, calc(220px + (320 - 220) * ((100vw - 1120px) / (1920 - 1120))), 320px)'
+                          }}
                         >
                           <ProductPreview 
                             product={product} 

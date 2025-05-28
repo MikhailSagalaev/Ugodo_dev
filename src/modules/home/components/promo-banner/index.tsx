@@ -1,15 +1,21 @@
-import { Button } from "@medusajs/ui"
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import SafeImage from "@modules/common/components/safe-image"
+'use client'
 
-type PromoBannerProps = {
+import { useState, useEffect } from 'react'
+import { Button } from "@medusajs/ui"
+import SafeImage from "@modules/common/components/safe-image"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
+
+interface PromoBannerProps {
   title: string
   subtitle?: string
-  buttonText: string
-  buttonLink: string
-  imageUrl: string
-  variant?: "light" | "dark" | "gradient" | "colored"
-  position?: "left" | "right"
+  buttonText?: string
+  buttonLink?: string
+  imageUrl?: string
+  backgroundColor?: string
+  textColor?: string
+  buttonColor?: string
+  position?: 'left' | 'center' | 'right'
+  className?: string
 }
 
 const PromoBanner = ({
@@ -18,63 +24,72 @@ const PromoBanner = ({
   buttonText,
   buttonLink,
   imageUrl,
-  variant = "light",
-  position = "right",
+  backgroundColor = '#f8f9fa',
+  textColor = '#000000',
+  buttonColor = '#000000',
+  position = 'center',
+  className = ''
 }: PromoBannerProps) => {
-  // Проверяем URL изображения и показываем заглушку, если изображения нет
-  const showPlaceholder = imageUrl === "/placeholder.svg" || !imageUrl || imageUrl === "/images/banners/placeholder.svg"
-  
-  // Функция для определения стиля кнопки на основе варианта
-  const getButtonClass = () => {
-    switch (variant) {
-      case "dark":
-        return "bg-white text-black hover:bg-white/90"
-      case "gradient":
-        return "bg-[#cbf401] text-black hover:bg-[#d8ff00]"
-      case "colored":
-        return "bg-[#cbf401] text-black hover:bg-[#d8ff00]"
-      case "light":
-      default:
-        return "bg-black text-white hover:bg-black/90"
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
     }
-  }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const textAlignment = position === 'left' ? 'text-left' : position === 'right' ? 'text-right' : 'text-center'
+  const justifyContent = position === 'left' ? 'justify-start' : position === 'right' ? 'justify-end' : 'justify-center'
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden my-12">
-      {/* Фоновое изображение */}
-      <div className="absolute inset-0 w-full h-full">
-        {showPlaceholder ? (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-violet-500 to-purple-600">
-            <span className="text-white text-xl">Изображение баннера будет здесь</span>
-          </div>
-        ) : (
-          <SafeImage
-            src={imageUrl}
-            alt={title}
-            fill
-            className="object-cover object-center brightness-75"
-            sizes="100vw"
-            startWithPlaceholder={true}
-          />
-        )}
-        
-        {/* Затемнение для лучшей читаемости текста */}
-        <div className={`absolute inset-0 ${position === "left" ? "bg-gradient-to-r" : "bg-gradient-to-l"} from-black/60 to-transparent`}></div>
-      </div>
+    <div 
+      className={`relative w-full h-[400px] md:h-[500px] overflow-hidden ${className}`}
+      style={{ backgroundColor }}
+    >
+      {imageUrl && (
+        <SafeImage
+          src={imageUrl}
+          alt={title}
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+      )}
       
-      {/* Контент поверх изображения */}
-      <div className="relative z-10 h-full content-container flex items-center">
-        <div className={`max-w-lg ${position === "right" ? "ml-0" : "ml-auto"}`}>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-white">{title}</h2>
-          {subtitle && <p className="mb-6 text-white/90 text-lg">{subtitle}</p>}
-          <LocalizedClientLink href={buttonLink} className="w-fit">
-            <Button 
-              className={`${getButtonClass()} px-6 py-3 rounded-lg font-medium transition-all duration-200 min-w-32 h-12`}
-              size="large"
-            >
-              {buttonText}
-            </Button>
-          </LocalizedClientLink>
+      <div className={`absolute inset-0 flex items-center ${justifyContent} p-6 md:p-12`}>
+        <div className={`max-w-lg ${textAlignment}`} style={{ color: textColor }}>
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+            {title}
+          </h2>
+          
+          {subtitle && (
+            <p className="text-lg md:text-xl mb-6 opacity-90">
+              {subtitle}
+            </p>
+          )}
+          
+          {buttonText && buttonLink && (
+            <LocalizedClientLink href={buttonLink}>
+              <Button 
+                variant="secondary"
+                size="large"
+                className="font-semibold"
+                style={{ 
+                  backgroundColor: buttonColor,
+                  color: backgroundColor,
+                  border: `2px solid ${buttonColor}`
+                }}
+              >
+                {buttonText}
+              </Button>
+            </LocalizedClientLink>
+          )}
         </div>
       </div>
     </div>

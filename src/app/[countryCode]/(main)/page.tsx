@@ -18,6 +18,7 @@ import ProductPreview from "@modules/products/components/product-preview"
 import ProductSlider from "@modules/home/components/product-slider"
 import CategoryShowcase from "@modules/home/components/category-showcase"
 import MarketplaceBestsellers from "@modules/home/components/marketplace-bestsellers"
+import { MobilePromoBar } from "@modules/mobile/components"
 
 export const metadata: Metadata = {
   title: "Интернет-магазин Ugodo",
@@ -81,58 +82,62 @@ export default async function Home({ params }: { params: { countryCode: string }
   })
 
   return (
-    <div className="flex flex-col gap-0">
-      <Hero />
-      
-      <Container className="pt-2 pb-1">
-        <CategoryStories />
-      </Container>
-      
-      <Container className="pt-2 pb-6">
-        <ProductSlider 
-          title="НОВИНКИ" 
-          products={newProducts} 
-          region={region}
-        />
-      </Container>
-      
-      <PromotionsSlider />
-      
-      <HomeMiddleBanner className="my-8" />
-      
-      <CategoryShowcase
-        title="Дом и сад"
-        products={homeGardenProducts}
-        region={region}
-      />
-      
-      <Container className="py-8 md:py-12">
-        <ProductSlider 
-          title="ПОПУЛЯРНОЕ" 
-          products={popularProducts} 
-          region={region}
-        />
-      </Container>
-      
-      <WishlistDiscountBanner />
-      
-      <MarketplaceBestsellers
-        title="Хиты продаж на маркетплейсах"
-        products={marketplaceBestsellers}
-        region={region}
-      />
-      
-      <Container className="py-8 md:py-12">
-        <div className="w-full max-w-[1360px] mx-auto">
-          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase mb-8">КАТАЛОГ ТОВАРОВ</Heading>
-          <PaginatedProducts 
-            initialProducts={catalogProducts}
-            totalCount={totalCount}
-            countryCode={countryCode}
+    <>
+      <div className="flex flex-col gap-0">
+        <Hero />
+        
+        <Container className="pt-2 pb-1">
+          <CategoryStories />
+        </Container>
+        
+        <Container className="pt-2 pb-6">
+          <ProductSlider 
+            title="НОВИНКИ" 
+            products={newProducts} 
             region={region}
           />
-        </div>
-      </Container>
-    </div>
+        </Container>
+        
+        <PromotionsSlider />
+        
+        <HomeMiddleBanner className="my-8" />
+        
+        <CategoryShowcase
+          title="Дом и сад"
+          products={homeGardenProducts}
+          region={region}
+        />
+        
+        <Container className="py-8 md:py-12">
+          <ProductSlider 
+            title="ПОПУЛЯРНОЕ" 
+            products={popularProducts} 
+            region={region}
+          />
+        </Container>
+        
+        <WishlistDiscountBanner />
+        
+        <MarketplaceBestsellers
+          title="Хиты продаж на маркетплейсах"
+          products={marketplaceBestsellers}
+          region={region}
+        />
+        
+        <Container className="py-8 md:py-12">
+          <div className="w-full max-w-[1360px] mx-auto">
+            <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase mb-8">КАТАЛОГ ТОВАРОВ</Heading>
+            <PaginatedProducts 
+              initialProducts={catalogProducts}
+              totalCount={totalCount}
+              countryCode={countryCode}
+              region={region}
+            />
+          </div>
+        </Container>
+      </div>
+      
+      <MobilePromoBar />
+    </>
   )
 }

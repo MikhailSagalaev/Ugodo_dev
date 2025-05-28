@@ -1,42 +1,40 @@
-import { Suspense } from "react"
+import { getRegion } from "@lib/data/regions"
+import { listProducts } from "@lib/data/products"
+import { listCategories } from "@lib/data/categories"
+import StoreClient from "./store-client"
 
-import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
-import RefinementList from "@modules/store/components/refinement-list"
-import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-
-import PaginatedProducts from "./paginated-products"
-
-const StoreTemplate = ({
-  sortBy,
-  page,
+const StoreTemplate = async ({
   countryCode,
 }: {
-  sortBy?: SortOptions
-  page?: string
   countryCode: string
 }) => {
-  const pageNumber = page ? parseInt(page) : 1
-  const sort = sortBy || "created_at"
+  const region = await getRegion(countryCode)
+  
+  if (!region) {
+    return <div>Регион не найден</div>
+  }
+
+  const { response: { products, count: totalCount } } = await listProducts({
+    regionId: region.id,
+    queryParams: {
+      limit: 16,
+    },
+  }).catch(err => {
+    console.error("Ошибка при загрузке товаров:", err)
+    return { response: { products: [], count: 0 } }
+  })
+
+  const allCategories = await listCategories().catch(() => [])
+  const categories = allCategories.slice(0, 8)
 
   return (
-    <div
-      className="flex flex-col small:flex-row small:items-start py-6 content-container"
-      data-testid="category-container"
-    >
-      <RefinementList sortBy={sort} />
-      <div className="w-full">
-        <div className="mb-8 text-2xl-semi">
-          <h1 data-testid="store-page-title">All products</h1>
-        </div>
-        <Suspense fallback={<SkeletonProductGrid />}>
-          <PaginatedProducts
-            sortBy={sort}
-            page={pageNumber}
-            countryCode={countryCode}
-          />
-        </Suspense>
-      </div>
-    </div>
+    <StoreClient
+      countryCode={countryCode}
+      products={products}
+      totalCount={totalCount}
+      categories={categories}
+      region={region}
+    />
   )
 }
 
