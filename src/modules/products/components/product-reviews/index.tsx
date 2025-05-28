@@ -144,7 +144,7 @@ export default function ProductReviews({ productId, product }: ProductReviewsPro
     <div className="py-8 md:py-12">
       {!isMobile && (
         <div className="flex items-center justify-between mb-8">
-          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">
+          <Heading level="h2" className="text-2xl md:text-3xl font-bold lowercase">
             рейтинг и отзывы
           </Heading>
           

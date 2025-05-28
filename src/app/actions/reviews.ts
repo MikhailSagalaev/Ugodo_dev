@@ -32,7 +32,14 @@ export async function createProductReviewAction(
     prevState: ActionResponse | null, // Добавляем prevState
     formData: FormData
 ): Promise<ActionResponse> {
-    const cookieHeader = cookies().toString(); // Получаем куки для передачи в Medusa
+    let cookieHeader: string;
+    
+    try {
+        cookieHeader = cookies().toString();
+    } catch (error) {
+        console.warn("Не удалось получить cookies в createProductReviewAction:", error);
+        return { success: false, message: "Ошибка аутентификации (нет куки).", errors: null, review: null };
+    }
 
     if (!cookieHeader) {
         return { success: false, message: "Ошибка аутентификации (нет куки).", errors: null, review: null };

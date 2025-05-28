@@ -72,16 +72,6 @@ export const listProducts = async ({
       }
     )
     .then(({ products, count }) => {
-      console.log('🛍️ Загружено товаров:', products.length)
-      if (products.length > 0) {
-        console.log('📸 Изображения первого товара:', {
-          id: products[0].id,
-          title: products[0].title,
-          images_count: products[0].images?.length || 0,
-          images: products[0].images?.map(img => ({ id: img.id, url: img.url })) || []
-        })
-      }
-      
       const nextPage = count > offset + limit ? pageParam + 1 : null
 
       return {

@@ -113,7 +113,6 @@ function ProductGallery({
                   sizes={`${thumbnailSize.width}px`}
                   style={{ objectFit: "cover" }}
                   className="absolute inset-0"
-                  startWithPlaceholder={true}
                 />
               </div>
             );
@@ -142,7 +141,6 @@ function ProductGallery({
                       style={{ objectFit: "cover" }}
                       priority={index === selectedIndex} 
                       data-testid="product-main-image"
-                      startWithPlaceholder={true}
                     />
                   </div>
                 </div>
@@ -167,7 +165,6 @@ function ProductGallery({
             style={{ objectFit: "cover" }}
             priority={true}
             data-testid="product-main-image"
-            startWithPlaceholder={true}
           />
         </div>
       </div>
@@ -212,7 +209,6 @@ function ProductGallery({
                     sizes={`${thumbnailSize.width}px`}
                     style={{ objectFit: "cover" }}
                     className="absolute inset-0"
-                    startWithPlaceholder={true}
                   />
                 </button>
               );
@@ -242,7 +238,6 @@ function ProductGallery({
                     style={{ objectFit: "cover" }}
                     priority={index === selectedIndex} 
                     data-testid="product-main-image"
-                    startWithPlaceholder={true}
                   />
                 </div>
               </div>

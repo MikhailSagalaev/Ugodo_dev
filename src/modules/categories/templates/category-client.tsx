@@ -4,7 +4,8 @@ import { Suspense, useState } from "react"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import FiltersModal from "../components/filters-modal"
+import ProductFilters, { FilterState } from "@modules/store/components/product-filters"
+import { filterProducts } from "@lib/util/filter-products"
 import { HttpTypes } from "@medusajs/types"
 
 const categoryColors = [
@@ -35,7 +36,23 @@ export default function CategoryClient({
   otherCategories,
   region
 }: CategoryClientProps) {
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [filteredProducts, setFilteredProducts] = useState(products)
+  const [currentFilters, setCurrentFilters] = useState<FilterState>({
+    colors: [],
+    sizes: [],
+    materials: [],
+    priceRange: null,
+    categories: [],
+    hasDiscount: false,
+    inStock: false,
+    expressDelivery: false
+  })
+
+  const handleFiltersChange = (filters: FilterState) => {
+    setCurrentFilters(filters)
+    const filtered = filterProducts(products, filters)
+    setFilteredProducts(filtered)
+  }
 
   return (
     <>
@@ -104,15 +121,10 @@ export default function CategoryClient({
         
         <div className="mb-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button 
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              onClick={() => setIsFiltersOpen(true)}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M3 7h10M3 12h4m4-9h4"/>
-              </svg>
-              фильтры
-            </button>
+            <ProductFilters
+              products={products}
+              onFiltersChange={handleFiltersChange}
+            />
             
             <select className="px-3 py-2 border border-gray-300 rounded-md text-sm">
               <option value="popular">по популярности</option>
@@ -123,7 +135,7 @@ export default function CategoryClient({
           </div>
           
           <div className="flex items-center">
-            <span className="text-lg font-medium text-gray-900">{totalCount} товаров</span>
+            <span className="text-lg font-medium text-gray-900">{filteredProducts.length} товаров</span>
           </div>
           
           <div></div>
@@ -131,20 +143,14 @@ export default function CategoryClient({
         
         <Suspense fallback={<SkeletonProductGrid />}>
           <PaginatedProducts
-            initialProducts={products}
-            totalCount={totalCount}
+            initialProducts={filteredProducts}
+            totalCount={filteredProducts.length}
             categoryId={category.id}
             countryCode={countryCode}
             region={region}
           />
         </Suspense>
       </div>
-
-      <FiltersModal
-        isOpen={isFiltersOpen}
-        onClose={() => setIsFiltersOpen(false)}
-        totalProducts={totalCount}
-      />
     </>
   )
 } 

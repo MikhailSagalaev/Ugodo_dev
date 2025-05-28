@@ -1,3 +1,4 @@
+import { HttpTypes } from "@medusajs/types"
 import { Container, clx } from "@medusajs/ui"
 import React from "react"
 
@@ -6,8 +7,7 @@ import SafeImage from "@modules/common/components/safe-image"
 
 type ThumbnailProps = {
   thumbnail?: string | null
-  // TODO: Fix image typings
-  images?: any[] | null
+  images?: HttpTypes.StoreProductImage[] | null
   size?: "small" | "medium" | "large" | "full" | "square"
   isFeatured?: boolean
   className?: string
@@ -27,43 +27,37 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
   return (
     <Container
       className={clx(
-        "relative w-full overflow-hidden p-4 bg-ui-bg-subtle rounded-large group-hover:shadow-elevation-card-hover transition-shadow ease-in-out duration-150",
+        "relative overflow-hidden p-4 bg-ui-bg-subtle shadow-elevation-card-rest rounded-large group-hover:shadow-elevation-card-hover transition-shadow ease-in-out duration-150",
         className,
         {
-          "aspect-[3/4]": isFeatured || size !== "square",
-          "aspect-[1/1]": size === "square",
+          "aspect-[11/14]": isFeatured,
+          "aspect-[9/16]": !isFeatured,
           "w-[180px]": size === "small",
           "w-[290px]": size === "medium",
           "w-[440px]": size === "large",
           "w-full": size === "full",
+          "aspect-[1/1]": size === "square",
         }
       )}
       data-testid={dataTestid}
     >
-      <ImageOrPlaceholder image={initialImage} size={size} />
+      {initialImage && (
+        <SafeImage
+          src={initialImage}
+          alt="Product image"
+          className="absolute inset-0 object-cover object-center"
+          draggable={false}
+          quality={50}
+          fill
+          sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
+        />
+      )}
+      {!initialImage && (
+        <div className="w-full h-full absolute inset-0 flex items-center justify-center">
+          <PlaceholderImage size={16} />
+        </div>
+      )}
     </Container>
-  )
-}
-
-const ImageOrPlaceholder = ({
-  image,
-  size,
-}: Pick<ThumbnailProps, "size"> & { image?: string }) => {
-  return image ? (
-    <SafeImage
-      src={image}
-      alt="Thumbnail"
-      className="absolute inset-0 object-cover object-center"
-      draggable={false}
-      quality={50}
-      sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
-      fill
-      startWithPlaceholder={true}
-    />
-  ) : (
-    <div className="w-full h-full absolute inset-0 flex items-center justify-center">
-      <PlaceholderImage size={size === "small" ? 16 : 24} />
-    </div>
   )
 }
 

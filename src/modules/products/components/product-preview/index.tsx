@@ -8,6 +8,10 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import { getProductPrice } from "@lib/util/get-product-price";
 import Modal from "@modules/common/components/modal";
 import Image from "next/image";
+import { Text } from "@medusajs/ui";
+import { VariantPrice } from "types/global";
+import Thumbnail from "../thumbnail";
+import PreviewPrice from "./price";
 
 const ProductActions = dynamic(() => import("../product-actions"), { ssr: false });
 
@@ -20,8 +24,8 @@ const COLORS = {
   neonGreen: "#BAFF29"
 }
 
-// Путь к заглушке
-const PLACEHOLDER_IMAGE = "/images/placeholder-chair.png";
+// Используем существующий placeholder
+const PLACEHOLDER_IMAGE = "/images/placeholder.png";
 
 // Функция для преобразования названия цвета в CSS цвет
 const getColorValue = (colorName: string): string => {
@@ -78,9 +82,9 @@ type ProductPreviewProps = {
   timeLabelPlaceholder?: React.ReactNode;
   videoIconPlaceholder?: string;
   // Для расположения текста (правый/левый)
-  textAlign?: "left" | "right";
-  // Тип флажка: new, hit или none
-  badgeType?: "new" | "hit" | "none";
+  textAlign?: "left" | "right" | "center";
+  // Тип флажка: new, hit, discount или none
+  badgeType?: "new" | "hit" | "discount" | "none";
   // Признак первой карточки в ряду для мобильной версии
   firstInRow?: boolean;
 };
@@ -97,9 +101,9 @@ export default function ProductPreview({
   showTimeLabel = () => false,
   timeLabelPlaceholder = "В течение часа",
   videoIconPlaceholder = "/images/video-icon.svg",
-  // По умолчанию текст слева
-  textAlign = "left",
-  // Тип флажка: new, hit или none
+  // По умолчанию текст центрирован
+  textAlign = "center",
+  // Тип флажка: new, hit, discount или none
   badgeType = "none",
   // Первая карточка в ряду
   firstInRow = false,
@@ -178,10 +182,23 @@ export default function ProductPreview({
     option.title.toLowerCase().includes('color')
   );
 
-  const colors = colorOptions?.values || [];
+  // Получаем уникальные цвета из вариантов
+  const colors: string[] = []
+  if (colorOptions) {
+    const colorSet = new Set<string>()
+    product.variants?.forEach(variant => {
+      variant.options?.forEach(optionValue => {
+        if (optionValue.option_id === colorOptions.id) {
+          colorSet.add(optionValue.value)
+        }
+      })
+    })
+    colors.push(...Array.from(colorSet))
+  }
+
   const hasColors = colors.length > 0;
 
-  const textAlignClass = textAlign === "right" ? "text-right" : "text-left";
+  const textAlignClass = textAlign === "right" ? "text-right" : textAlign === "center" ? "text-center" : "text-left";
 
   const handleImageError = () => {
     setImageError(true);
@@ -226,6 +243,12 @@ export default function ProductPreview({
         {badgeType === "hit" && (
           <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
             HIT
+          </div>
+        )}
+
+        {badgeType === "discount" && cheapestPrice?.percentage_diff && (
+          <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
+            -{cheapestPrice.percentage_diff}%
           </div>
         )}
 
@@ -303,7 +326,7 @@ export default function ProductPreview({
       {hasColors && (
         <div className="flex flex-nowrap overflow-x-auto py-1 mt-2 px-2 justify-end w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
           {colors.slice(0, 3).map((color, idx) => {
-            const colorValue = getColorValue(color.value);
+            const colorValue = getColorValue(color);
             return (
               <div
                 key={idx}
@@ -312,7 +335,7 @@ export default function ProductPreview({
                   backgroundColor: colorValue,
                   boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
                 }}
-                title={color.value}
+                title={color}
               />
             );
           })}
@@ -327,20 +350,20 @@ export default function ProductPreview({
       <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
         
         {secondaryTitle && (
-          <div className={`text-[11px] sm:text-[11px] ${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight`}>
+          <div className={`text-[11px] sm:text-[11px] ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight`}>
             {secondaryTitle}
           </div>
         )}
         
         
-        <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
+        <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
           {product.title}
         </h3>
         
         
         {cheapestPrice && (
-          <div className={`${firstInRow && isTabletOrMobile ? 'px-6' : 'px-2'} sm:px-3 w-full`}>
-            <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : ""}`}>
+          <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full`}>
+            <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : textAlign === "center" ? "justify-center" : ""}`}>
               <span className={`text-base sm:text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase`}>
                 {cheapestPrice.calculated_price}
               </span>

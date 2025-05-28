@@ -55,28 +55,28 @@ export default function PaginatedProducts({
     setIsLoading(true)
     const nextPage = page + 1
     
-  const queryParams: PaginatedProductsParams = {
+    const queryParams: PaginatedProductsParams = {
       limit: PRODUCT_LIMIT,
-  }
+    }
 
-  if (collectionId) {
-    queryParams["collection_id"] = [collectionId]
-  }
+    if (collectionId) {
+      queryParams["collection_id"] = [collectionId]
+    }
 
-  if (categoryId) {
-    queryParams["category_id"] = [categoryId]
-  }
+    if (categoryId) {
+      queryParams["category_id"] = [categoryId]
+    }
 
-  if (productsIds) {
-    queryParams["id"] = productsIds
-  }
+    if (productsIds) {
+      queryParams["id"] = productsIds
+    }
 
     try {
       const { response } = await listProducts({
         pageParam: nextPage,
-    queryParams,
-    countryCode,
-  })
+        queryParams,
+        countryCode,
+      })
 
       setProducts([...products, ...response.products])
       setPage(nextPage)
@@ -108,6 +108,7 @@ export default function PaginatedProducts({
                       region={region} 
                       categoryTitle={categoryTitle}
                       firstInRow={isTabletOrMobile && index % 2 === 0}
+                      textAlign="left"
                     />
                   </div>
                 </div>

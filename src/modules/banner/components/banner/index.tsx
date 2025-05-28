@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Button, Heading, Text } from "@medusajs/ui"
+import { useState, useEffect } from 'react'
+import { Heading, Text, Button } from "@medusajs/ui"
 import { BannerPositionEnum, BannerType } from "../../types"
 import SafeImage from "@modules/common/components/safe-image"
 
@@ -10,90 +10,72 @@ interface BannerProps {
   className?: string
 }
 
-const Banner = ({ position, className = "" }: BannerProps) => {
+const Banner = ({ position, className = '' }: BannerProps) => {
   const [banner, setBanner] = useState<BannerType | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBanner = async () => {
-      // ---- ВРЕМЕННО ОТКЛЮЧАЕМ ЗАГРУЗКУ БАННЕРОВ ----
-      setLoading(false);
-      setBanner(null); // Устанавливаем null, чтобы баннер не рендерился
-      return; 
-      // ---- КОНЕЦ ВРЕМЕННОГО ОТКЛЮЧЕНИЯ ----
-
-      /* // Старый код загрузки
       try {
         setLoading(true)
-        const response = await fetch(`/api/banners?position=${position}&active=true`)
+        const response = await fetch(`/api/banners?position=${position}`)
         
         if (!response.ok) {
-          throw new Error(`Ошибка при загрузке баннера: ${response.status}`)
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
         
         const data = await response.json()
-        
-        // Берем первый баннер из списка для данной позиции
-        if (data.banners && data.banners.length > 0) {
-          setBanner(data.banners[0])
-        } else {
-          setBanner(null)
-        }
-        
-        setError(null)
+        setBanner(data.banner)
       } catch (err) {
-        console.error("Ошибка при загрузке баннера:", err)
-        setError("Не удалось загрузить баннер")
-        setBanner(null)
+        console.error('Ошибка загрузки баннера:', err)
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
       } finally {
         setLoading(false)
       }
-      */
     }
-    
+
     fetchBanner()
   }, [position])
-  
+
   if (loading) {
     return (
       <div className={`w-full h-[300px] bg-gray-100 animate-pulse rounded-lg ${className}`}>
         <div className="flex items-center justify-center h-full">
-          <span className="text-gray-400">Загрузка баннера...</span>
+          <div className="text-gray-400">Загрузка баннера...</div>
         </div>
       </div>
     )
   }
-  
+
   if (error || !banner) {
     return null
   }
-  
+
   return (
     <div className={`relative w-full overflow-hidden rounded-lg ${className}`}>
       {banner.image_url ? (
         <div className="relative w-full h-[300px]">
-          <SafeImage 
+          <SafeImage
             src={banner.image_url}
             alt={banner.title}
             fill
             style={{ objectFit: "cover" }}
             priority={position === BannerPositionEnum.HOME_TOP}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
-            startWithPlaceholder={true}
           />
           
           <div className="absolute inset-0 bg-black/30 p-6 flex flex-col justify-center text-white">
             <Heading level="h2" className="text-2xl md:text-3xl font-bold mb-2">
               {banner.title}
             </Heading>
-            
+          
             {banner.subtitle && (
               <Text className="text-sm md:text-base mb-4">
                 {banner.subtitle}
               </Text>
             )}
-            
+          
             <div>
               <Button 
                 variant="secondary"

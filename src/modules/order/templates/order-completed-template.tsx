@@ -17,9 +17,14 @@ type OrderCompletedTemplateProps = {
 export default async function OrderCompletedTemplate({
   order,
 }: OrderCompletedTemplateProps) {
-  const cookies = await nextCookies()
-
-  const isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
+  let isOnboarding = false;
+  
+  try {
+    const cookies = await nextCookies()
+    isOnboarding = cookies.get("_medusa_onboarding")?.value === "true"
+  } catch (error) {
+    console.warn("Не удалось получить cookies в OrderCompletedTemplate:", error);
+  }
 
   return (
     <div className="py-6 min-h-[calc(100vh-64px)]">
