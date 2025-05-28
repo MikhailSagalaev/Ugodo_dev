@@ -63,7 +63,7 @@ export const listProducts = async ({
           offset,
           region_id: region?.id,
           fields:
-            "id,title,subtitle,description,handle,status,thumbnail,weight,length,height,width,hs_code,mid_code,material,collection_id,type_id,discountable,external_id,created_at,updated_at,deleted_at,metadata,*variants.calculated_price,*variants.inventory_quantity,*variants.prices,*variants.options,*variants.metadata,*images.id,*images.url,*images.metadata,*options,*tags,*type,*collection,*categories.id,*categories.name,*categories.handle",
+            "id,title,subtitle,description,handle,status,thumbnail,weight,length,height,width,hs_code,mid_code,material,collection_id,type_id,discountable,external_id,created_at,updated_at,deleted_at,metadata,*variants.calculated_price,*variants.inventory_quantity,*variants.prices,*variants.options,*variants.metadata,*variants.sku,*images.id,*images.url,*images.metadata,*options,*tags,*type,*collection,*categories.id,*categories.name,*categories.handle",
           ...queryParams,
         },
         headers,
