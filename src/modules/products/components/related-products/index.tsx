@@ -6,6 +6,7 @@ import { getRegion } from "@lib/data/regions"
 import { HttpTypes } from "@medusajs/types"
 import { Heading } from "@medusajs/ui"
 import ProductPreview from "../product-preview"
+import useEmblaCarousel from 'embla-carousel-react'
 
 type RelatedProductsProps = {
   product: HttpTypes.StoreProduct
@@ -24,7 +25,12 @@ export default function RelatedProducts({
   const [region, setRegion] = useState<HttpTypes.StoreRegion | null>(null)
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    loop: true,
+    slidesToScroll: 1,
+  })
 
   useEffect(() => {
     const handleResize = () => {
@@ -82,13 +88,11 @@ export default function RelatedProducts({
     loadProducts()
   }, [product.id, countryCode, showAllProducts])
 
-  const nextSlide = () => {
-    const maxSlide = Math.max(0, products.length - 4)
-    setCurrentSlide(prev => Math.min(prev + 1, maxSlide))
-  }
-
-  const prevSlide = () => {
-    setCurrentSlide(prev => Math.max(prev - 1, 0))
+  // Группируем продукты по 4 для десктопа
+  const itemsPerGroup = 4;
+  const productGroups = []
+  for (let i = 0; i < products.length; i += itemsPerGroup) {
+    productGroups.push(products.slice(i, i + itemsPerGroup))
   }
 
   if (loading) {
@@ -98,7 +102,7 @@ export default function RelatedProducts({
           <div className={`flex items-center justify-between mb-8 ${isMobile ? 'px-4' : 'px-4 sm:px-0'}`}>
             <Heading level="h2" className="text-2xl md:text-3xl font-bold lowercase">{title}</Heading>
           </div>
-          <div className={`grid ${isMobile ? 'grid-cols-2 gap-4' : 'grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8'}`}>
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-4' : 'grid-cols-4 gap-6'}`}>
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="w-full aspect-[3/4] bg-gray-200 animate-pulse rounded"></div>
             ))}
@@ -118,22 +122,19 @@ export default function RelatedProducts({
         <div className={`flex items-center justify-between mb-8 ${isMobile ? 'px-4' : 'px-4 sm:px-0'}`}>
           <Heading level="h2" className="text-2xl md:text-3xl font-bold lowercase">{title}</Heading>
           
-          {/* Стрелки для десктопа */}
           {!isMobile && products.length > 4 && (
             <div className="flex gap-2">
               <button
-                onClick={prevSlide}
-                disabled={currentSlide === 0}
-                className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => emblaApi?.scrollPrev()}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />
                 </svg>
               </button>
               <button
-                onClick={nextSlide}
-                disabled={currentSlide >= products.length - 4}
-                className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => emblaApi?.scrollNext()}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 18l6-6-6-6" />
@@ -166,31 +167,33 @@ export default function RelatedProducts({
             })}
           </div>
         ) : (
-          <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ 
-                transform: `translateX(-${currentSlide * 25}%)`,
-                gap: 'clamp(24px, 3vw, 60px)'
-              }}
-            >
-              {products.map((product) => {
-                const categoryTitle = product.type?.value || 
-                  (product.categories && product.categories.length > 0 ? 
-                    product.categories[0].name : undefined);
-                
-                return (
-                  <div key={product.id} className="flex-shrink-0" style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}>
-                    <ProductPreview 
-                      product={product} 
-                      region={region} 
-                      categoryTitle={categoryTitle}
-                      badgeType="none"
-                      textAlign="left"
-                    />
+          <div className="relative">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex">
+                {productGroups.map((group, groupIndex) => (
+                  <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
+                    <div className="grid grid-cols-4 gap-6">
+                      {group.map((product) => {
+                        const categoryTitle = product.type?.value || 
+                          (product.categories && product.categories.length > 0 ? 
+                            product.categories[0].name : undefined);
+                        
+                        return (
+                          <div key={product.id} className="w-full">
+                            <ProductPreview 
+                              product={product} 
+                              region={region} 
+                              categoryTitle={categoryTitle}
+                              badgeType="none"
+                              textAlign="left"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
           </div>
         )}
