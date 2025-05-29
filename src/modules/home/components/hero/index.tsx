@@ -7,8 +7,20 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 
-// Данные для слайдов (ЗАМЕНИТЬ НА ДИНАМИЧЕСКИЕ ДАННЫЕ)
-const slides = [
+interface Slide {
+  id: number
+  headline: string
+  title: string
+  image: string
+  video?: string
+  videoDesktop?: string
+  cta: {
+    text: string
+    link: string
+  }
+}
+
+const slides: Slide[] = [
   {
     id: 1,
     headline: "на товары для дома",
@@ -38,11 +50,24 @@ const slides = [
       text: "Перейти",
       link: "/collections/bathroom"
     }
+  },
+  {
+    id: 4,
+    headline: "новая коллекция",
+    title: "UGODO 2024",
+    video: "/video/banners/0526-mobile.mp4",
+    videoDesktop: "/video/banners/0526-pc.mp4",
+    image: "/images/hero/доставка бирюза 2.png",
+    cta: {
+      text: "Смотреть видео",
+      link: "/collections/new-arrivals"
+    }
   }
 ]
 
 const Hero = () => {
-  const autoplayDelay = 10000; // 10 секунд
+  const autoplayDelay = 10000
+  const [isMobile, setIsMobile] = useState(false)
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true,
@@ -50,15 +75,26 @@ const Hero = () => {
     },
     [
       Autoplay({ 
-        delay: autoplayDelay, // Используем переменную для задержки
-        stopOnInteraction: false, // Продолжать автопрокрутку после взаимодействия
-        stopOnMouseEnter: false, // НЕ останавливать при наведении мыши
+        delay: autoplayDelay,
+        stopOnInteraction: false,
+        stopOnMouseEnter: false,
       })
     ]
   )
 
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const scrollTo = useCallback((index: number) => {
     emblaApi?.scrollTo(index);
@@ -95,23 +131,45 @@ const Hero = () => {
           {slides.map((slide) => (
             <div 
               key={slide.id} 
-              className="flex-[0_0_100%] min-w-0 relative h-[75vh] md:h-[80vh]" 
+              className="flex-[0_0_100%] min-w-0 relative h-[80vh]" 
             >
-              {/* Фоновое изображение */}
-              <Image 
-                src={slide.image} 
-                alt={slide.title}
-                fill
-                priority={slide.id === 1} // Приоритет для первого слайда
-                loading={slide.id === 1 ? "eager" : "lazy"}
-                className="object-cover object-center brightness-75 -z-10"
-                sizes="100vw"
-                quality={90}
-              />
-              {/* Затемнение */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent z-0"></div>
+              <div className="absolute inset-0 w-full h-full -z-10">
+                {slide.video ? (
+                  <div className="w-full h-full relative overflow-hidden">
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      disablePictureInPicture
+                      className="w-full h-full object-cover object-center"
+                      style={{
+                        minWidth: '100%',
+                        minHeight: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center center'
+                      }}
+                    >
+                      <source src={slide.video} type="video/mp4" />
+                    </video>
+                  </div>
+                ) : (
+                  <Image 
+                    src={slide.image} 
+                    alt={slide.title}
+                    fill
+                    priority={slide.id === 1}
+                    loading={slide.id === 1 ? "eager" : "lazy"}
+                    className="object-cover object-center"
+                    sizes="100vw"
+                    quality={90}
+                  />
+                )}
+              </div>
               
-              {/* Контент */}
+              <div className="absolute inset-0 z-0"></div>
+              
               <div className="relative z-10 h-full flex items-center">
                 <div className="container mx-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
                   <div className="max-w-md">

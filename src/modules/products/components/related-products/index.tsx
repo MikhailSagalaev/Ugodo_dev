@@ -144,14 +144,14 @@ export default function RelatedProducts({
         </div>
 
         {isMobile ? (
-          <div className="w-full flex flex-row gap-5 overflow-x-auto pl-4 pr-4 scrollbar-hide">
+          <div className="w-full flex flex-row overflow-x-auto pl-4 pr-4 scrollbar-hide" style={{ gap: 'clamp(24px, 3vw, 60px)' }}>
             {products.slice(0, 8).map((product) => {
               const categoryTitle = product.type?.value || 
                 (product.categories && product.categories.length > 0 ? 
                   product.categories[0].name : undefined);
               
               return (
-                <div key={product.id} className="flex-shrink-0 w-[225px]">
+                <div key={product.id} className="flex-shrink-0" style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}>
                   <div className="aspect-[3/4] w-full">
                     <ProductPreview 
                       product={product} 
@@ -169,7 +169,10 @@ export default function RelatedProducts({
           <div className="relative overflow-hidden">
             <div 
               className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+              style={{ 
+                transform: `translateX(-${currentSlide * 25}%)`,
+                gap: 'clamp(24px, 3vw, 60px)'
+              }}
             >
               {products.map((product) => {
                 const categoryTitle = product.type?.value || 
@@ -177,7 +180,7 @@ export default function RelatedProducts({
                     product.categories[0].name : undefined);
                 
                 return (
-                  <div key={product.id} className="w-1/4 flex-shrink-0 px-2">
+                  <div key={product.id} className="flex-shrink-0" style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}>
                     <ProductPreview 
                       product={product} 
                       region={region} 

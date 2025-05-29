@@ -65,10 +65,8 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  // Для блока "Дом и сад" используем часть новых товаров, так как нет специального фильтра
   const homeGardenProducts = newProducts.slice(0, 8)
 
-  // Для блока "Хиты продаж на маркетплейсах" используем популярные товары
   const marketplaceBestsellers = popularProducts.slice(0, 8)
 
   const { response: { products: catalogProducts, count: totalCount } } = await listProducts({

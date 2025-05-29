@@ -3,15 +3,15 @@ import ProductPreview from "@modules/products/components/product-preview";
 import { Pagination } from "@modules/store/components/pagination";
 import { Region } from "@medusajs/medusa"; // Или HttpTypes.StoreRegion
 
-interface StoreProductsDisplayProps {
+type StoreProductsDisplayProps = {
   products: HttpTypes.StoreProduct[];
   totalPages: number;
   currentPage: number;
   count: number;
-  region: HttpTypes.StoreRegion; // Используем тип из HttpTypes для консистентности
+  region: HttpTypes.StoreRegion;
   countryCode: string;
-  searchParams?: Record<string, string | string[] | undefined>; // Для построения ссылок пагинации
-}
+  searchParams?: any;
+};
 
 export default async function StoreProductsDisplay({
   products,
@@ -37,26 +37,29 @@ export default async function StoreProductsDisplay({
         <p className="text-sm text-gray-600">
           Показано {products.length} из {count} товаров
         </p>
-        {/* Здесь можно добавить селектор для количества товаров на странице, если нужно */}
       </div>
 
       <ul
-        className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 sm:gap-x-6 sm:gap-y-10 w-full"
+        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 w-full justify-center"
+        style={{ gap: 'clamp(30px, 4vw, 80px)' }}
         data-testid="products-list"
       >
         {products.map((p, index) => {
           const categoryTitle = p.type?.value 
                               || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
-          // Логика для isLeftSideInMobileGrid может понадобиться, если есть специфичные стили
-          // const isLeftSideInMobileGrid = index % 2 === 0; 
           return (
-            <li key={p.id} className="">
-              <ProductPreview 
-                product={p} 
-                region={region} 
-                categoryTitle={categoryTitle} 
-                // isLeftSideInMobileGrid={isLeftSideInMobileGrid}
-              />
+            <li key={p.id} className="flex justify-center">
+              <div 
+                className="w-full aspect-[3/4]"
+                style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}
+              >
+                <ProductPreview 
+                  product={p} 
+                  region={region} 
+                  categoryTitle={categoryTitle}
+                  textAlign="left"
+                />
+              </div>
             </li>
           );
         })}
@@ -68,8 +71,6 @@ export default async function StoreProductsDisplay({
             data-testid="product-pagination"
             page={currentPage}
             totalPages={totalPages}
-            // searchParams для генерации ссылок пагинации, если компонент Pagination это поддерживает
-            // Иначе, StorePage должен будет передавать их в нужном формате
           />
         </div>
       )}

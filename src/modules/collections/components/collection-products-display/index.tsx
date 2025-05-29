@@ -7,44 +7,40 @@
 
 import { cache } from "react"
 import { HttpTypes } from "@medusajs/types"
-import { listProductsWithSort, type SortOptions as ProductSortOptions } from "@lib/data/products"
+import { listProductsWithSort } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
 import { Heading } from "@medusajs/ui"
 
-const PRODUCT_LIMIT = 12 // Соответствует PRODUCT_LIMIT в CollectionPage
+const PRODUCT_LIMIT = 12
 
 interface CollectionProductsDisplayProps {
   collectionId: string
   searchParams: {
-    sortBy?: ProductSortOptions
+    sortBy?: string
     page?: string
-    category?: string // Для возможной доп. фильтрации внутри коллекции
+    category?: string
     type?: string
-    tag?: string | string[] // Теги могут приходить как строка или массив ID из URL
+    tag?: string | string[]
     min_price?: string
     max_price?: string
     in_stock?: string
-    // q?: string; // Поиск внутри коллекции
   }
   countryCode: string
   currentPage: number
 }
 
-// Используем более общий тип для queryParams, чтобы избежать ошибок типизации при формировании
-// и затем приводим к HttpTypes.StoreProductParams при вызове API, как в store/page.tsx
-interface CustomCollectionProductParams extends HttpTypes.FindParams {
-  region_id: string;
-  collection_id: string[];
-  category_id?: string | string[];
-  type_id?: string | string[];
-  tag_id?: string[]; // Используем tag_id как в openapi
-  // Другие возможные параметры из HttpTypes.StoreProductParams можно добавить сюда при необходимости
-  [key: string]: any; // Для гибкости, если StoreProductParams принимает доп. поля
+type CustomCollectionProductParams = {
+  limit: number
+  offset: number
+  region_id: string
+  collection_id: string[]
+  category_id?: string[]
+  type_id?: string[]
+  tag_id?: string[]
 }
 
-// Адаптированная функция из StorePage для загрузки продуктов коллекции
 const fetchCollectionProductData = cache(
   async (
     collectionId: string,
@@ -73,16 +69,14 @@ const fetchCollectionProductData = cache(
       queryParams.type_id = Array.isArray(searchParams.type) ? searchParams.type : [searchParams.type];
     }
     if (searchParams.tag) {
-      // Преобразуем searchParams.tag в массив ID для tag_id
       queryParams.tag_id = Array.isArray(searchParams.tag) ? searchParams.tag : [searchParams.tag];
     }
 
     try {
       const { response } = await listProductsWithSort({
         page: currentPage,
-        // Приводим к HttpTypes.StoreProductParams, допуская, что API примет эти поля
         queryParams: queryParams as HttpTypes.StoreProductParams, 
-        sortBy: sortBy,
+        sortBy: sortBy as any,
         countryCode: countryCode,
       })
 
@@ -91,7 +85,6 @@ const fetchCollectionProductData = cache(
       }
       let { products, count } = response
 
-      // Фильтрация по наличию (in_stock)
       if (searchParams.in_stock) {
         const inStock = searchParams.in_stock === "true"
         products = products.filter((product: HttpTypes.StoreProduct) => {
@@ -102,7 +95,7 @@ const fetchCollectionProductData = cache(
           })
           return inStock ? hasInStockVariant : !hasInStockVariant
         })
-        count = products.length // Обновляем count после фильтрации
+        count = products.length
       }
 
       const totalPages = Math.ceil(count / PRODUCT_LIMIT)
@@ -128,7 +121,6 @@ export default async function CollectionProductsDisplay({
   )
 
   if (!region) {
-    // Можно вернуть notFound() или компонент-заглушку
     return <div className="text-center py-8">Регион не найден.</div>
   }
 
@@ -151,28 +143,33 @@ export default async function CollectionProductsDisplay({
         <Heading className="text-xl-semi">
           Показано: {products.length} из {count} товаров
         </Heading>
-        {/* Сортировка может быть добавлена здесь или управляться через ProductFilters */}
       </div>
       <ul
-        className="grid grid-cols-1 gap-x-6 gap-y-8 small:grid-cols-2 medium:grid-cols-3"
+        className="grid grid-cols-1 small:grid-cols-2 medium:grid-cols-3 w-full justify-center"
+        style={{ gap: 'clamp(30px, 4vw, 80px)' }}
         data-testid="collection-products-list"
       >
         {products.map((p, idx) => (
-          <li key={p.id}>
-            <ProductPreview 
-              product={p} 
-              region={region} 
-              isFeatured={idx < 2} // Пример: первые два товара могут быть выделены
-            />
+          <li key={p.id} className="flex justify-center">
+            <div 
+              className="w-full aspect-[3/4]"
+              style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}
+            >
+              <ProductPreview 
+                product={p} 
+                region={region} 
+                isFeatured={idx < 2}
+                textAlign="left"
+              />
+            </div>
           </li>
         ))}
       </ul>
       {totalPages > 1 && (
         <Pagination
           data-testid="collection-pagination"
-          page={currentPage} // Исправлено: Pagination ожидает 'page'
+          page={currentPage}
           totalPages={totalPages}
-          // searchParams не передаем, так как Pagination сам их обрабатывает
         />
       )}
     </div>

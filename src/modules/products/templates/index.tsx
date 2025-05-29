@@ -57,6 +57,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   // Карусель для мобильной версии
@@ -84,7 +85,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   useEffect(() => {
     setIsClient(true)
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -756,6 +759,294 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
           </div>
         </div>
+      ) : isTablet ? (
+        // ПЛАНШЕТНАЯ ВЕРСИЯ (768px - 1024px)
+        <div>
+          <div className="flex items-center justify-between mb-4 pt-2 px-6">
+            <div className="flex items-center">
+              <ChevronLeft size={16} className="mr-2" />
+              <nav aria-label="Breadcrumbs" className="flex items-center text-[14px] text-black">
+                {breadcrumbItems.length > 0 ? (
+                  <span className="text-black">{breadcrumbItems[breadcrumbItems.length - 1].name}</span>
+                ) : (
+                  <span className="text-black">товар</span>
+                )}
+              </nav>
+            </div>
+            
+            <div className="flex items-center">
+              <ProductRating productId={product.id} showCount={true} size="lg" />
+            </div>
+          </div>
+
+          <div className="flex px-6 gap-8">
+            {/* Левая часть - изображения */}
+            <div className="w-1/2">
+              <div className="mb-2">
+                <div className="uppercase text-[#7f7f7f]" style={{
+                  fontSize: "9px",
+                  fontWeight: 500,
+                  letterSpacing: "1.4px",
+                  lineHeight: 1.5,
+                  textTransform: "uppercase"
+                }}>
+                  {productCategory}
+                </div>
+              </div>
+
+              <h1 className="mb-6" style={{
+                fontSize: "28px",
+                fontWeight: 500,
+                letterSpacing: "-0.4px",
+                lineHeight: 1.1,
+                textTransform: "uppercase"
+              }}>
+                {productTitle}
+                {productSubtitle && (
+                  <div style={{
+                    fontSize: "28px",
+                    fontWeight: 500,
+                    letterSpacing: "-0.4px",
+                    lineHeight: 1.1,
+                    textTransform: "uppercase"
+                  }}>
+                    {productSubtitle}
+                  </div>
+                )}
+              </h1>
+
+              <div className="mb-6 relative">
+                <div className="relative">
+                  {isNew && (
+                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
+                      NEW
+                    </div>
+                  )}
+                  {isHit && !isNew && (
+                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
+                      HIT
+                    </div>
+                  )}
+                  {!isNew && !isHit && discountPercentage && (
+                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
+                      -{discountPercentage}%
+                    </div>
+                  )}
+                  
+                  <div className="relative w-full aspect-[3/4] overflow-hidden" ref={emblaRef}>
+                    <div className="flex h-full">
+                      {product.images?.map((image, index) => (
+                        <div key={image.id} className="flex-[0_0_100%] min-w-0 relative h-full">
+                          <div onClick={openImageModal} className="cursor-pointer w-full h-full">
+                            <Image
+                              src={image.url}
+                              alt={`Product image ${index + 1}`}
+                              fill
+                              priority={index === 0}
+                              sizes="50vw"
+                              style={{ objectFit: "cover" }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {product.images && product.images.length > 1 && (
+                    <div className="absolute bottom-4 left-4 flex gap-1">
+                      {product.images.map((_, index) => (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            setSelectedImageIndex(index);
+                          }}
+                          className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-200 
+                            ${index === selectedImageIndex 
+                              ? 'bg-black' 
+                              : 'bg-gray-400 hover:bg-gray-600'}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Правая часть - информация о товаре */}
+            <div className="w-1/2">
+              <div className="mb-6">
+                <div className="font-medium" style={{
+                  fontSize: "32px",
+                  fontWeight: 500,
+                  letterSpacing: "-0.4px",
+                  lineHeight: 1.2
+                }}>
+                  <ProductPrice 
+                    product={product} 
+                    region={region} 
+                    variant={product.variants?.[0]}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                {product.metadata?.bulk_discount === "true" ? (
+                  <QuantitySelector
+                    product={product}
+                    region={region}
+                    onQuantityChange={(newQuantity, newPrice) => {
+                      setQuantity(newQuantity)
+                    }}
+                    selectedQuantity={quantity}
+                  />
+                ) : (
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-gray-500 uppercase" style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      letterSpacing: "1.4px",
+                      lineHeight: 1.5,
+                      textTransform: "uppercase"
+                    }}>
+                      КОЛИЧЕСТВО / ШТ
+                    </div>
+                    <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
+                      <input 
+                        type="number" 
+                        min="1" 
+                        value={quantity} 
+                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                        className="w-full h-full text-center outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 mb-6">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart || !isInStock}
+                  className={`flex-1 h-12 font-medium transition-colors duration-200 ${
+                    isAddingToCart || !isInStock
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : addSuccess
+                      ? 'bg-green-500 text-white'
+                      : 'bg-black text-white hover:bg-gray-800'
+                  }`}
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    letterSpacing: "1.4px",
+                    textTransform: "uppercase"
+                  }}
+                >
+                  {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : addSuccess ? 'ДОБАВЛЕНО!' : !isInStock ? 'НЕТ В НАЛИЧИИ' : 'В КОРЗИНУ'}
+                </button>
+
+                <button
+                  onClick={handleWishlistToggle}
+                  disabled={isLoadingWishlist || !customer}
+                  className="w-12 h-12 border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill={isInWishlist ? "red" : "none"} 
+                    stroke={isInWishlist ? "red" : "currentColor"}
+                    strokeWidth="1.5"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Аккордеон для планшетной версии */}
+              <div className="space-y-4">
+                {Object.entries(tabContent).map(([tab, content]) => (
+                  <div key={tab} className="border-b border-gray-200">
+                    <button
+                      onClick={() => setSelectedTab(selectedTab === tab ? "" : tab)}
+                      className="w-full flex items-center justify-between py-4 text-left"
+                    >
+                      <span className={`font-medium uppercase text-sm ${selectedTab === tab ? 'border-b border-black pb-1' : ''}`}>{tab}</span>
+                      <div className="w-5 h-5 flex items-center justify-center">
+                        {selectedTab === tab ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                    
+                    {selectedTab === tab && (
+                      <div className="pb-4">
+                        {tab === "ОПИСАНИЕ" ? (
+                          <div>
+                            <h3 className="mb-4" style={{ fontSize: "16px", fontWeight: 500, textTransform: "uppercase" }}>
+                              {productTitle}
+                            </h3>
+                            <div className="text-sm mb-4">
+                              <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                              <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
+                            </div>
+                            {content.split('\\n\\n').map((paragraph, idx) => (
+                              <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
+                                {paragraph}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: "14px" }}>{content}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Блоки гарантий для планшетной версии */}
+              <div className="space-y-4 mt-8">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="text-xs">
+                    <div className="font-semibold">Гарантия качества</div>
+                    <div>продукции</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
+                    <span className="font-bold">₽</span>
+                  </div>
+                  <div className="text-xs">
+                    <div className="font-semibold">Бесплатная доставка от</div>
+                    <div>1500 ₽</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-8 h-8 border border-black rounded-full flex items-center justify-center mr-3">
+                    <span className="font-bold">RU</span>
+                  </div>
+                  <div className="text-xs">
+                    <div className="font-semibold">Доставка по всей</div>
+                    <div>территории РФ</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
         // ДЕСКТОПНАЯ ВЕРСИЯ (оригинальная)
         <>
@@ -831,13 +1122,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       </svg>
                     </button>
                     
-                    <div className="flex flex-col">
+                    <div className="flex flex-col gap-2">
                       {product.images
                         .slice(visibleThumbStartIndex, visibleThumbStartIndex + 4)
                         .map((image, index) => {
                           const actualIndex = index + visibleThumbStartIndex;
                           return (
-                            <div 
+                            <div
                               key={image.id}
                               onClick={() => {
                                 setSelectedImageIndex(actualIndex);
@@ -1507,7 +1798,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 <button className="w-full flex items-center p-4 hover:bg-gray-50 transition-colors">
                   <div className="w-8 h-8 mr-4 flex items-center justify-center">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 8.16c-.169 1.858-.896 6.728-.896 6.728-.378 2.618-1.408 3.089-2.377 3.089-.818 0-1.447-.613-1.447-1.448 0-.896.896-8.96.896-8.96.169-1.79.896-2.377 2.208-2.377.896 0 1.617.613 1.617 1.448v1.52z" fill="#0088cc"/>
+                      <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 8.16c-.169 1.858-.896 6.728-.896 6.728-.378 2.618-1.408 3.089-2.377 3.089-2.377 0-1.447-.613-1.447-1.448 0-.896.896-8.96.896-8.96.169-1.79.896-2.377 2.208-2.377.896 0 1.617.613 1.617 1.448v1.52z" fill="#0088cc"/>
                     </svg>
                   </div>
                   <span className="font-medium">Telegram</span>
