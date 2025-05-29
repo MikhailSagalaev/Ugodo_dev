@@ -1,5 +1,6 @@
 "use client";
 import React, { Suspense, useState, useEffect } from "react"
+import Image from "next/image"
 
 import ProductGallery from "@modules/products/components/product-gallery"
 import ProductActions from "@modules/products/components/product-actions"
@@ -8,7 +9,6 @@ import RelatedProducts from "@modules/products/components/related-products"
 import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { notFound } from "next/navigation"
-import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
 import ProductReviews from "@modules/products/components/product-reviews"
 import Breadcrumbs, { BreadcrumbItem } from "@modules/common/components/breadcrumbs"
@@ -21,6 +21,8 @@ import SafeImage from "@modules/common/components/safe-image"
 import ColorSelector from "@modules/common/components/color-selector"
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft } from 'lucide-react'
+import ProductRating from "@modules/products/components/product-rating"
+import QuantitySelector from "@modules/products/components/quantity-selector"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -55,6 +57,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   
   const [isMobile, setIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Карусель для мобильной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -79,6 +82,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   }, [emblaApi])
 
   useEffect(() => {
+    setIsClient(true)
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -196,6 +200,27 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }));
   };
 
+  // Проверяем наличие выбранного варианта
+  const getSelectedVariant = () => {
+    if (!product.variants || product.variants.length === 0) return null
+    
+    // Если нет опций, возвращаем первый вариант
+    if (!product.options || product.options.length === 0) {
+      return product.variants[0]
+    }
+    
+    // Ищем вариант который соответствует выбранным опциям
+    return product.variants.find(variant => {
+      return variant.options?.every(optionValue => {
+        const selectedValue = selectedOptions[optionValue.option_id || '']
+        return !selectedValue || selectedValue === optionValue.value
+      })
+    }) || product.variants[0]
+  }
+
+  const selectedVariant = getSelectedVariant()
+  const isInStock = selectedVariant?.inventory_quantity ? selectedVariant.inventory_quantity > 0 : true
+
   const scrollToImage = (index: number) => {
     const imageElement = document.getElementById(`modal-image-${index}`);
     if (imageElement) {
@@ -213,12 +238,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   if (!product || !product.id) {
     return notFound()
   }
-
-  console.log("Product structure:", {
-    id: product.id,
-    title: product.title,
-    categories: product.categories
-  })
 
   const breadcrumbItems: BreadcrumbItem[] = []
   
@@ -240,29 +259,67 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const articleNumber = product.metadata?.article as string || "99000048271"
 
   const tabContent: Record<string, string> = {
-    "ОПИСАНИЕ": product.description || "Пудра обогащена витаминами, регулирует работу сальных желез, способствует увлажнению и питанию изнутри. Этот продукт для лица поможет решить проблемы с воспалениями, избытком себума, забиванием пор, а также поможет уменьшить появление акне и сделает следы постакне менее заметными. Регулярное использование этого продукта позволит достичь ровного тонуса кожи и естественного сияния.\n\nНежная пудра для умывания мягко удаляет омертвевшие клетки, не вызывая шелушения. Умывалка для лица бережно и эффективно очистит кожу от загрязнений и остатков макияжа. Этот уход активизирует процесс обновления кожных клеток, борется со старением, помогает разгладить морщины и неровности, а также уменьшает пигментацию.\n\nСпециальный комплекс активных компонентов в составе пудры смягчает и матирует кожный покров, делая его чистым, свежим и привлекательным. Наш пилинг порошок подходит для жирной, нормальной, проблемной и чувствительной кожи.",
-    "СОСТАВ": product.metadata?.composition as string || "состава пока нет",
-    "БРЕНД": product.metadata?.brand_info as string || "бренд угодо",
-    "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ": product.metadata?.additional_info as string || "пока нет"
+    "ОПИСАНИЕ": product.description || "Описание товара отсутствует.",
+    "СОСТАВ": product.material || "Информация о составе отсутствует.",
+    "БРЕНД": "UGODO",
+    "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ": product.subtitle || "Дополнительная информация отсутствует."
   };
 
-  const productSpecs = product.metadata?.product_type || 
-                      product.metadata?.target_audience || 
-                      product.metadata?.purpose || 
-                      product.metadata?.skin_type || 
-                      product.metadata?.application_area || 
-                      product.metadata?.age_range || 
-                      product.metadata?.volume
-    ? [
-        { name: "тип продукта", value: product.metadata?.product_type as string || "" },
-        { name: "для кого", value: product.metadata?.target_audience as string || "" },
-        { name: "назначение", value: product.metadata?.purpose as string || "" },
-        { name: "тип кожи", value: product.metadata?.skin_type as string || "" },
-        { name: "область применения", value: product.metadata?.application_area as string || "" },
-        { name: "возраст", value: product.metadata?.age_range as string || "" },
-        { name: "объём", value: product.metadata?.volume as string || "" }
-      ].filter(spec => spec.value.trim() !== "")
-    : [{ name: "тип продукта", value: productCategory }];
+  const productSpecs = (() => {
+    const metadata = product.metadata || {}
+    const specs = []
+    
+    // Добавляем стандартные поля продукта
+    if (product.material && product.material.trim() !== "") {
+      specs.push({ name: "Материал", value: product.material })
+    }
+    
+    if (product.weight) {
+      specs.push({ name: "Вес", value: `${product.weight} г` })
+    }
+    
+    if (product.length || product.width || product.height) {
+      const dimensions = []
+      if (product.length) dimensions.push(`${product.length}`)
+      if (product.width) dimensions.push(`${product.width}`)
+      if (product.height) dimensions.push(`${product.height}`)
+      specs.push({ name: "Размеры", value: `${dimensions.join(' × ')} мм` })
+    }
+    
+    if (product.origin_country && product.origin_country.trim() !== "") {
+      specs.push({ name: "Страна производства", value: product.origin_country })
+    }
+    
+    // Добавляем метаданные, исключая служебные поля
+    Object.entries(metadata).forEach(([key, value]) => {
+      if (
+        value && 
+        value !== "" && 
+        value !== "-" && 
+        !key.startsWith("_")
+      ) {
+        const formattedKey = key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, char => char.toUpperCase())
+        specs.push({ name: formattedKey, value: String(value) })
+      }
+    })
+    
+    // Если нет характеристик, добавляем базовые из других полей
+    if (specs.length === 0) {
+      if (product.type?.value) {
+        specs.push({ name: "Тип продукта", value: product.type.value })
+      }
+      if (product.categories && product.categories.length > 0) {
+        specs.push({ name: "Категория", value: product.categories[0].name })
+      }
+      if (product.collection?.title) {
+        specs.push({ name: "Коллекция", value: product.collection.title })
+      }
+    }
+    
+    return specs
+  })()
 
   const nextImage = () => {
     if (product.images && selectedImageIndex < product.images.length - 1) {
@@ -290,6 +347,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     document.body.style.overflow = 'unset';
   };
 
+  // Предотвращаем проблемы с гидратацией
+  if (!isClient) {
+    return (
+      <div className="pb-16">
+        <div className="content-container">
+          <div style={{ height: "600px" }} className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+              <p className="text-gray-500">Загрузка...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`pb-16 ${isMobile ? 'pb-20' : ''}`}>
       {isMobile ? (
@@ -298,29 +371,16 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex items-center">
               <ChevronLeft size={16} className="mr-2" />
               <nav aria-label="Breadcrumbs" className="flex items-center text-[14px] text-black">
-                <LocalizedClientLink href="/" className="hover:text-gray-800 transition-colors duration-200">
-                  главная
-                </LocalizedClientLink>
-                {breadcrumbItems.map((item, index) => (
-                  <span key={index} className="flex items-center">
-                    <span className="mx-1">/</span>
-                    {index === breadcrumbItems.length - 1 ? (
-                      <span className="text-black">{item.name}</span>
-                    ) : (
-                      <LocalizedClientLink 
-                        href={item.path} 
-                        className="hover:text-gray-800 transition-colors duration-200"
-                      >
-                        {item.name}
-                      </LocalizedClientLink>
-                    )}
-                  </span>
-                ))}
+                {breadcrumbItems.length > 0 ? (
+                  <span className="text-black">{breadcrumbItems[breadcrumbItems.length - 1].name}</span>
+                ) : (
+                  <span className="text-black">товар</span>
+                )}
               </nav>
             </div>
             
             <div className="flex items-center">
-              <span className="text-lg">★★★★☆</span>
+              <ProductRating productId={product.id} showCount={true} size="lg" />
             </div>
           </div>
 
@@ -337,7 +397,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
 
           <h1 className="mb-6 px-4" style={{
-            fontSize: "30px",
+            fontSize: "20px",
             fontWeight: 500,
             letterSpacing: "-0.4px",
             lineHeight: 1.1,
@@ -346,7 +406,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             {productTitle}
             {productSubtitle && (
               <div style={{
-                fontSize: "30px",
+                fontSize: "20px",
                 fontWeight: 500,
                 letterSpacing: "-0.4px",
                 lineHeight: 1.1,
@@ -375,12 +435,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 </div>
               )}
               
-              <div className="relative w-full overflow-hidden" style={{ height: "400px" }} ref={emblaRef}>
+              <div className="relative w-full overflow-hidden" style={{ height: "533px" }} ref={emblaRef}>
                 <div className="flex h-full">
                   {product.images?.map((image, index) => (
                     <div key={image.id} className="flex-[0_0_100%] min-w-0 relative h-full">
                       <div onClick={openImageModal} className="cursor-pointer w-full h-full">
-                        <SafeImage
+                        <Image
                           src={image.url}
                           alt={`Product image ${index + 1}`}
                           fill
@@ -401,7 +461,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       key={index}
                       onClick={() => {
                         setSelectedImageIndex(index);
-                        emblaApi?.scrollTo(index);
                       }}
                       className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-200 
                         ${index === selectedImageIndex 
@@ -430,26 +489,37 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
 
           <div className="mb-6 px-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-500 uppercase" style={{
-                fontSize: "11px",
-                fontWeight: 500,
-                letterSpacing: "1.4px",
-                lineHeight: 1.5,
-                textTransform: "uppercase"
-              }}>
-                КОЛИЧЕСТВО / ШТ
+            {product.metadata?.bulk_discount === "true" ? (
+              <QuantitySelector
+                product={product}
+                region={region}
+                onQuantityChange={(newQuantity, newPrice) => {
+                  setQuantity(newQuantity)
+                }}
+                selectedQuantity={quantity}
+              />
+            ) : (
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-gray-500 uppercase" style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  letterSpacing: "1.4px",
+                  lineHeight: 1.5,
+                  textTransform: "uppercase"
+                }}>
+                  КОЛИЧЕСТВО / ШТ
+                </div>
+                <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    className="w-full h-full text-center outline-none"
+                  />
+                </div>
               </div>
-              <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  className="w-full h-full text-center outline-none"
-                />
-              </div>
-            </div>
+            )}
 
             {product.options?.some(option => 
               option.title.toLowerCase().includes('цвет') || 
@@ -461,6 +531,57 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   selectedOptions={selectedOptions}
                   onOptionChange={handleOptionChange}
                 />
+              </div>
+            )}
+            
+            {/* Селектор размеров */}
+            {product.options?.some(option => 
+              option.title.toLowerCase().includes('размер') || 
+              option.title.toLowerCase().includes('size')
+            ) && (
+              <div className="mb-6">
+                <div className="text-gray-500 uppercase mb-3" style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  letterSpacing: "1.4px",
+                  lineHeight: 1.5,
+                  textTransform: "uppercase"
+                }}>
+                  РАЗМЕР
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {(() => {
+                    const sizeOption = product.options?.find(option => 
+                      option.title.toLowerCase().includes('размер') || 
+                      option.title.toLowerCase().includes('size')
+                    )
+                    if (!sizeOption) return null
+                    
+                    const sizeValues = new Set<string>()
+                    product.variants?.forEach(variant => {
+                      variant.options?.forEach(optionValue => {
+                        if (optionValue.option_id === sizeOption.id) {
+                          sizeValues.add(optionValue.value)
+                        }
+                      })
+                    })
+                    
+                    return Array.from(sizeValues).map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => handleOptionChange(sizeOption.id, value)}
+                        className={`px-4 py-2 border transition-colors duration-200 ${
+                          selectedOptions[sizeOption.id] === value
+                            ? 'border-black bg-black text-white'
+                            : 'border-gray-300 hover:border-black'
+                        }`}
+                        style={{ fontSize: "14px" }}
+                      >
+                        {value}
+                      </button>
+                    ))
+                  })()}
+                </div>
               </div>
             )}
             
@@ -518,7 +639,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   onClick={() => setSelectedTab(selectedTab === tab ? "" : tab)}
                   className="w-full flex items-center justify-between py-4 text-left"
                 >
-                  <span className="font-medium uppercase text-sm">{tab}</span>
+                  <span className={`font-medium uppercase text-sm ${selectedTab === tab ? 'border-b border-black pb-1' : ''}`}>{tab}</span>
                   <div className="w-5 h-5 flex items-center justify-center">
                     {selectedTab === tab ? (
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -535,14 +656,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   <div className="pb-4">
                     {tab === "ОПИСАНИЕ" ? (
                       <>
-                        <h3 className="mb-4 text-sm font-medium uppercase">
+                        <h3 className="mb-4" style={{ fontSize: "16px", fontWeight: 500, textTransform: "uppercase" }}>
                           {productTitle}
                         </h3>
                         <div className="text-sm mb-4">
-                          <p className="mb-4">артикул: {articleNumber}</p>
+                          <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                          <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
                         </div>
                         {content.split('\n\n').map((paragraph, idx) => (
-                          <p key={idx} className="text-sm mb-4">
+                          <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
                             {paragraph}
                           </p>
                         ))}
@@ -569,7 +691,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         )}
                       </>
                     ) : (
-                      <p className="text-sm">{content}</p>
+                      <p style={{ fontSize: "14px" }}>{content}</p>
                     )}
                   </div>
                 )}
@@ -581,7 +703,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           <div className="flex items-center justify-center mb-8 px-4">
             <div className="flex items-center cursor-pointer" onClick={() => setIsSupportModalOpen(true)}>
               <div className="w-[80px] h-[80px] mr-4">
-                <SafeImage
+                <Image
                   src="/images/logo/logo3.png"
                   alt="Логотип"
                   width={80}
@@ -645,7 +767,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex flex-col w-1/2" style={{ paddingLeft: "20px" }}>
               <div className="flex items-center mb-3">
                 <div className="flex items-center">
-                  <span className="text-lg">★★★★☆</span>
+                  <ProductRating productId={product.id} showCount={true} size="lg" />
                 </div>
                 <span className="mx-2">•</span>
                 <span className="text-sm">6 отзывов</span>
@@ -717,11 +839,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                           return (
                             <div 
                               key={image.id}
-                              onClick={() => setSelectedImageIndex(actualIndex)}
+                              onClick={() => {
+                                setSelectedImageIndex(actualIndex);
+                              }}
                               className={`relative cursor-pointer my-2 transition-all duration-200 ${selectedImageIndex === actualIndex ? 'opacity-100 ring-2 ring-black' : 'opacity-50 hover:opacity-75'}`}
                               style={{ width: "70px", height: "70px" }}
                             >
-                              <SafeImage
+                              <Image
                                 src={image.url}
                                 alt={`Thumbnail ${actualIndex + 1}`}
                                 fill
@@ -772,14 +896,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     </div>
                   )}
                   
-                  <div style={{ width: "989px", height: "674px", position: "relative" }} className="group">
+                  <div style={{ width: "632px", height: "843px", position: "relative" }} className="group">
                     {product.images && product.images.length > 0 && (
-                      <SafeImage
+                      <Image
+                        key={`main-image-${selectedImageIndex}`}
                         src={product.images[selectedImageIndex].url}
                         alt={`Product image ${selectedImageIndex + 1}`}
                         fill
                         priority
-                        sizes="989px"
+                        sizes="632px"
                         style={{ objectFit: "cover" }}
                       />
                     )}
@@ -843,29 +968,37 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <div style={{ padding: "60px 90px 0" }}>
                 <div className="w-[400px]">
                   <div className="mb-6">
-                    <div className="flex items-center">
-                      <div 
-                        className="text-gray-500 uppercase mr-6"
-                        style={{
+                    {product.metadata?.bulk_discount === "true" ? (
+                      <QuantitySelector
+                        product={product}
+                        region={region}
+                        onQuantityChange={(newQuantity, newPrice) => {
+                          setQuantity(newQuantity)
+                        }}
+                        selectedQuantity={quantity}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="text-gray-500 uppercase" style={{
                           fontSize: "11px",
                           fontWeight: 500,
                           letterSpacing: "1.4px",
                           lineHeight: 1.5,
                           textTransform: "uppercase"
-                        }}
-                      >
-                        КОЛИЧЕСТВО / ШТ
+                        }}>
+                          КОЛИЧЕСТВО / ШТ
+                        </div>
+                        <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
+                          <input 
+                            type="number" 
+                            min="1" 
+                            value={quantity} 
+                            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                            className="w-full h-full text-center outline-none"
+                          />
+                        </div>
                       </div>
-                      <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
-                        <input 
-                          type="number" 
-                          min="1" 
-                          value={quantity} 
-                          onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                          className="w-full h-full text-center outline-none"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {product.options?.some(option => 
@@ -878,6 +1011,57 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         selectedOptions={selectedOptions}
                         onOptionChange={handleOptionChange}
                       />
+                    </div>
+                  )}
+                  
+                  {/* Селектор размеров */}
+                  {product.options?.some(option => 
+                    option.title.toLowerCase().includes('размер') || 
+                    option.title.toLowerCase().includes('size')
+                  ) && (
+                    <div className="mb-6">
+                      <div className="text-gray-500 uppercase mb-3" style={{
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        letterSpacing: "1.4px",
+                        lineHeight: 1.5,
+                        textTransform: "uppercase"
+                      }}>
+                        РАЗМЕР
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(() => {
+                          const sizeOption = product.options?.find(option => 
+                            option.title.toLowerCase().includes('размер') || 
+                            option.title.toLowerCase().includes('size')
+                          )
+                          if (!sizeOption) return null
+                          
+                          const sizeValues = new Set<string>()
+                          product.variants?.forEach(variant => {
+                            variant.options?.forEach(optionValue => {
+                              if (optionValue.option_id === sizeOption.id) {
+                                sizeValues.add(optionValue.value)
+                              }
+                            })
+                          })
+                          
+                          return Array.from(sizeValues).map((value) => (
+                            <button
+                              key={value}
+                              onClick={() => handleOptionChange(sizeOption.id, value)}
+                              className={`px-4 py-2 border transition-colors duration-200 ${
+                                selectedOptions[sizeOption.id] === value
+                                  ? 'border-black bg-black text-white'
+                                  : 'border-gray-300 hover:border-black'
+                              }`}
+                              style={{ fontSize: "14px" }}
+                            >
+                              {value}
+                            </button>
+                          ))
+                        })()}
+                      </div>
                     </div>
                   )}
                   
@@ -941,7 +1125,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   
                   <div className="flex mb-6 gap-2">
                     <button 
-                      className={`${addSuccess ? 'bg-[#C2E7DA]' : 'bg-black'} text-white uppercase font-medium transition-colors duration-200 hover:bg-[#C2E7DA] hover:text-black`}
+                      className={`${addSuccess ? 'bg-[#C2E7DA]' : isInStock ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
                       style={{
                         width: "305px",
                         height: "50px",
@@ -952,9 +1136,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         textTransform: "uppercase"
                       }}
                       onClick={handleAddToCart}
-                      disabled={isAddingToCart}
+                      disabled={isAddingToCart || !isInStock}
                     >
-                      {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : 'Добавить в корзину'}
+                      {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : 'Добавить в корзину'}
                     </button>
                     <button 
                       className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
@@ -1001,17 +1185,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
           
           <div className="hidden">
-            <Suspense
-              fallback={
-                <ProductActions
-                  disabled={true}
-                  product={product}
-                  region={region}
-                />
-              }
-            >
-              <ProductActionsWrapper id={product.id} region={region} />
-            </Suspense>
+            <div></div>
           </div>
         </>
       )}
@@ -1054,18 +1228,17 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       {productTitle}
                     </h3>
                     <div className="text-sm mb-6" style={{ fontSize: "16px", lineHeight: 1.5 }}>
-                      <p className="mb-4">артикул: {articleNumber}</p>
+                      <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                      <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
                     </div>
                     {tabContent[selectedTab].split('\n\n').map((paragraph, idx) => (
-                      <p key={idx} className="text-base mb-4" style={{ fontSize: "16px", lineHeight: 1.5 }}>
+                      <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
                         {paragraph}
                       </p>
                     ))}
                   </>
                 ) : (
-                  <p className="text-base" style={{ fontSize: "16px", lineHeight: 1.5 }}>
-                    {tabContent[selectedTab]}
-                  </p>
+                  <p style={{ fontSize: "14px" }}>{tabContent[selectedTab]}</p>
                 )}
               </div>
             </div>
@@ -1106,7 +1279,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex justify-center items-center my-4">
               <div className="flex items-center cursor-pointer" onClick={() => setIsSupportModalOpen(true)}>
                 <div className="w-[106px] h-[106px] mr-4">
-                  <SafeImage
+                  <Image
                     src="/images/logo/logo3.png"
                     alt="Логотип"
                     width={106}
@@ -1142,7 +1315,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       </div>
       
       <div className={`content-container my-8 ${isMobile ? 'px-4' : ''}`} style={{ marginTop: "40px" }}>
-        <ProductReviews productId={product.id} />
+        <ProductReviews productId={product.id} product={product} />
       </div>
       
       <div className={`content-container my-8 ${isMobile ? 'px-4' : ''}`}>
@@ -1234,7 +1407,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                             className={`relative cursor-pointer transition-all duration-200 ${selectedImageIndex === actualIndex ? 'opacity-100 ring-2 ring-black' : 'opacity-50 hover:opacity-75'}`}
                             style={{ width: "80px", height: "80px" }}
                           >
-                            <SafeImage
+                            <Image
                               src={image.url}
                               alt={`Thumbnail ${actualIndex + 1}`}
                               fill
@@ -1277,7 +1450,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     maxWidth: isMobile ? "100%" : "90vw", 
                     maxHeight: "90vh" 
                   }}>
-                    <SafeImage
+                    <Image
                       src={image.url}
                       alt={`Product image ${index + 1}`}
                       fill
@@ -1362,7 +1535,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
           <div className="flex gap-2">
             <button 
-              className={`${addSuccess ? 'bg-[#C2E7DA]' : 'bg-black'} text-white uppercase font-medium transition-colors duration-200 hover:bg-[#C2E7DA] hover:text-black flex-1`}
+              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : isInStock ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
               style={{
                 height: "50px",
                 fontSize: "11px",
@@ -1372,9 +1545,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 textTransform: "uppercase"
               }}
               onClick={handleAddToCart}
-              disabled={isAddingToCart}
+              disabled={isAddingToCart || !isInStock}
             >
-              {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : 'Добавить в корзину'}
+              {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : 'Добавить в корзину'}
             </button>
             <button 
               className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"

@@ -22,13 +22,14 @@ type ProductActionsProps = {
   onAddToCartSuccess?: () => void
 }
 
-const optionsAsKeymap = (
-  variantOptions: HttpTypes.StoreProductVariant["options"]
-) => {
-  return variantOptions?.reduce((acc: Record<string, string>, varopt: any) => {
-    acc[varopt.option_id] = varopt.value
+function optionsAsKeymap(options: HttpTypes.StoreProductVariant["options"]) {
+  if (!options) return {}
+  return options.reduce((acc, option) => {
+    if (option.option_id && option.value) {
+      acc[option.option_id] = option.value
+    }
     return acc
-  }, {})
+  }, {} as Record<string, string>)
 }
 
 export default function ProductActions({
@@ -45,13 +46,18 @@ export default function ProductActions({
   const [wishlistItemId, setWishlistItemId] = React.useState<string | null>(null)
   const [isLoadingWishlist, setIsLoadingWishlist] = React.useState(false)
   const [isLoadingCustomer, setIsLoadingCustomer] = React.useState(true)
+  const [isInitialized, setIsInitialized] = React.useState(false)
 
+  // Инициализация опций только один раз при монтировании
   useEffect(() => {
-    if (product.variants?.length === 1) {
+    if (!isInitialized && product.variants?.length === 1) {
       const variantOptions = optionsAsKeymap(product.variants[0].options)
       setOptions(variantOptions ?? {})
+      setIsInitialized(true)
+    } else if (!isInitialized) {
+      setIsInitialized(true)
     }
-  }, [product.variants])
+  }, [product.variants, isInitialized])
 
   const selectedVariant = useMemo(() => {
     if (!product.variants || product.variants.length === 0) {
@@ -154,37 +160,72 @@ export default function ProductActions({
     }
   }
 
+  // Загрузка данных пользователя
   React.useEffect(() => {
-    setIsLoadingCustomer(true)
-    retrieveCustomer()
-      .then(setCustomer as any)
-      .catch(() => setCustomer(null))
-      .finally(() => setIsLoadingCustomer(false))
+    let isMounted = true
+    
+    const loadCustomer = async () => {
+      try {
+        const customerData = await retrieveCustomer()
+        if (isMounted) {
+          setCustomer(customerData as any)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setCustomer(null)
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCustomer(false)
+        }
+      }
+    }
+    
+    loadCustomer()
+    
+    return () => {
+      isMounted = false
+    }
   }, [])
 
+  // Загрузка избранного
   React.useEffect(() => {
+    let isMounted = true
+    
     if (customer && !isLoadingCustomer) {
       setIsLoadingWishlist(true)
       getWishlist()
         .then(items => {
-          const item = items.find(i => i.product_id === product.id)
-          if (item) {
-            setIsInWishlist(true)
-            setWishlistItemId(item.id)
-          } else {
-            setIsInWishlist(false)
-            setWishlistItemId(null)
+          if (isMounted) {
+            const item = items.find(i => i.product_id === product.id)
+            if (item) {
+              setIsInWishlist(true)
+              setWishlistItemId(item.id)
+            } else {
+              setIsInWishlist(false)
+              setWishlistItemId(null)
+            }
           }
         })
         .catch(err => {
           console.error("Ошибка загрузки избранного на странице товара:", err)
-          setIsInWishlist(false)
-          setWishlistItemId(null)
+          if (isMounted) {
+            setIsInWishlist(false)
+            setWishlistItemId(null)
+          }
         })
-        .finally(() => setIsLoadingWishlist(false))
-    } else if (!customer && !isLoadingCustomer) {
+        .finally(() => {
+          if (isMounted) {
+            setIsLoadingWishlist(false)
+          }
+        })
+    } else if (!customer && !isLoadingCustomer && isMounted) {
       setIsInWishlist(false)
       setWishlistItemId(null)
+    }
+    
+    return () => {
+      isMounted = false
     }
   }, [customer, product.id, isLoadingCustomer])
 
@@ -224,40 +265,28 @@ export default function ProductActions({
 
   return (
     <>
-      <div className="flex flex-col gap-y-2 items-start" ref={actionsRef}>
-        <div>
-          {(product.variants?.length ?? 0) > 1 && (
-            <div className="flex flex-col gap-y-4 items-start">
-              {(product.options || []).map((option) => {
-                return (
-                  <div key={option.id} className="w-full">
-                    <OptionSelect
-                      option={option}
-                      current={options[option.id]}
-                      updateOption={setOptionValue}
-                      title={option.title ?? ""}
-                      data-testid="product-options"
-                      disabled={!!disabled || isAdding}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Блок авторизации и бонусов */}
-        <div className="flex items-center gap-2 mt-4 mb-4">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="black" strokeWidth="2"/>
-            <path d="M12 8v8M8 12h8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <div className="text-sm">
-            <a href="/account/login" className="font-bold underline">авторизуйся</a> и получай бонусы
+      <div className="flex flex-col gap-y-4" ref={actionsRef}>
+        {product.variants && product.variants.length > 1 && (
+          <div className="flex flex-col gap-y-4">
+            {(product.options || []).map((option) => {
+              return (
+                <div key={option.id}>
+                  <OptionSelect
+                    option={option}
+                    current={options[option.id]}
+                    updateOption={setOptionValue}
+                    title={option.title}
+                    data-testid="option-select"
+                    disabled={!!disabled}
+                  />
+                </div>
+              )
+            })}
           </div>
-        </div>
+        )}
 
-        {/* Кнопки добавления в корзину и избранное */}
+        <ProductPrice product={product} variant={selectedVariant} region={region} />
+
         <div className="flex w-full gap-2 mb-6">
           <Button
             onClick={handleAddToCart}
@@ -300,7 +329,7 @@ export default function ProductActions({
         </div>
 
         {/* Наличие в магазинах */}
-        <div className="w-full">
+        <div className="flex items-center justify-center">
           <a href="#" className="flex items-center text-sm font-medium">
             <span>Наличие в магазинах</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1">

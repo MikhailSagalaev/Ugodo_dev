@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { XMark } from "@medusajs/icons"
-import { MobileNav, MobileBottomNav } from "@modules/mobile/components"
+import { MobileNav } from "@modules/mobile/components"
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -43,9 +43,6 @@ const MobileMenu = () => {
       
       {/* Боковое меню */}
       <MobileNav isOpen={isOpen} setIsOpen={setIsOpen} />
-      
-      {/* Нижняя панель навигации */}
-      <MobileBottomNav />
     </>
   )
 }

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ products: [] })
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+    const apiUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://api.ugodo.ru"
     const apiKey = process.env.NEXT_PUBLIC_MEDUSA_API_KEY || "pk_c7d203b4eb02900c90763acebc5dbd649264953d2dc849de6424c65aae8614cf" 
     
     // Выполняем поиск продуктов напрямую через fetch

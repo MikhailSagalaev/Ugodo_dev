@@ -25,7 +25,7 @@ const OtpLoginPage = () => {
     setMessage(null)
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
       const response = await fetch(`${apiBaseUrl}/store/auth/customer/otp/pre-register`, {
         method: 'POST',
         headers: {
@@ -59,7 +59,7 @@ const OtpLoginPage = () => {
     setMessage(null)
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
       
       const loginResponse = await fetch(`${apiBaseUrl}/store/auth/customer/otp/verify`, {
         method: 'POST',

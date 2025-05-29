@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
   },
 })
 
-const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://api.ugodo.ru"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

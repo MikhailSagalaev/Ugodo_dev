@@ -1,24 +1,20 @@
-'use client'
+"use client"
 
-import { Fragment, Suspense, useRef, useState, useEffect } from "react"
+import { Suspense, useEffect, useRef, useState, useCallback } from "react"
+import { useParams, usePathname, useSearchParams } from "next/navigation"
+import { HttpTypes } from "@medusajs/types"
 import Image from "next/image"
-import { Popover, Transition } from '@headlessui/react'
+import clx from "clsx"
 
+import { listRegions } from "@lib/data/regions"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
-import SideMenu from "@modules/layout/components/side-menu"
-import { Avatar, Text, clx, useToggleState } from "@medusajs/ui"
-import MobileMenu from "@modules/mobile-menu/templates"
-import ListRegions from "../list-regions"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { listRegions } from "@lib/data/regions"
 import Search from "@modules/search"
-import { User } from "@medusajs/icons"
-import { HttpTypes } from "@medusajs/types"
+import MobileMenu from "@modules/mobile-menu/templates"
+import ListRegions from "@modules/layout/templates/list-regions"
+import CatalogDropdown from "@modules/layout/components/catalog-dropdown"
 
-const NAV_ICON_SIZE = 22;
-
-const Nav = ({ isHome = false }: { isHome?: boolean }) => {
+const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparent?: boolean }) => {
   const pathName = usePathname()
   const searchParams = useSearchParams()
   const [regions, setRegions] = useState<HttpTypes.StoreRegion[]>([])
@@ -29,8 +25,44 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
   const [lastScrollY, setLastScrollY] = useState(0)
   const headerRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  const [showCatalogDropdown, setShowCatalogDropdown] = useState(false)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const isStorePage = pathName.includes('/store') || pathName.includes('/categories')
+  const isProductPage = pathName.includes('/products/')
+  // Если isTransparent не передан, используем isHome для обратной совместимости
+  const shouldBeTransparent = isTransparent !== undefined ? isTransparent : isHome
+
+  const handleCatalogMouseEnter = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    setShowCatalogDropdown(true)
+  }, [])
+
+  const handleCatalogMouseLeave = useCallback(() => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowCatalogDropdown(false)
+    }, 150)
+  }, [])
+
+  const handleDropdownMouseEnter = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }, [])
+
+  const handleDropdownMouseLeave = useCallback(() => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowCatalogDropdown(false)
+    }, 150)
+  }, [])
 
   useEffect(() => {
+    setIsClient(true)
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -49,37 +81,45 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
   }, [])
 
   useEffect(() => {
+    if (!isClient) return
+    
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
-      if (isHome) {
-        if (currentScrollY > 100) {
+      setLastScrollY(prevLastScrollY => {
+        if (shouldBeTransparent) {
+          if (currentScrollY > 100) {
+            setIsScrolled(true)
+          } else {
+            setIsScrolled(false)
+          }
+        } else {
           setIsScrolled(true)
-        } else {
-          setIsScrolled(false)
         }
-      } else {
-        setIsScrolled(true)
-      }
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setShowCatalogNav(false)
+        
+        if (!isStorePage) {
+          if (currentScrollY > prevLastScrollY && currentScrollY > 100) {
+            setShowCatalogNav(false)
+            if (isMobile) {
+              setShowMobileBanner(false)
+            }
+          } else if (currentScrollY < prevLastScrollY) {
+            setShowCatalogNav(true)
+          }
+        } else {
+          setShowCatalogNav(true)
+        }
+        
         if (isMobile) {
-          setShowMobileBanner(false)
+          if (currentScrollY === 0) {
+            setShowMobileBanner(true)
+          } else {
+            setShowMobileBanner(false)
+          }
         }
-      } else if (currentScrollY < lastScrollY) {
-        setShowCatalogNav(true)
-      }
-      
-      if (isMobile) {
-        if (currentScrollY === 0) {
-          setShowMobileBanner(true)
-        } else {
-          setShowMobileBanner(false)
-        }
-      }
-      
-      setLastScrollY(currentScrollY)
+        
+        return currentScrollY
+      })
     }
 
     window.addEventListener("scroll", handleScroll)
@@ -88,25 +128,32 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
     return () => {
       window.removeEventListener("scroll", handleScroll)
     }
-  }, [lastScrollY, isHome, isMobile])
+  }, [isMobile, isClient, isStorePage, shouldBeTransparent])
 
   useEffect(() => {
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.offsetHeight)
     }
+  }, [isClient])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+      }
+    }
   }, [])
 
-  const getIconColor = () => {
-    if (isScrolled || !isHome) return "black";
-    return "white";
+  // Предотвращаем гидратацию - показываем правильную версию сразу
+  if (!isClient) {
+    return (
+      <>
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+          <div style={{ height: "180px" }} />
+        </div>
+      </>
+    )
   }
-
-  const getLinkClasses = (targetPath: string) => {
-      if (pathName === targetPath) {
-          return "text-[16px] font-normal transition-colors duration-200 text-black";
-      }
-      return "text-[16px] font-normal transition-colors duration-200 text-black hover:text-gray-700";
-  };
 
   if (isMobile) {
     return (
@@ -167,7 +214,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
             </nav>
           </header>
           
-          {showMobileBanner && (
+          {!isHome && isProductPage && (
             <div className="bg-[#BAFF29] h-[40px] flex items-center justify-center">
               <div className="overflow-hidden whitespace-nowrap w-full">
                 <div className="animate-marquee inline-block">
@@ -185,22 +232,22 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
             </div>
           )}
         </div>
-        <div style={{ height: showMobileBanner ? "104px" : "64px" }} className="transition-all duration-300" />
+        <div style={{ height: (!isHome && isProductPage) ? "104px" : "64px" }} className="transition-all duration-300" />
       </>
     )
   }
 
   return (
     <>
-      {!isHome && <div style={{ height: "180px" }} />}
+      {!shouldBeTransparent && <div style={{ height: "180px" }} />}
       
       <div 
         ref={headerRef}
         className={clx(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-200 group",
           {
-            "bg-transparent hover:bg-white": isHome && !isScrolled,
-            "bg-white shadow-sm": isScrolled || !isHome,
+            "bg-transparent hover:bg-white": shouldBeTransparent && !isScrolled,
+            "bg-white shadow-sm": isScrolled || !shouldBeTransparent,
           }
         )}
       >
@@ -236,7 +283,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
               <div className="hidden small:flex items-center gap-x-8 h-full">
                 <div className="w-[22px] h-[22px] flex items-center justify-center">
                   <Suspense>
-                    <Search isScrolled={isScrolled || !isHome} />
+                    <Search isScrolled={isScrolled || !shouldBeTransparent} />
                   </Suspense>
                 </div>
                 
@@ -250,7 +297,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     height="22" 
                     viewBox="0 0 22 22" 
                     fill="none" 
-                    stroke={!isHome || isScrolled ? "black" : "white"}
+                    stroke={!shouldBeTransparent || isScrolled ? "black" : "white"}
                     className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -268,7 +315,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     height="22" 
                     viewBox="0 0 22 22" 
                     fill="none" 
-                    stroke={!isHome || isScrolled ? "black" : "white"}
+                    stroke={!shouldBeTransparent || isScrolled ? "black" : "white"}
                     className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -288,7 +335,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                 </LocalizedClientLink>
                 
                 <div className="w-[22px] h-[22px] flex items-center justify-center relative z-[60]">
-                  <CartButton isScrolled={isScrolled || !isHome} />
+                  <CartButton isScrolled={isScrolled || !shouldBeTransparent} />
                 </div>
               </div>
               <div className="flex small:hidden">
@@ -298,40 +345,47 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
           </nav>
         </header>
 
-        <div className={clx(
-          "hidden small:block transition-all duration-300 transform-gpu overflow-hidden z-50",
-          {
-            "bg-transparent group-hover:bg-white": isHome && !isScrolled,
-            "bg-white": isScrolled || !isHome,
-            "max-h-14 opacity-100": showCatalogNav,
-            "max-h-0 opacity-0": !showCatalogNav,
-          }
-        )}>
+        <div 
+          className={clx(
+            "hidden small:block transition-all duration-300 transform-gpu overflow-hidden z-50 relative",
+            {
+              "bg-transparent group-hover:bg-white": shouldBeTransparent && !isScrolled,
+              "bg-white": isScrolled || !shouldBeTransparent,
+              "max-h-14 opacity-100": showCatalogNav,
+              "max-h-0 opacity-0": !showCatalogNav,
+            }
+          )}
+        >
           <div className="content-container flex justify-center">
             <nav className="flex items-center h-14">
               <ul className="flex items-center gap-x-16">
-                <li>
+                <li 
+                  className="relative"
+                  onMouseEnter={handleCatalogMouseEnter}
+                  onMouseLeave={handleCatalogMouseLeave}
+                >
                   <LocalizedClientLink
                     href="/store"
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
                     каталог
                   </LocalizedClientLink>
                 </li>
+                
                 <li>
                   <LocalizedClientLink
                     href="/new-arrivals"
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -344,22 +398,23 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
                     хиты продаж
                   </LocalizedClientLink>
                 </li>
+                
                 <li>
                   <LocalizedClientLink
                     href="/promotions"
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -372,22 +427,23 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
                     бренды
                   </LocalizedClientLink>
                 </li>
+                
                 <li>
                   <LocalizedClientLink
                     href="/blog"
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -400,8 +456,8 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": isHome && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !isHome
+                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -413,7 +469,14 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
           </div>
         </div>
         
-        {!isHome && (
+        <CatalogDropdown
+          isVisible={showCatalogDropdown}
+          onClose={() => setShowCatalogDropdown(false)}
+          onMouseEnter={handleDropdownMouseEnter}
+          onMouseLeave={handleDropdownMouseLeave}
+        />
+        
+        {!isHome && !isStorePage && (
           <div className="bg-[#BAFF29] h-[45px] flex items-center justify-center transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer">
             <div className="flex items-center justify-center w-full">
               <span 
@@ -428,6 +491,7 @@ const Nav = ({ isHome = false }: { isHome?: boolean }) => {
             </div>
           </div>
         )}
+        
       </div>
     </>
   )

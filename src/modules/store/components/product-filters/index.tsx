@@ -1,265 +1,314 @@
 'use client'
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useState, useEffect } from "react"
-import { Heading, RadioGroup, Button, Input, Label } from "@medusajs/ui"
-import { ChevronDown, ChevronUp, FilterIcon, X } from "lucide-react"
-import { SortOptions as ProductSortOptions } from "@lib/data/products" // Импортируем наш тип сортировки
-import { HttpTypes } from "@medusajs/types"
+import React, { useState } from 'react'
+import { HttpTypes } from '@medusajs/types'
+import { Button } from '@medusajs/ui'
 
-interface ProductFiltersProps {
-  categories: HttpTypes.StoreProductCategory[]; // Упрощенный тип
-  types: Array<{ id: string; value: string }>; // Пока не используется, но оставим
-  tags: Array<{ id: string; value: string }>;  // Пока не используется, но оставим
-  priceRange: { min: number; max: number };
-  searchParams: Record<string, any>; // Получаем текущие параметры поиска
+type FilterOption = {
+  value: string
+  label: string
+  count?: number
 }
 
-// Компонент для сворачиваемых секций
-const CollapsibleSection = ({
-  title,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  // Для мобильных можно добавить отдельную логику открытия/закрытия по умолчанию
+type ProductFiltersProps = {
+  products: HttpTypes.StoreProduct[]
+  onFiltersChange: (filters: FilterState) => void
+  className?: string
+}
 
-  return (
-    <div className="border-b border-ui-border-base pb-4 mb-6">
-      <button
-        className="flex justify-between items-center w-full py-2 text-left text-ui-fg-subtle hover:text-ui-fg-base"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Heading level="h3" className="text-base font-medium">{title}</Heading>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5" />
-        ) : (
-          <ChevronDown className="w-5 h-5" />
-        )}
-      </button>
-      {isOpen && <div className="pt-4 space-y-3">{children}</div>}
-    </div>
-  );
-};
+export type FilterState = {
+  colors: string[]
+  sizes: string[]
+  materials: string[]
+  priceRange: [number, number] | null
+  categories: string[]
+  hasDiscount: boolean
+  inStock: boolean
+  expressDelivery: boolean
+}
 
-// Основной компонент фильтров
 const ProductFilters: React.FC<ProductFiltersProps> = ({
-  categories,
-  priceRange,
-  searchParams,
+  products,
+  onFiltersChange,
+  className = ''
 }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const currentSearchParams = useSearchParams(); // Для получения текущих параметров из URL
+  const [filters, setFilters] = useState<FilterState>({
+    colors: [],
+    sizes: [],
+    materials: [],
+    priceRange: null,
+    categories: [],
+    hasDiscount: false,
+    inStock: false,
+    expressDelivery: false
+  })
 
-  const активныеФильтрыПоУмолчанию = {
-    category: searchParams?.category || "",
-    min_price: searchParams?.min_price || priceRange.min.toString(),
-    max_price: searchParams?.max_price || priceRange.max.toString(),
-    sortBy: (searchParams?.sortBy as ProductSortOptions) || "created_at",
-  };
+  const [isOpen, setIsOpen] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    brand: false,
+    country: false,
+    productType: false,
+    purpose: false,
+    forWho: false,
+    applicationArea: false,
+    color: false
+  })
 
-  const [currentCategory, setCurrentCategory] = useState(активныеФильтрыПоУмолчанию.category);
-  const [minPrice, setMinPrice] = useState(активныеФильтрыПоУмолчанию.min_price);
-  const [maxPrice, setMaxPrice] = useState(активныеФильтрыПоУмолчанию.max_price);
-  const [currentSortBy, setCurrentSortBy] = useState<ProductSortOptions>(активныеФильтрыПоУмолчанию.sortBy);
+  // Извлекаем уникальные значения из товаров
+  const extractFilterOptions = () => {
+    const colors = new Set<string>()
+    const sizes = new Set<string>()
+    const materials = new Set<string>()
+    const categories = new Set<string>()
+    let minPrice = Infinity
+    let maxPrice = 0
 
-  // Обновление состояния, если searchParams изменились (например, при навигации назад/вперед)
-  useEffect(() => {
-    setCurrentCategory(currentSearchParams.get("category") || "");
-    setMinPrice(currentSearchParams.get("min_price") || priceRange.min.toString());
-    setMaxPrice(currentSearchParams.get("max_price") || priceRange.max.toString());
-    setCurrentSortBy((currentSearchParams.get("sortBy") as ProductSortOptions) || "created_at");
-  }, [currentSearchParams, priceRange]);
+    products.forEach(product => {
+      // Цвета и размеры из вариантов
+      product.variants?.forEach(variant => {
+        variant.options?.forEach(option => {
+          const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+          
+          if (optionTitle?.includes('цвет') || optionTitle?.includes('color')) {
+            colors.add(option.value)
+          }
+          
+          if (optionTitle?.includes('размер') || optionTitle?.includes('size')) {
+            sizes.add(option.value)
+          }
+        })
 
-  const updateQueryParams = (paramsToUpdate: Record<string, string>) => {
-    const newParams = new URLSearchParams(currentSearchParams.toString());
-    Object.entries(paramsToUpdate).forEach(([key, value]) => {
-      if (value === "" || (key === "min_price" && value === priceRange.min.toString()) || (key === "max_price" && value === priceRange.max.toString())) {
-        newParams.delete(key);
-      } else {
-        newParams.set(key, value);
+        // Цены
+        if (variant.calculated_price?.calculated_amount) {
+          const price = variant.calculated_price.calculated_amount / 100
+          minPrice = Math.min(minPrice, price)
+          maxPrice = Math.max(maxPrice, price)
+        }
+      })
+
+      // Материалы
+      if (product.material) {
+        materials.add(product.material)
       }
-    });
-    newParams.delete("page"); // Сбрасываем на первую страницу при изменении фильтров/сортировки
-    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
-  };
 
-  const handleCategoryChange = (value: string) => {
-    setCurrentCategory(value);
-    updateQueryParams({ category: value });
-  };
+      // Категории
+      product.categories?.forEach(category => {
+        categories.add(category.name)
+      })
+    })
 
-  const handleSortChange = (value: string) => {
-    setCurrentSortBy(value as ProductSortOptions);
-    updateQueryParams({ sortBy: value });
-  };
-  
-  const handlePriceApply = () => {
-    updateQueryParams({ min_price: minPrice, max_price: maxPrice });
-  };
-  
-  const resetFilters = () => {
-    setCurrentCategory("");
-    setMinPrice(priceRange.min.toString());
-    setMaxPrice(priceRange.max.toString());
-    setCurrentSortBy("created_at");
-    router.push(pathname, { scroll: false });
-  };
+    return {
+      colors: Array.from(colors).map(color => ({ value: color, label: color })),
+      sizes: Array.from(sizes).map(size => ({ value: size, label: size })),
+      materials: Array.from(materials).map(material => ({ value: material, label: material })),
+      categories: Array.from(categories).map(category => ({ value: category, label: category })),
+      priceRange: minPrice !== Infinity ? [Math.floor(minPrice), Math.ceil(maxPrice)] as [number, number] : [25, 56865]
+    }
+  }
 
-  const sortOptions: { value: ProductSortOptions; label: string }[] = [
-    { value: "created_at", label: "Новинки" },
-    { value: "price_asc", label: "Цена: по возрастанию" },
-    { value: "price_desc", label: "Цена: по убыванию" },
-    { value: "name_asc", label: "Название: А-Я" }, 
-    { value: "name_desc", label: "Название: Я-А" },
-  ];
-  
-  // Состояние для мобильных фильтров
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const filterOptions = extractFilterOptions()
 
-  const FiltersContent = () => (
-    <div className="space-y-6">
-      <CollapsibleSection title="Категории">
-        <RadioGroup value={currentCategory} onValueChange={handleCategoryChange} className="space-y-2">
-          <div key="all-cat" className="flex items-center space-x-2">
-            <RadioGroup.Item id="all-cat-radio" value="" checked={currentCategory === ""} />
-            <Label htmlFor="all-cat-radio" className="text-sm font-normal hover:cursor-pointer">Все категории</Label>
-          </div>
-          {categories.filter(c => !c.parent_category_id).map((category) => (
-             <div key={category.id} className="flex items-center space-x-2">
-                <RadioGroup.Item id={category.handle} value={category.handle} checked={currentCategory === category.handle} />
-                <Label htmlFor={category.handle} className="text-sm font-normal hover:cursor-pointer">{category.name}</Label>
-              </div>
-            // TODO: Добавить отображение вложенных категорий, если нужно
-          ))}
-        </RadioGroup>
-      </CollapsibleSection>
+  const handleFilterChange = (filterType: keyof FilterState, value: any) => {
+    const newFilters = { ...filters }
+    
+    if (filterType === 'priceRange' || filterType === 'hasDiscount' || filterType === 'inStock' || filterType === 'expressDelivery') {
+      newFilters[filterType] = value
+    } else {
+      const currentValues = newFilters[filterType] as string[]
+      if (currentValues.includes(value)) {
+        newFilters[filterType] = currentValues.filter(v => v !== value) as any
+      } else {
+        newFilters[filterType] = [...currentValues, value] as any
+      }
+    }
+    
+    setFilters(newFilters)
+    onFiltersChange(newFilters)
+  }
 
-      <CollapsibleSection title="Цена">
-        <div className="flex items-end gap-x-3">
-          <div className="flex-1">
-            <Label htmlFor="min-price" className="text-xs text-ui-fg-muted mb-1 block">От</Label>
-            <Input 
-              id="min-price" 
-              type="number" 
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              placeholder={priceRange.min.toString()} 
-              min={priceRange.min}
-              max={parseInt(maxPrice) || priceRange.max}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-          <div className="text-ui-fg-muted">-</div>
-          <div className="flex-1">
-            <Label htmlFor="max-price" className="text-xs text-ui-fg-muted mb-1 block">До</Label>
-            <Input 
-              id="max-price" 
-              type="number" 
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              placeholder={priceRange.max.toString()} 
-              min={parseInt(minPrice) || priceRange.min}
-              max={priceRange.max}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <Button onClick={handlePriceApply} className="mt-4 w-full" variant="secondary">Применить цену</Button>
-      </CollapsibleSection>
+  const clearFilters = () => {
+    const emptyFilters: FilterState = {
+      colors: [],
+      sizes: [],
+      materials: [],
+      priceRange: null,
+      categories: [],
+      hasDiscount: false,
+      inStock: false,
+      expressDelivery: false
+    }
+    setFilters(emptyFilters)
+    onFiltersChange(emptyFilters)
+  }
 
-      {/* TODO: Добавить фильтры по типам и тегам, если нужно */}
+  const hasActiveFilters = Object.values(filters).some(filter => 
+    Array.isArray(filter) ? filter.length > 0 : filter !== null && filter !== false
+  )
 
-      <Button onClick={resetFilters} variant="secondary" className="w-full">Сбросить все фильтры</Button>
-    </div>
-  );
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
 
-  // Временная замена Select на HTML select
-  const NativeSelectSort = ({ id, value, onChange, options, label }: {
-    id: string;
-    value: string;
-    onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-    options: { value: string; label: string }[];
-    label: string;
-  }) => (
-    <div>
-      <Label htmlFor={id} className="text-sm text-ui-fg-muted mb-1">{label}</Label>
-      <select 
-        id={id} 
-        value={value} 
-        onChange={onChange} 
-        className="w-full p-2 border border-ui-border-base rounded-md bg-ui-bg-field hover:bg-ui-bg-field-hover focus:border-ui-border-interactive focus:ring-ui-focus focus:ring-2 text-ui-fg-base text-sm"
-      >
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+  const filteredProductsCount = products.length // Здесь должна быть логика подсчета отфильтрованных товаров
 
   return (
-    <aside className="w-full md:w-1/4 lg:w-1/5">
-      {/* Desktop Filters and Sort */}
-      <div className="hidden md:block space-y-8">
-        <NativeSelectSort 
-          id="sort-by-desktop"
-          value={currentSortBy}
-          onChange={(e) => handleSortChange(e.target.value)}
-          options={sortOptions}
-          label="Сортировать по"
-        />
-        <FiltersContent />
+    <div className={`bg-white ${className}`}>
+      {/* Кнопка открытия фильтров */}
+      <div>
+        <Button
+          onClick={() => setIsOpen(true)}
+          variant="secondary"
+          className="w-full flex items-center justify-center gap-2 py-3"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Фильтры
+          {hasActiveFilters && (
+            <span className="bg-black text-white text-xs px-2 py-1 rounded-full">
+              {Object.values(filters).flat().filter(Boolean).length}
+            </span>
+          )}
+        </Button>
       </div>
 
-      {/* Mobile Filters Button and Drawer/Modal */}
-      <div className="md:hidden">
-        <Button 
-          variant="secondary"
-          onClick={() => setMobileFiltersOpen(true)} 
-          className="w-full flex items-center justify-center gap-x-2 mb-4"
-        >
-          <FilterIcon size={18}/> Фильтры и сортировка
-        </Button>
-        
-        {mobileFiltersOpen && (
-          <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm md:hidden">
-            <div className="fixed inset-y-0 right-0 h-full w-full max-w-sm bg-ui-bg-base shadow-xl flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-ui-border-base">
-                <Heading level="h3">Фильтры</Heading>
-                <Button variant="transparent" onClick={() => setMobileFiltersOpen(false)} className="p-1">
-                  <X size={24} />
-                </Button>
+      {/* Модальное окно фильтров */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-80 bg-white overflow-y-auto">
+            {/* Заголовок */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-medium">фильтры</h3>
+              <button onClick={() => setIsOpen(false)} className="p-1">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Основные чекбоксы */}
+              <div className="space-y-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={filters.expressDelivery}
+                    onChange={(e) => handleFilterChange('expressDelivery', e.target.checked)}
+                    className="mr-3 w-4 h-4"
+                  />
+                  <span className="text-sm">экспресс-доставка</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={filters.hasDiscount}
+                    onChange={(e) => handleFilterChange('hasDiscount', e.target.checked)}
+                    className="mr-3 w-4 h-4"
+                  />
+                  <span className="text-sm">со скидкой</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={filters.inStock}
+                    onChange={(e) => handleFilterChange('inStock', e.target.checked)}
+                    className="mr-3 w-4 h-4"
+                  />
+                  <span className="text-sm">в наличии</span>
+                </label>
               </div>
-              <div className="p-6 overflow-y-auto flex-grow space-y-8">
-                <NativeSelectSort 
-                  id="sort-by-mobile"
-                  value={currentSortBy}
-                  onChange={(e) => {
-                    handleSortChange(e.target.value);
-                    setMobileFiltersOpen(false);
-                  }}
-                  options={sortOptions}
-                  label="Сортировать по"
-                />
-                <FiltersContent />
+
+              {/* Цена */}
+              <div>
+                <h4 className="font-medium mb-4">Цена</h4>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min={filterOptions.priceRange[0]}
+                      max={filterOptions.priceRange[1]}
+                      value={filters.priceRange?.[0] || filterOptions.priceRange[0]}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value)
+                        handleFilterChange('priceRange', [value, filters.priceRange?.[1] || filterOptions.priceRange[1]])
+                      }}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>от {filters.priceRange?.[0] || filterOptions.priceRange[0]} ₽</span>
+                    <span>до {filters.priceRange?.[1] || filterOptions.priceRange[1]} ₽</span>
+                  </div>
+                </div>
               </div>
-              <div className="p-4 border-t border-ui-border-base">
-                <Button onClick={() => { resetFilters(); setMobileFiltersOpen(false);}} variant="secondary" className="w-full mb-2">Сбросить</Button>
-                <Button onClick={() => setMobileFiltersOpen(false)} className="w-full">Показать товары</Button>
-              </div>
+
+              {/* Сворачиваемые секции */}
+              {[
+                { key: 'brand', title: 'бренд', options: [] },
+                { key: 'country', title: 'страна бренда', options: [] },
+                { key: 'productType', title: 'тип продукта', options: filterOptions.categories },
+                { key: 'purpose', title: 'назначение', options: [] },
+                { key: 'forWho', title: 'для кого', options: [] },
+                { key: 'applicationArea', title: 'область применения', options: [] },
+                { key: 'color', title: 'цвет', options: filterOptions.colors }
+              ].map(section => (
+                <div key={section.key} className="border-b border-gray-100 pb-4">
+                  <button
+                    onClick={() => toggleSection(section.key)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <span className="font-medium">+ {section.title}</span>
+                  </button>
+                  
+                  {expandedSections[section.key] && section.options.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {section.options.map(option => (
+                        <label key={option.value} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              section.key === 'color' ? filters.colors.includes(option.value) :
+                              section.key === 'productType' ? filters.categories.includes(option.value) :
+                              false
+                            }
+                            onChange={() => {
+                              if (section.key === 'color') {
+                                handleFilterChange('colors', option.value)
+                              } else if (section.key === 'productType') {
+                                handleFilterChange('categories', option.value)
+                              }
+                            }}
+                            className="mr-2 w-4 h-4"
+                          />
+                          <span className="text-sm">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Кнопка применить */}
+            <div className="p-6 border-t">
+              <Button 
+                onClick={() => setIsOpen(false)} 
+                className="w-full bg-black text-white py-3 rounded-none"
+              >
+                показать {filteredProductsCount} товаров
+              </Button>
             </div>
           </div>
-        )}
-      </div>
-    </aside>
-  );
-};
+        </div>
+      )}
+    </div>
+  )
+}
 
-export default ProductFilters; 
+export default ProductFilters 
