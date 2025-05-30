@@ -37,10 +37,13 @@ export default function PaginatedProducts({
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(totalCount > PRODUCT_LIMIT)
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
+  const [isTablet, setIsTablet] = useState(false)
   
   useEffect(() => {
     const handleResize = () => {
-      setIsTabletOrMobile(window.innerWidth < 1024);
+      const width = window.innerWidth;
+      setIsTabletOrMobile(width < 824);
+      setIsTablet(width >= 824 && width < 1024);
     };
     
     handleResize();
@@ -94,20 +97,33 @@ export default function PaginatedProducts({
         {products.length > 0 && (
           <div className={`
             grid
-            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[20px] gap-y-[60px]' : 'grid-cols-4 gap-x-8 gap-y-12'}
+            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px]' : 
+              isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px]' : 
+              'grid-cols-4 px-16'}
             w-full
-            justify-start
-          `}>
+            justify-center
+          `}
+          style={!isTabletOrMobile && !isTablet ? { gap: 'clamp(15px, 2vw, 30px)' } : {}}
+          >
             {products.map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
               return (
-                <div key={p.id} className={`flex ${isTabletOrMobile ? 'justify-center' : 'justify-start'}`}>
-                  <div className="w-full aspect-[3/4]">
+                <div key={p.id} className="flex justify-center">
+                  <div 
+                    className="w-full aspect-[3/4]"
+                    style={!isTabletOrMobile && !isTablet ? { 
+                      width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)'
+                    } : {}}
+                  >
                     <ProductPreview 
                       product={p} 
                       region={region} 
                       categoryTitle={categoryTitle}
-                      firstInRow={isTabletOrMobile && index % 2 === 0}
+                      firstInRow={
+                        isTabletOrMobile ? index % 2 === 0 : 
+                        isTablet ? index % 3 === 0 : 
+                        false
+                      }
                       textAlign="left"
                     />
                   </div>

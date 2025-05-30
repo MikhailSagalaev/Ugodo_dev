@@ -156,67 +156,135 @@ export default function ReviewModal({ productId, product, onClose, onReviewSubmi
 
         <div className="w-full max-w-6xl px-8">
           {currentStep === 1 && (
-            <div className="flex items-center gap-16">
-              <div className="flex-1">
-                <h2 className="text-3xl font-medium mb-4">оцените товар</h2>
-                <p className="text-gray-600 mb-8">поставьте оценку от 1 до 5 звезд</p>
-                
-                <div className="flex gap-2 mb-6">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleRatingClick(star)}
-                      onMouseEnter={() => setHoveredRating(star)}
-                      onMouseLeave={() => setHoveredRating(0)}
-                      className="p-2 transition-colors"
-                    >
-                      {star <= (hoveredRating || rating) ? (
-                        <StarSolid className="text-black" style={{ width: "40px", height: "40px" }} />
-                      ) : (
-                        <Star className="text-gray-300" style={{ width: "40px", height: "40px" }} />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                {(rating > 0 || hoveredRating > 0) && (
-                  <p className="text-xl mb-8">
-                    {ratingLabels[(hoveredRating || rating) as keyof typeof ratingLabels]}
-                  </p>
-                )}
-
-                <button 
-                  onClick={handleNext}
-                  disabled={rating === 0}
-                  className="bg-black text-white px-8 py-3 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    letterSpacing: "1.4px",
-                    textTransform: "uppercase"
-                  }}
-                >
-                  далее
-                </button>
-              </div>
-
-              <div className="flex-1 flex flex-col items-center">
+            <div className="flex items-start gap-16">
+              <div className="flex-1 flex flex-col">
                 {product && (
                   <>
                     {product.images?.[0] && (
                       <img 
                         src={product.images[0].url} 
                         alt={product.title}
-                        className="w-80 h-80 object-cover mb-6"
+                        className="w-96 h-96 object-cover mb-6"
                       />
                     )}
-                    <div className="text-center">
-                      <div className="text-sm text-gray-600 mb-2">количество: 1</div>
-                      <div className="text-sm text-gray-600 mb-2">{product.collection?.title}</div>
-                      <h3 className="text-xl font-medium">{product.title}</h3>
+                    <div>
+                      <div 
+                        className="text-gray-600 mb-2"
+                        style={{
+                          fontSize: "9px",
+                          fontWeight: 500,
+                          letterSpacing: "1.4px",
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        количество: 1
+                      </div>
+                      <div 
+                        className="text-gray-600 mb-2"
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          letterSpacing: "1.4px",
+                          lineHeight: "150%",
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        {product.collection?.title}
+                      </div>
+                      <h3 
+                        className="font-medium"
+                        style={{
+                          fontSize: "20px"
+                        }}
+                      >
+                        {product.title}
+                      </h3>
                     </div>
                   </>
                 )}
+              </div>
+
+              <div className="flex-1">
+                <h2 
+                  className="font-medium mb-4"
+                  style={{
+                    fontSize: "45px",
+                    fontWeight: 500,
+                    letterSpacing: "-.2px",
+                    lineHeight: 1.1
+                  }}
+                >
+                  оцените продукт
+                </h2>
+                <p 
+                  className="mb-8"
+                  style={{
+                    color: "#000",
+                    fontSize: "16px",
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                    lineHeight: 1.6
+                  }}
+                >
+                  поставьте оценку
+                </p>
+                
+                <div className="flex items-center gap-4 mb-6">
+                  <div 
+                    className="flex-shrink-0"
+                    style={{
+                      fontSize: "80px",
+                      lineHeight: 1.1,
+                      color: rating > 0 ? "#000" : "#999",
+                      fontWeight: 500
+                    }}
+                  >
+                    {rating || 0}
+                  </div>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleRatingClick(star)}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(0)}
+                        className="p-1 transition-colors"
+                      >
+                        {star <= (hoveredRating || rating) ? (
+                          <StarSolid className="text-black" style={{ width: "30px", height: "30px" }} />
+                        ) : (
+                          <Star className="text-gray-300" style={{ width: "30px", height: "30px" }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(rating > 0 || hoveredRating > 0) && (
+                  <div className="flex items-center gap-4 mb-8">
+                    <div style={{ width: "80px" }}></div>
+                    <p className="text-xl">
+                      {ratingLabels[(hoveredRating || rating) as keyof typeof ratingLabels]}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-4">
+                  <div style={{ width: "80px" }}></div>
+                  <button 
+                    onClick={handleNext}
+                    disabled={rating === 0}
+                    className="bg-black text-white px-8 py-3 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      letterSpacing: "1.4px",
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    далее
+                  </button>
+                </div>
               </div>
             </div>
           )}

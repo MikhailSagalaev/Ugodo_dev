@@ -185,7 +185,7 @@ export default function ProductReviews({ productId, product }: ProductReviewsPro
             </button>
           ) : (
             <button 
-              onClick={() => window.location.href = '/account/login'}
+              onClick={() => window.location.href = '/account'}
               className="border border-black px-6 py-3 hover:bg-black hover:text-white transition-all duration-200"
               style={{
                 fontSize: "11px",
@@ -321,7 +321,7 @@ export default function ProductReviews({ productId, product }: ProductReviewsPro
               </button>
             ) : (
               <button 
-                onClick={() => window.location.href = '/account/login'}
+                onClick={() => window.location.href = '/account'}
                 className="border border-black px-6 py-3 hover:bg-black hover:text-white transition-all duration-200"
                 style={{
                   fontSize: "11px",

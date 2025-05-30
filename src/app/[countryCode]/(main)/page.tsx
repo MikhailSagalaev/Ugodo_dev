@@ -9,8 +9,8 @@ import Hero from "@modules/home/components/hero"
 import CategoryStories from "@modules/home/components/category-stories"
 import ProductSection from "@modules/home/components/product-section"
 import PromotionsSlider from "@modules/home/components/promotions-slider"
-import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-banner"
-import InfoBanner from "@modules/home/components/banners"
+// import WishlistDiscountBanner from "@modules/home/components/wishlist-discount-banner"
+// import InfoBanner from "@modules/home/components/banners"
 import DeliveryFeatures from "@modules/home/components/delivery-feature"
 import { HomeTopBanner, HomeMiddleBanner } from "@modules/banner/components"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
@@ -65,10 +65,8 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  // Для блока "Дом и сад" используем часть новых товаров, так как нет специального фильтра
   const homeGardenProducts = newProducts.slice(0, 8)
 
-  // Для блока "Хиты продаж на маркетплейсах" используем популярные товары
   const marketplaceBestsellers = popularProducts.slice(0, 8)
 
   const { response: { products: catalogProducts, count: totalCount } } = await listProducts({
@@ -116,7 +114,7 @@ export default async function Home({ params }: { params: { countryCode: string }
           />
         </Container>
         
-        <WishlistDiscountBanner />
+        {/* <WishlistDiscountBanner /> */}
         
         <MarketplaceBestsellers
           title="Хиты продаж на маркетплейсах"

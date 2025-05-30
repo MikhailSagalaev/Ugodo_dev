@@ -124,7 +124,7 @@ export default function ProductSlider({
             <div className="flex">
               {productGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                  <div className="flex justify-center" style={{ gap: 'clamp(24px, 3vw, 60px)' }}>
+                  <div className="flex justify-center px-16" style={{ gap: 'clamp(18px, 2.5vw, 35px)' }}>
                     {group.map((product) => {
                       const categoryTitle = product.type?.value || 
                         (product.categories && product.categories.length > 0 ? 
@@ -135,7 +135,7 @@ export default function ProductSlider({
                           key={product.id} 
                           className="flex justify-center"
                           style={{ 
-                            width: 'clamp(220px, calc(220px + (320 - 220) * ((100vw - 1120px) / (1920 - 1120))), 320px)'
+                            width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)'
                           }}
                         >
                           <ProductPreview 
