@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, useState, useEffect } from "react"
+import React, { Suspense, useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 
 import ProductGallery from "@modules/products/components/product-gallery"
@@ -23,6 +23,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft } from 'lucide-react'
 import ProductRating from "@modules/products/components/product-rating"
 import QuantitySelector from "@modules/products/components/quantity-selector"
+import { getProductReviews } from "@lib/data/reviews"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -59,6 +60,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [promoCodeCopied, setPromoCodeCopied] = useState(false);
 
   // Карусель для мобильной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -136,6 +139,97 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     fetchWishlist();
   }, [customer, product.id, wishlistLoaded]);
 
+  // Загружаем количество отзывов
+  useEffect(() => {
+    const loadReviewCount = async () => {
+      try {
+        const data = await getProductReviews({ productId: product.id, limit: 1 })
+        setReviewCount(data.count || 0)
+      } catch (error) {
+        console.error('Ошибка загрузки количества отзывов:', error)
+      }
+    }
+
+    loadReviewCount()
+  }, [product.id])
+
+  // Функция копирования промокода
+  const handlePromoCodeClick = async () => {
+    try {
+      await navigator.clipboard.writeText('ВМЕСТЕ')
+      setPromoCodeCopied(true)
+      setTimeout(() => setPromoCodeCopied(false), 2000)
+    } catch (error) {
+      console.error('Ошибка копирования промокода:', error)
+    }
+  }
+
+  // Обработчик изменения опций
+  const handleOptionChange = (optionId: string, value: string) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [optionId]: value
+    }))
+  }
+
+  // Функция для отображения всех опций как кнопки
+  const renderOptionSelector = (option: HttpTypes.StoreProductOption) => {
+    const isColorOption = option.title.toLowerCase().includes('цвет') || 
+                         option.title.toLowerCase().includes('color')
+    
+    if (isColorOption) {
+      return (
+        <div className="mb-6">
+          <ColorSelector 
+            product={product}
+            selectedOptions={selectedOptions}
+            onOptionChange={handleOptionChange}
+          />
+        </div>
+      )
+    }
+
+    // Для всех остальных опций отображаем как кнопки
+    const optionValues = new Set<string>()
+    product.variants?.forEach(variant => {
+      variant.options?.forEach(optionValue => {
+        if (optionValue.option_id === option.id) {
+          optionValues.add(optionValue.value)
+        }
+      })
+    })
+
+    return (
+      <div className="mb-6">
+        <div className="text-gray-500 uppercase mb-3" style={{
+          fontSize: "11px",
+          fontWeight: 500,
+          letterSpacing: "1.4px",
+          lineHeight: 1.5,
+          textTransform: "uppercase"
+        }}>
+          {option.title}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {Array.from(optionValues).map((value) => (
+            <button
+              key={value}
+              onClick={() => handleOptionChange(option.id, value)}
+              className={`px-4 py-2 border transition-colors duration-200 ${
+                selectedOptions[option.id] === value
+                  ? 'border-black bg-black text-white'
+                  : 'border-gray-300 hover:border-black'
+              }`}
+              style={{ fontSize: "14px" }}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const handleAddToCart = async () => {
     if (!product.variants || product.variants.length === 0) return;
     
@@ -194,13 +288,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     if (product.images && visibleThumbStartIndex < product.images.length - 4) {
       setVisibleThumbStartIndex(visibleThumbStartIndex + 1);
     }
-  };
-
-  const handleOptionChange = (optionId: string, value: string) => {
-    setSelectedOptions(prev => ({
-      ...prev,
-      [optionId]: value
-    }));
   };
 
   // Проверяем наличие выбранного варианта
@@ -524,71 +611,17 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               </div>
             )}
 
-            {product.options?.some(option => 
-              option.title.toLowerCase().includes('цвет') || 
-              option.title.toLowerCase().includes('color')
-            ) && (
-              <div className="mb-6">
-                <ColorSelector 
-                  product={product}
-                  selectedOptions={selectedOptions}
-                  onOptionChange={handleOptionChange}
-                />
+            {/* Отображение всех опций товара */}
+            {product.options?.map((option) => (
+              <div key={option.id}>
+                {renderOptionSelector(option)}
               </div>
-            )}
+            ))}
             
-            {/* Селектор размеров */}
-            {product.options?.some(option => 
-              option.title.toLowerCase().includes('размер') || 
-              option.title.toLowerCase().includes('size')
-            ) && (
-              <div className="mb-6">
-                <div className="text-gray-500 uppercase mb-3" style={{
-                  fontSize: "11px",
-                  fontWeight: 500,
-                  letterSpacing: "1.4px",
-                  lineHeight: 1.5,
-                  textTransform: "uppercase"
-                }}>
-                  РАЗМЕР
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {(() => {
-                    const sizeOption = product.options?.find(option => 
-                      option.title.toLowerCase().includes('размер') || 
-                      option.title.toLowerCase().includes('size')
-                    )
-                    if (!sizeOption) return null
-                    
-                    const sizeValues = new Set<string>()
-                    product.variants?.forEach(variant => {
-                      variant.options?.forEach(optionValue => {
-                        if (optionValue.option_id === sizeOption.id) {
-                          sizeValues.add(optionValue.value)
-                        }
-                      })
-                    })
-                    
-                    return Array.from(sizeValues).map((value) => (
-                      <button
-                        key={value}
-                        onClick={() => handleOptionChange(sizeOption.id, value)}
-                        className={`px-4 py-2 border transition-colors duration-200 ${
-                          selectedOptions[sizeOption.id] === value
-                            ? 'border-black bg-black text-white'
-                            : 'border-gray-300 hover:border-black'
-                        }`}
-                        style={{ fontSize: "14px" }}
-                      >
-                        {value}
-                      </button>
-                    ))
-                  })()}
-                </div>
-              </div>
-            )}
-            
-            <div className="flex items-center mb-6 group cursor-pointer justify-center">
+            <div 
+              className="flex items-center mb-6 group cursor-pointer"
+              onClick={handlePromoCodeClick}
+            >
               <div 
                 className="bg-[#BAFF29] flex items-center justify-center relative" 
                 style={{ 
@@ -618,20 +651,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   fontStyle: "italic"
                 }}
               >
-                по промокоду
+                {promoCodeCopied ? 'скопировано' : 'по промокоду'}
               </span>
               <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
             
-            <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer justify-center" style={{ fontSize: "14px" }}>
-              <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
-                <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+            {!customer && (
+              <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+                <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
+                  <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+                </div>
+                <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
+                <span className="ml-1">и получай бонусы</span>
               </div>
-              <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
-              <span className="ml-1">и получай бонусы</span>
-            </div>
+            )}
           </div>
 
           {/* Аккордион для мобильной версии */}
@@ -664,7 +699,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         </h3>
                         <div className="text-sm mb-4">
                           <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
-                          <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
                         </div>
                         {content.split('\n\n').map((paragraph, idx) => (
                           <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
@@ -923,6 +957,63 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 )}
               </div>
 
+              {/* Отображение всех опций товара */}
+              {product.options?.map((option) => (
+                <div key={option.id}>
+                  {renderOptionSelector(option)}
+                </div>
+              ))}
+
+              <div 
+                className="flex items-center mb-6 group cursor-pointer"
+                onClick={handlePromoCodeClick}
+              >
+                <div 
+                  className="bg-[#BAFF29] flex items-center justify-center relative" 
+                  style={{ 
+                    width: "118px", 
+                    height: "26px",
+                    clipPath: "polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)"
+                  }}
+                >
+                  <span 
+                    className="text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      textTransform: "uppercase",
+                      lineHeight: "12.1px"
+                    }}
+                  >
+                    ВМЕСТЕ | -25%
+                  </span>
+                </div>
+                <span 
+                  className="ml-2 text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: 1.1,
+                    fontWeight: 400,
+                    fontStyle: "italic"
+                  }}
+                >
+                  {promoCodeCopied ? 'скопировано' : 'по промокоду'}
+                </span>
+                <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              {!customer && (
+                <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+                  <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
+                    <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+                  </div>
+                  <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
+                  <span className="ml-1">и получай бонусы</span>
+                </div>
+              )}
+
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={handleAddToCart}
@@ -993,7 +1084,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                             </h3>
                             <div className="text-sm mb-4">
                               <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
-                              <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
                             </div>
                             {content.split('\\n\\n').map((paragraph, idx) => (
                               <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
@@ -1058,10 +1148,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex flex-col w-1/2" style={{ paddingLeft: "20px" }}>
               <div className="flex items-center mb-3">
                 <div className="flex items-center">
-                  <ProductRating productId={product.id} showCount={true} size="lg" />
+                  <ProductRating productId={product.id} showCount={false} size="lg" />
+                  {reviewCount > 0 && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <span className="text-sm">{reviewCount} отзывов</span>
+                    </>
+                  )}
                 </div>
-                <span className="mx-2">•</span>
-                <span className="text-sm">6 отзывов</span>
               </div>
                 
               <div className="flex items-center mb-2">
@@ -1292,69 +1386,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     )}
                   </div>
 
-                  {product.options?.some(option => 
-                    option.title.toLowerCase().includes('цвет') || 
-                    option.title.toLowerCase().includes('color')
-                  ) && (
-                    <div className="mb-6">
-                      <ColorSelector 
-                        product={product}
-                        selectedOptions={selectedOptions}
-                        onOptionChange={handleOptionChange}
-                      />
+                  {/* Отображение всех опций товара */}
+                  {product.options?.map((option) => (
+                    <div key={option.id}>
+                      {renderOptionSelector(option)}
                     </div>
-                  )}
-                  
-                  {/* Селектор размеров */}
-                  {product.options?.some(option => 
-                    option.title.toLowerCase().includes('размер') || 
-                    option.title.toLowerCase().includes('size')
-                  ) && (
-                    <div className="mb-6">
-                      <div className="text-gray-500 uppercase mb-3" style={{
-                        fontSize: "11px",
-                        fontWeight: 500,
-                        letterSpacing: "1.4px",
-                        lineHeight: 1.5,
-                        textTransform: "uppercase"
-                      }}>
-                        РАЗМЕР
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {(() => {
-                          const sizeOption = product.options?.find(option => 
-                            option.title.toLowerCase().includes('размер') || 
-                            option.title.toLowerCase().includes('size')
-                          )
-                          if (!sizeOption) return null
-                          
-                          const sizeValues = new Set<string>()
-                          product.variants?.forEach(variant => {
-                            variant.options?.forEach(optionValue => {
-                              if (optionValue.option_id === sizeOption.id) {
-                                sizeValues.add(optionValue.value)
-                              }
-                            })
-                          })
-                          
-                          return Array.from(sizeValues).map((value) => (
-                            <button
-                              key={value}
-                              onClick={() => handleOptionChange(sizeOption.id, value)}
-                              className={`px-4 py-2 border transition-colors duration-200 ${
-                                selectedOptions[sizeOption.id] === value
-                                  ? 'border-black bg-black text-white'
-                                  : 'border-gray-300 hover:border-black'
-                              }`}
-                              style={{ fontSize: "14px" }}
-                            >
-                              {value}
-                            </button>
-                          ))
-                        })()}
-                      </div>
-                    </div>
-                  )}
+                  ))}
                   
                   <div className="mb-6">
                     <div 
@@ -1369,7 +1406,10 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     </div>
                   </div>
                   
-                  <div className="flex items-center mb-6 group cursor-pointer">
+                  <div 
+                    className="flex items-center mb-6 group cursor-pointer"
+                    onClick={handlePromoCodeClick}
+                  >
                     <div 
                       className="bg-[#BAFF29] flex items-center justify-center relative" 
                       style={{ 
@@ -1399,20 +1439,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         fontStyle: "italic"
                       }}
                     >
-                      по промокоду
+                      {promoCodeCopied ? 'скопировано' : 'по промокоду'}
                     </span>
                     <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                   
-                  <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
-                    <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
-                      <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+                  {!customer && (
+                    <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+                      <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
+                        <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
+                      </div>
+                      <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
+                      <span className="ml-1">и получай бонусы</span>
                     </div>
-                    <LocalizedClientLink href="/account/login" className="font-medium hover:no-underline">авторизуйся</LocalizedClientLink>
-                    <span className="ml-1">и получай бонусы</span>
-                  </div>
+                  )}
                   
                   <div className="flex mb-6 gap-2">
                     <button 
@@ -1452,23 +1494,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeWidth="1.5"/>
                       </svg>
                     </button>
-                  </div>
-                  
-                  <div className="flex items-center font-medium transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer">
-                    <span 
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 500,
-                        letterSpacing: "1.4px",
-                        lineHeight: 1.5,
-                        textTransform: "uppercase"
-                      }}
-                    >
-                      Наличие в магазинах
-                    </span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="ml-1">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
                   </div>
                 </div>
               </div>
@@ -1520,7 +1545,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     </h3>
                     <div className="text-sm mb-6" style={{ fontSize: "16px", lineHeight: 1.5 }}>
                       <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
-                      <p className="mb-4" style={{ fontSize: "14px", color: "#7f7f7f" }}>артикул: {articleNumber}</p>
                     </div>
                     {tabContent[selectedTab].split('\n\n').map((paragraph, idx) => (
                       <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
