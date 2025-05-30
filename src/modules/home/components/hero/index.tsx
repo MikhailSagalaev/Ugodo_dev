@@ -14,6 +14,8 @@ interface Slide {
   image: string
   video?: string
   videoDesktop?: string
+  videoMobile?: string
+  textAlign?: 'left' | 'right'
   cta: {
     text: string
     link: string
@@ -55,9 +57,10 @@ const slides: Slide[] = [
     id: 4,
     headline: "новая коллекция",
     title: "UGODO 2024",
-    video: "/video/banners/0526-mobile.mp4",
-    videoDesktop: "/video/banners/0526-pc.mp4",
+    videoDesktop: "/video/banners/1-pc.mp4",
+    videoMobile: "/video/banners/1-mobile.mp4",
     image: "/images/hero/доставка бирюза 2.png",
+    textAlign: 'right',
     cta: {
       text: "Смотреть видео",
       link: "/collections/new-arrivals"
@@ -68,6 +71,7 @@ const slides: Slide[] = [
 const Hero = () => {
   const autoplayDelay = 10000
   const [isMobile, setIsMobile] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true,
@@ -86,6 +90,7 @@ const Hero = () => {
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
 
   useEffect(() => {
+    setIsClient(true)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -134,7 +139,7 @@ const Hero = () => {
               className="flex-[0_0_100%] min-w-0 relative h-[80vh]" 
             >
               <div className="absolute inset-0 w-full h-full -z-10">
-                {slide.video ? (
+                {(slide.videoDesktop || slide.videoMobile) && isClient ? (
                   <div className="w-full h-full relative overflow-hidden">
                     <video
                       autoPlay
@@ -151,7 +156,7 @@ const Hero = () => {
                         objectPosition: 'center center'
                       }}
                     >
-                      <source src={slide.video} type="video/mp4" />
+                      <source src={isMobile ? slide.videoMobile : slide.videoDesktop} type="video/mp4" />
                     </video>
                   </div>
                 ) : (
@@ -172,7 +177,7 @@ const Hero = () => {
               
               <div className="relative z-10 h-full flex items-center">
                 <div className="container mx-auto pt-32 pb-16 md:pt-36 md:pb-24 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-md">
+                  <div className={`max-w-md ${slide.textAlign === 'right' ? 'ml-auto' : ''}`}>
                     <Text className="text-white/90 text-lg md:text-xl mb-2 font-light tracking-wide">
                       {slide.headline}
                     </Text>

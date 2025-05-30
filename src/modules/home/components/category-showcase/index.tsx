@@ -29,7 +29,10 @@ export default function CategoryShowcase({
   )
 
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  
   useEffect(() => {
+    setIsClient(true);
     const handleResize = () => {
       setIsTabletOrMobile(window.innerWidth <= 1025);
     };
@@ -54,15 +57,27 @@ export default function CategoryShowcase({
           <div className="w-full mb-6">
             <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
               <div className="relative w-full" style={{ height: '395px' }}>
-                <Image 
-                  src="/images/banners/banner.png" 
-                  alt="Дом и сад"
-                  fill
-                  priority
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                  sizes={isTabletOrMobile ? "100vw" : "1360px"}
-                  quality={90}
-                />
+                {isClient && (
+                  <div className="w-full h-full relative overflow-hidden">
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      disablePictureInPicture
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                      style={{
+                        minWidth: '100%',
+                        minHeight: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center center'
+                      }}
+                    >
+                      <source src={isTabletOrMobile ? "/video/banners/2-mobile.mp4" : "/video/banners/2-pc.mp4"} type="video/mp4" />
+                    </video>
+                  </div>
+                )}
                 <div className="absolute inset-0  z-0"></div>
                 <div className={`absolute inset-0 z-10 flex flex-col justify-center items-start ${isTabletOrMobile ? 'p-6' : 'p-8'}`}>
                   <div className="max-w-lg text-white">

@@ -10,7 +10,8 @@ import { Button, Heading, Text } from '@medusajs/ui'
 const promotionBanners = [
   {
     id: 1,
-    image: "/images/banners/banner.png",
+    videoDesktop: "/video/banners/1-pc.mp4",
+    videoMobile: "/video/banners/1-mobile.mp4",
     alt: "Большая Распродажа",
     headline: "Скидки до 70%",
     subheadline: "Ограниченное предложение на избранные товары",
@@ -19,7 +20,8 @@ const promotionBanners = [
   },
   {
     id: 2,
-    image: "/images/banners/banner2.png",
+    videoDesktop: "/video/banners/2-pc.mp4",
+    videoMobile: "/video/banners/2-mobile.mp4",
     alt: "Новая Коллекция",
     headline: "Стиль Сезона",
     subheadline: "Обновите гардероб с последними трендами",
@@ -28,7 +30,8 @@ const promotionBanners = [
   },
   {
     id: 3,
-    image: "/images/banners/banner.png",
+    videoDesktop: "/video/banners/3-pc.mp4",
+    videoMobile: "/video/banners/3-mobile.mp4",
     alt: "Техника для Дома",
     headline: "Гаджеты и Аксессуары",
     subheadline: "Лучшие предложения на электронику и игровые девайсы",
@@ -43,6 +46,7 @@ const SLIDE_GAP = 90; // Gap between slides in pixels
 const PromotionsSlider = () => {
   const [selectedIndex, setSelectedIndex] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const [emblaRef, emblaApi] = useEmblaCarousel({
       loop: true, 
     align: 'center',
@@ -51,6 +55,7 @@ const PromotionsSlider = () => {
   })
 
   useEffect(() => {
+    setIsClient(true)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -120,16 +125,27 @@ const PromotionsSlider = () => {
             >
                 <LocalizedClientLink href={banner.link} className="relative block overflow-hidden rounded-md group">
                   <div className="relative w-full" style={{ height: '395px' }}>
-                  <Image 
-                    src={banner.image} 
-                    alt={banner.alt}
-                    fill
-                    priority={index === 0}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                    sizes="(max-width: 768px) 100vw, 990px"
-                    quality={90}
-                  />
+                  {isClient && (
+                    <div className="w-full h-full relative overflow-hidden">
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        disablePictureInPicture
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                        style={{
+                          minWidth: '100%',
+                          minHeight: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'center center'
+                        }}
+                      >
+                        <source src={isMobile ? banner.videoMobile : banner.videoDesktop} type="video/mp4" />
+                      </video>
+                    </div>
+                  )}
                   <div className="absolute inset-0  z-0"></div>
                     <div className="absolute inset-0 z-10 flex flex-col justify-center items-center">
                       <div className="max-w-lg text-white text-center px-8">
