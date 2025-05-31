@@ -1,112 +1,21 @@
 "use client"
 
-import { useActionState } from "react"
-import Input from "@modules/common/components/input"
-import { LOGIN_VIEW } from "@modules/account/templates/login-template"
-import ErrorMessage from "@modules/checkout/components/error-message"
-import { SubmitButton } from "@modules/checkout/components/submit-button"
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import { signup } from "@lib/data/customer"
+import React, { useState } from 'react'
+import LoginSMS from '../login-sms'
+import RegisterEmailPass from '../register-emailpass'
+import { Button } from '@medusajs/ui'
 
-type Props = {
-  setCurrentView: (view: LOGIN_VIEW) => void
-}
-
-const Register = ({ setCurrentView }: Props) => {
-  const [message, formAction] = useActionState(signup, null)
+// Единственный способ регистрации — по SMS (OTP)
+export default function Register(props: any) {
+  const [method, setMethod] = useState<'sms' | 'email'>('sms')
 
   return (
-    <div
-      className="max-w-sm flex flex-col items-center"
-      data-testid="register-page"
-    >
-      <h1 className="text-large-semi uppercase mb-6">
-        Станьте участником Ugodo
-      </h1>
-      <p className="text-center text-base-regular text-ui-fg-base mb-4">
-        Создайте свой профиль участника Ugodo и получите доступ к расширенным возможностям покупок.
-      </p>
-      <form className="w-full flex flex-col" action={formAction}>
-        <div className="flex flex-col w-full gap-y-2">
-          <Input
-            label="Имя"
-            name="first_name"
-            required
-            autoComplete="given-name"
-            data-testid="first-name-input"
-          />
-          <Input
-            label="Фамилия"
-            name="last_name"
-            required
-            autoComplete="family-name"
-            data-testid="last-name-input"
-          />
-          <Input
-            label="Эл. почта"
-            name="email"
-            required
-            type="email"
-            autoComplete="email"
-            data-testid="email-input"
-          />
-          <Input
-            label="Телефон"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            data-testid="phone-input"
-          />
-          <Input
-            label="Пароль"
-            name="password"
-            required
-            type="password"
-            autoComplete="new-password"
-            data-testid="password-input"
-          />
-        </div>
-        <ErrorMessage error={message} data-testid="register-error" />
-        <span className="text-center text-ui-fg-base text-small-regular mt-6">
-          Создавая аккаунт, вы соглашаетесь с{" "}
-          <LocalizedClientLink
-            href="/content/privacy-policy"
-            className="underline"
-          >
-            Политикой конфиденциальности
-          </LocalizedClientLink>{" "}
-          и{" "}
-          <LocalizedClientLink
-            href="/content/terms-of-use"
-            className="underline"
-          >
-            Условиями использования
-          </LocalizedClientLink>
-          {" "}Ugodo.
-        </span>
-        <SubmitButton className="w-full mt-6" data-testid="register-button">
-          Присоединиться
-        </SubmitButton>
-      </form>
-      <span className="text-center text-ui-fg-base text-small-regular mt-6">
-        Уже зарегистрированы?{" "}
-        <button
-          onClick={() => setCurrentView(LOGIN_VIEW.SIGN_IN)}
-          className="underline"
-        >
-          Войти
-        </button>
-        .
-      </span>
-      <button
-        onClick={() => setCurrentView(LOGIN_VIEW.SMS)}
-        className="underline text-blue-600 mt-4"
-        data-testid="sms-login-button-from-register"
-      >
-        Войти по SMS
-      </button>
+    <div className="w-full max-w-md flex flex-col items-center gap-y-6 p-4 md:p-0">
+      <div className="flex gap-2 mb-4">
+        <Button variant={method === 'sms' ? 'primary' : 'secondary'} onClick={() => setMethod('sms')}>По SMS</Button>
+        <Button variant={method === 'email' ? 'primary' : 'secondary'} onClick={() => setMethod('email')}>По email/паролю</Button>
+      </div>
+      {method === 'sms' ? <LoginSMS {...props} /> : <RegisterEmailPass {...props} />}
     </div>
   )
 }
-
-export default Register

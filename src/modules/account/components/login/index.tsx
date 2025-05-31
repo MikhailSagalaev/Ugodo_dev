@@ -1,71 +1,19 @@
-import { login } from "@lib/data/customer"
-import { LOGIN_VIEW } from "@modules/account/templates/login-template"
-import ErrorMessage from "@modules/checkout/components/error-message"
-import { SubmitButton } from "@modules/checkout/components/submit-button"
-import Input from "@modules/common/components/input"
-import { useActionState } from "react"
+import React, { useState } from 'react'
+import LoginSMS from '../login-sms'
+import LoginEmailPass from '../login-emailpass'
+import { Button } from '@medusajs/ui'
 
-type Props = {
-  setCurrentView: (view: LOGIN_VIEW) => void
-}
-
-const Login = ({ setCurrentView }: Props) => {
-  const [message, formAction] = useActionState(login, null)
+// Единственный способ входа — по SMS (OTP)
+export default function Login(props: any) {
+  const [method, setMethod] = useState<'sms' | 'email'>('sms')
 
   return (
-    <div
-      className="max-w-sm w-full flex flex-col items-center"
-      data-testid="login-page"
-    >
-      <h1 className="text-large-semi uppercase mb-6">С возвращением!</h1>
-      <p className="text-center text-base-regular text-ui-fg-base mb-8">
-        Войдите в систему, чтобы получить доступ к расширенным возможностям покупок.
-      </p>
-      <form className="w-full" action={formAction}>
-        <div className="flex flex-col w-full gap-y-2">
-          <Input
-            label="Эл. почта"
-            name="email"
-            type="email"
-            title="Введите действительный адрес электронной почты."
-            autoComplete="email"
-            required
-            data-testid="email-input"
-          />
-          <Input
-            label="Пароль"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            data-testid="password-input"
-          />
-        </div>
-        <ErrorMessage error={message} data-testid="login-error-message" />
-        <SubmitButton data-testid="sign-in-button" className="w-full mt-6">
-          Войти
-        </SubmitButton>
-      </form>
-      <span className="text-center text-ui-fg-base text-small-regular mt-6">
-        Еще не зарегистрированы?{" "}
-        <button
-          onClick={() => setCurrentView(LOGIN_VIEW.REGISTER)}
-          className="underline"
-          data-testid="register-button"
-        >
-          Присоединяйтесь
-        </button>
-        .
-      </span>
-      <button
-        onClick={() => setCurrentView(LOGIN_VIEW.SMS)}
-        className="underline text-blue-600 mt-4"
-        data-testid="sms-login-button"
-      >
-        Войти по SMS
-      </button>
+    <div className="w-full max-w-md flex flex-col items-center gap-y-6 p-4 md:p-0">
+      <div className="flex gap-2 mb-4">
+        <Button variant={method === 'sms' ? 'primary' : 'secondary'} onClick={() => setMethod('sms')}>По SMS</Button>
+        <Button variant={method === 'email' ? 'primary' : 'secondary'} onClick={() => setMethod('email')}>По email/паролю</Button>
+      </div>
+      {method === 'sms' ? <LoginSMS {...props} /> : <LoginEmailPass {...props} />}
     </div>
   )
 }
-
-export default Login

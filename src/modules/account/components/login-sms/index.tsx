@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Input, Button, Label, Text, Heading, clx } from "@medusajs/ui"
 import { LOGIN_VIEW } from "@modules/account/templates/login-template"
 import { InformationCircleSolid } from "@medusajs/icons"
@@ -16,10 +16,17 @@ const LoginSMS = ({ setCurrentView }: Props) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [needRegistration, setNeedRegistration] = useState(false)
+  const registrationTokenRef = useRef<string | null>(null)
 
   // TODO: Раскомментировать и настроить, если используется Medusa React SDK для управления состоянием
   // import { useAccount } from "@lib/context/account-context"
   // const { refetchCustomer, loginView } = useAccount()
+
+  const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
 
   const handleRequestOtp = async () => {
     if (!identifier) {
@@ -32,32 +39,84 @@ const LoginSMS = ({ setCurrentView }: Props) => {
 
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
-      const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
+        'x-publishable-api-key': publishableApiKey || '',
       }
-      if (publishableApiKey) {
-        headers['x-publishable-api-key'] = publishableApiKey
-      }
-
-      const response = await fetch(`${apiBaseUrl}/store/auth/customer/otp/pre-register`, {
+      const response = await fetch(`${apiBaseUrl}/auth/customer/otp/pre-register`, {
         method: 'POST',
-        headers: headers, 
-        body: JSON.stringify({ phone: identifier }),
+        headers,
+        body: JSON.stringify({ identifier }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) { // fetch не выбрасывает ошибку на HTTP error статусах, нужна проверка .ok
-        throw new Error(data.message || 'Не удалось запросить OTP. Попробуйте снова.');
+      if (response.ok) {
+        setMessage(data.message || 'Код OTP был отправлен на ваш номер.')
+        setStep(2)
+      } else if (
+        data.message?.toLowerCase().includes('actor already exists') ||
+        response.status === 409 || response.status === 400
+      ) {
+        // Пользователь уже есть — вызываем /verify для генерации OTP
+        try {
+          const verifyResponse = await fetch(`${apiBaseUrl}/auth/customer/otp/verify`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ identifier }),
+          })
+          const verifyData = await verifyResponse.json()
+          if (verifyResponse.ok) {
+            setMessage(verifyData.message || 'Код OTP был отправлен на ваш номер.');
+            setStep(2)
+          } else {
+            throw new Error(verifyData.message || 'Не удалось запросить OTP повторно.');
+          }
+        } catch (verifyErr: any) {
+          setError(verifyErr.message || 'Ошибка при повторном запросе OTP.')
+        }
+      } else {
+        throw new Error(data.message || 'Не удалось запросить OTP. Попробуйте снова.')
       }
-      setMessage(data.message || 'Код OTP был отправлен на ваш номер.')
-      setStep(2)
     } catch (err: any) {
       setError(err.message || 'Произошла непредвиденная ошибка при запросе OTP.')
+    } finally {
+      setIsLoading(false)
     }
-    finally {
+  }
+
+  const handleAuthenticate = async (token: string | null, isExistingUser = false) => {
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
+      const defaultHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        'x-publishable-api-key': publishableApiKey || '',
+      }
+      const authResponse = await fetch(`${apiBaseUrl}/auth/customer/otp/authenticate`, {
+        method: 'POST',
+        headers: defaultHeaders,
+        body: JSON.stringify({ identifier, otp }),
+      })
+      const authData = await authResponse.json()
+      if (!authResponse.ok || !authData.token) {
+        throw new Error(authData.message || 'Не удалось аутентифицировать пользователя.')
+      }
+      // После успешной аутентификации — можно делать GET /store/customers/me
+      const meResponse = await fetch(`${apiBaseUrl}/store/customers/me`, {
+        method: 'GET',
+        headers: {
+          ...defaultHeaders,
+          'Authorization': `Bearer ${authData.token}`,
+        },
+      })
+      if (!meResponse.ok) {
+        throw new Error('Ошибка при получении данных пользователя после аутентификации.')
+      }
+      setMessage('Вход выполнен успешно!')
+      setTimeout(() => {
+        setCurrentView(LOGIN_VIEW.SIGN_IN)
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при аутентификации.')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -73,92 +132,82 @@ const LoginSMS = ({ setCurrentView }: Props) => {
 
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
-      const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-
+      const publishableApiKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
       const defaultHeaders: HeadersInit = {
         'Content-Type': 'application/json',
+        'x-publishable-api-key': publishableApiKey || '',
       }
-      if (publishableApiKey) {
-        defaultHeaders['x-publishable-api-key'] = publishableApiKey
-      }
-
-      let registerData: any;
-      let registerResponseOk: boolean;
-
-      try {
-        const registerResponse = await fetch(`${apiBaseUrl}/store/auth/customer/otp/register`, {
+      // 1. Пробуем register
+      const registerResponse = await fetch(`${apiBaseUrl}/auth/customer/otp/register`, {
             method: 'POST',
             headers: defaultHeaders, 
-            body: JSON.stringify({ phone: identifier, otp }),
-        });
-        registerResponseOk = registerResponse.ok;
-        registerData = await registerResponse.json();
-
-        if (!registerResponseOk) {
-            throw new Error(registerData.message || 'Ошибка на этапе /otp/register');
-        }
-      } catch (registrationError: any) {
-        console.warn('OTP registration failed, attempting login with /otp/verify:', registrationError);
-        
-        const verifyLoginResponse = await fetch(`${apiBaseUrl}/store/auth/customer/otp/verify`, {
-            method: 'POST',
-            headers: defaultHeaders, 
-            body: JSON.stringify({ phone: identifier, otp }),
-        });
-        const verifyLoginData = await verifyLoginResponse.json();
-
-        if (!verifyLoginResponse.ok || !verifyLoginData.token) {
-            throw new Error(verifyLoginData.message || registrationError.message || 'Неверный OTP или пользователь не найден.');
-        }
-        setMessage('Вход выполнен успешно! Вы будете перенаправлены.');
-        console.log('Existing user logged in. JWT:', verifyLoginData.token, 'Customer:', verifyLoginData.customer);
-        setTimeout(() => setCurrentView(LOGIN_VIEW.SIGN_IN), 2000);
-        return; 
+        body: JSON.stringify({ identifier, otp }),
+      })
+      const registerData = await registerResponse.json()
+      if (registerResponse.ok && registerData.token) {
+        // Новый пользователь: создаём Customer, затем authenticate
+        registrationTokenRef.current = registerData.token
+        setNeedRegistration(true)
+        setMessage('Пожалуйста, заполните email и имя для завершения регистрации.')
+        setIsLoading(false)
+        return
+      } else if (
+        registerResponse.status === 401 ||
+        registerData.message?.toLowerCase().includes('actor already exists')
+      ) {
+        // Существующий пользователь: сразу authenticate
+        await handleAuthenticate(null, true)
+        return
+      } else {
+        throw new Error(registerData.message || 'Ошибка на этапе /otp/register')
       }
-      
-      const registrationToken = registerData?.token;
-      if (!registrationToken) {
-        throw new Error(registerData?.message || 'Не удалось получить токен регистрации.')
+    } catch (err: any) {
+      setError(err.message || 'Произошла непредвиденная ошибка при верификации OTP.')
+      setIsLoading(false)
+    }
+  }
+
+  const handleCreateCustomer = async () => {
+    // Если email не введён, генерируем его автоматически
+    const emailToUse = email || `phone+${identifier.replace(/\D/g, '')}@ugodo.local`
+    if (!email && !emailToUse) {
+      setError('Пожалуйста, введите email или используйте номер телефона.')
+      return
+    }
+    setIsLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'
+      const defaultHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        'x-publishable-api-key': publishableApiKey || '',
       }
-
-      const createCustomerHeaders: HeadersInit = { ...defaultHeaders, 'Authorization': `Bearer ${registrationToken}` };
-      // defaultHeaders уже содержит publishableApiKey, если он есть
-
+      const registrationToken = registrationTokenRef.current
+      const createCustomerHeaders: HeadersInit = {
+        ...defaultHeaders,
+        'Authorization': `Bearer ${registrationToken}`,
+      }
       const createCustomerResponse = await fetch(`${apiBaseUrl}/store/customers`, {
         method: 'POST',
         headers: createCustomerHeaders, 
-        body: JSON.stringify({ phone: identifier }),
-      });
-
-      const createCustomerData = await createCustomerResponse.json();
+        body: JSON.stringify({ email: emailToUse, phone: identifier, first_name: firstName, last_name: lastName }),
+      })
+      const createCustomerData = await createCustomerResponse.json()
       if (!createCustomerResponse.ok || !createCustomerData.customer) {
-        throw new Error(createCustomerData.message || 'Не удалось создать пользователя.');
+        throw new Error(createCustomerData.message || 'Не удалось создать пользователя.')
       }
-      console.log('New customer created:', createCustomerData.customer);
-
-      const authResponse = await fetch(`${apiBaseUrl}/store/auth/customer/otp/authenticate`, {
-        method: 'POST',
-        headers: defaultHeaders, 
-        body: JSON.stringify({ phone: identifier, otp }),
-      });
-
-      const authData = await authResponse.json();
-      if (!authResponse.ok || !authData.token) {
-        throw new Error(authData.message || 'Не удалось аутентифицировать нового пользователя.');
-      }
-
-      setMessage('Регистрация и вход выполнены успешно! Вы будете перенаправлены.');
-      console.log('New user registered and logged in. JWT:', authData.token, 'Customer:', authData.customer || createCustomerData.customer);
-      
-      setTimeout(() => {
-        setCurrentView(LOGIN_VIEW.SIGN_IN)
-      }, 2000)
-
+      // После успешного создания — authenticate
+      await handleAuthenticate(registrationToken as string)
     } catch (err: any) {
-      setError(err.message || 'Произошла непредвиденная ошибка при верификации OTP.');
+      setError(err.message || 'Ошибка при создании пользователя.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('PK:', process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY)
   }
 
   return (
@@ -238,14 +287,52 @@ const LoginSMS = ({ setCurrentView }: Props) => {
           </Button>
         </form>
       )}
-      <Button 
-        variant="transparent"
-        onClick={() => setCurrentView(LOGIN_VIEW.SIGN_IN)}
-        className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover mt-2"
-        data-testid="standard-login-button"
-      >
-        Войти по email и паролю
+
+      {needRegistration && (
+        <form className="w-full flex flex-col gap-y-4" onSubmit={(e) => {e.preventDefault(); handleCreateCustomer();}}>
+          <Label htmlFor="email_input_sms" className="text-ui-fg-subtle">Email <span className="text-xs text-ui-fg-muted">(необязательно, можно добавить позже)</span></Label>
+          <Input
+            id="email_input_sms"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            aria-describedby={error ? "error-message-email" : undefined}
+          />
+          <Text className="text-xs text-ui-fg-muted">Если не указать email, он будет сгенерирован автоматически на основе номера телефона. Вы сможете добавить email позже для восстановления доступа.</Text>
+          <div className="flex flex-col gap-y-1.5">
+            <Label htmlFor="first_name_input_sms" className="text-ui-fg-subtle">Имя</Label>
+            <Input
+              id="first_name_input_sms"
+              name="first_name"
+              type="text"
+              placeholder="Имя"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              autoComplete="given-name"
+            />
+          </div>
+          <div className="flex flex-col gap-y-1.5">
+            <Label htmlFor="last_name_input_sms" className="text-ui-fg-subtle">Фамилия</Label>
+            <Input
+              id="last_name_input_sms"
+              name="last_name"
+              type="text"
+              placeholder="Фамилия"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              autoComplete="family-name"
+            />
+          </div>
+          <Button type="submit" isLoading={isLoading} className="w-full" variant="primary">
+            Завершить регистрацию
       </Button>
+        </form>
+      )}
     </div>
   )
 }

@@ -33,6 +33,7 @@ graph TD
         C -- Кеширование/Сессии --> M[Redis]
         C -- Уведомления --> K[Email/SMS (плагины)]
         C -- Программа лояльности --> L[Кастомный модуль/Плагин]
+        C -- Аутентификация --> N[Email/Password + SMS OTP]
     end
     A --> B
 ```
@@ -83,9 +84,24 @@ graph TD
     - **Уведомления**: Требуется настройка плагинов для email (SendGrid, Mailchimp) и, возможно, SMS.
     - **Список желаний (Wishlist)**: Может требовать кастомной реализации или поиска плагина.
     - **Программа лояльности**: Бонусы, скидки – вероятно, потребует кастомной разработки или специализированного плагина.
+    - **Аутентификация**: Реализована двумя провайдерами:
+        - **Email/Password**: Стандартный модуль `@medusajs/medusa/auth-emailpass`.
+        - **SMS OTP**: Кастомный модуль `auth-phone-otp` (в директории `medusa/src/modules/auth-phone-otp/`) для авторизации и регистрации через SMS-коды. Использует библиотеку `@perseidesjs/auth-otp` для базовой логики и `smsc-client` для отправки SMS через SMSC.ru. Фронтенд компоненты находятся в `src/modules/account/components/login-sms/` и `src/app/[countryCode]/(main)/account/login-otp/page.tsx`.
 
 ### 2.3. База данных
 - **PostgreSQL**: Основная СУБД для MedusaJS.
+
+### 2.3. API и Интеграции
+
+- **API**: Полностью задокументировано с использованием Swagger/OpenAPI.
+  - **Основная документация**: Доступна по адресу `/doc` (например, http://localhost:9000/doc).
+  - **Документация для фронтенда**: Доступна по адресу `/doc/storefront` (например, http://localhost:9000/doc/storefront).
+  - **OTP API**: Специфические эндпоинты для SMS авторизации доступны в разделе "Customer OTP Auth" в документации фронтенда. Основные эндпоинты:
+    - `/auth/customer/otp/pre-register` - запрос OTP для регистрации
+    - `/auth/customer/otp/verify` - проверка OTP без создания сессии
+    - `/auth/customer/otp/register` - регистрация с использованием OTP
+    - `/auth/customer/otp/authenticate` - авторизация с использованием OTP
+  - **Спецификация для OTP**: Отдельная спецификация OTP API также доступна в файле `docs/otp_api.yaml`.
 
 ## 3. Ключевые Компоненты и Модули
 - **Каталог товаров**: Включает страницы `/store`, `/brands`, `/collections/[handle]`, `/new-arrivals`, `/bestsellers` с фильтрацией, сортировкой и пагинацией.
@@ -95,6 +111,10 @@ graph TD
 - **Страница товара**: Детальное описание, изображения, опции, добавление в корзину (требует более детального описания по мере реализации).
 - **Корзина и оформление заказа**: Стандартный функционал Medusa, требующий настройки и кастомизации UI.
 - **Личный кабинет пользователя**: Обзор, профиль, адреса, заказы.
+- **SMS OTP Аутентификация**: Кастомный модуль для входа и регистрации пользователей с помощью одноразовых паролей, отправляемых по SMS. 
+    - **Бэкенд**: Модуль `auth-phone-otp` в Medusa, обрабатывающий запросы на генерацию, верификацию OTP и аутентификацию пользователя. Эндпоинты: `/store/auth/customer/otp/pre-register`, `/store/auth/customer/otp/register`, `/store/auth/customer/otp/verify`, `/store/auth/customer/otp/authenticate`.
+    - **Особенность (2025-06-01)**: Теперь при ошибке 'Actor already exists' на /pre-register фронтенд автоматически вызывает /verify для генерации и отправки OTP существующему пользователю. Flow полностью соответствует best practice PerseidesJS. Повторный запрос OTP на уже зарегистрированный номер работает корректно и не ломает UX.
+    - **Фронтенд**: Компоненты `LoginSMS` и страница `OtpLoginPage` для взаимодействия пользователя с системой OTP.
 
 ## 4. Технологический Стек
 - **Фронтенд**:
@@ -113,6 +133,7 @@ graph TD
     - Отзывы: `@appateam/medusa-plugin-product-reviews`, `medusa-plugin-reviews`
     - Файловое хранилище: MinIO (S3-совместимое, публичный bucket, CORS, интеграция через @medusajs/file-s3, bucket: medusa-uploads, endpoint: http://localhost:9000, forcePathStyle: true)
     - Кеширование/Сессии: Redis (интеграция через модуль @medusajs/cache-redis и переменные окружения)
+    - SMS-провайдер: SMSC.ru для отправки SMS-кодов
 - **Инструменты сборки и разработки**:
     - Менеджер пакетов: Yarn
     - Линтинг: ESLint
@@ -239,4 +260,79 @@ graph TD
 
 ## 11. API Документация
 
-Ссылки на API документацию или описание эндпоинтов... 
+### 11.1 API Аутентификации
+
+#### 11.1.1 SMS OTP Аутентификация
+Кастомные эндпоинты для аутентификации через SMS OTP описаны в отдельном Swagger/OpenAPI файле.
+
+- **Расположение спецификации**: `docs/otp_api.yaml`
+- **Краткое описание**: Предоставляет эндпоинты для запроса OTP, регистрации нового пользователя с OTP, верификации OTP (что может приводить к логину существующего пользователя) и прямой аутентификации с OTP.
+- **Основные эндпоинты**:
+    - `POST /store/auth/customer/otp/pre-register`: Запрос на отправку OTP.
+    - `POST /store/auth/customer/otp/register`: Регистрация нового пользователя с OTP.
+    - `POST /store/auth/customer/otp/verify`: Проверка OTP (может использоваться и для логина, и как шаг перед регистрацией).
+    - `POST /store/auth/customer/otp/authenticate`: Аутентификация существующего пользователя с OTP.
+
+Детальное описание запросов, ответов и схем данных смотрите в файле `docs/otp_api.yaml`.
+
+## Регистрация и авторизация по SMS (OTP) — эталонный flow (2025-05-31)
+
+### Новый пошаговый процесс:
+
+1. **Ввод телефона** — POST `/auth/customer/otp/pre-register`
+2. **Ввод OTP** — POST `/auth/customer/otp/register` (получаем токен)
+3. **Проверка Customer** — GET `/store/customers/me` с токеном
+   - Если 404: показывается форма для email/имя/фамилия, POST `/store/customers` с токеном
+   - Если найден: переход к следующему шагу
+4. **Аутентификация** — POST `/auth/customer/otp/authenticate` (тот же OTP, тот же токен)
+5. **Успех** — пользователь авторизован, токен сохранён
+
+#### Пример схемы (Mermaid):
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant MedusaAPI
+  User->>Frontend: Вводит телефон
+  Frontend->>MedusaAPI: POST /auth/customer/otp/pre-register
+  MedusaAPI-->>User: SMS с OTP
+  User->>Frontend: Вводит OTP
+  Frontend->>MedusaAPI: POST /auth/customer/otp/register
+  MedusaAPI-->>Frontend: token
+  Frontend->>MedusaAPI: GET /store/customers/me (с token)
+  alt Customer найден
+    Frontend->>MedusaAPI: POST /auth/customer/otp/authenticate
+    MedusaAPI-->>Frontend: token
+    Frontend-->>User: Успех
+  else Customer не найден
+    Frontend->>User: Форма email/имя/фамилия
+    User->>Frontend: Вводит email/имя/фамилию
+    Frontend->>MedusaAPI: POST /store/customers (с token)
+    MedusaAPI-->>Frontend: customer
+    Frontend->>MedusaAPI: POST /auth/customer/otp/authenticate
+    MedusaAPI-->>Frontend: token
+    Frontend-->>User: Успех
+  end
+```
+
+#### Пример curl для создания Customer:
+
+```bash
+curl -X POST 'http://localhost:9000/store/customers' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{"email": "user@example.com", "phone": "+79999999999", "first_name": "Имя", "last_name": "Фамилия"}'
+```
+
+### Особенности:
+- Email обязателен для новых пользователей (требование Medusa)
+- Для существующих — только телефон и OTP
+- UX: email/имя/фамилия запрашиваются только если Customer не найден
+
+### [2025-05-31] Только SMS-авторизация/регистрация
+- Вся регистрация и вход теперь возможны только по номеру телефона (SMS OTP).
+- Формы email/пароль полностью удалены из интерфейса и backend.
+- Все переходы и кнопки ведут только на SMS-авторизацию.
+- Email теперь используется только для восстановления доступа (опционально, можно добавить в профиле).
+- Преимущества: быстрый вход, отсутствие паролей, современный UX, меньше точек отказа для пользователя.

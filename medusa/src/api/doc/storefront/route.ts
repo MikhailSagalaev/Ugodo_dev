@@ -128,8 +128,7 @@ const generateStorefrontSwaggerUIHtml = (jsonUrl: string) => {
 const getStorefrontSwaggerSpec = () => {
     // --- Загрузка базовой спецификации из YAML (если есть) ---
     let yamlSpec: any = {};
-    // ЗАКОММЕНТИРУЕМ ЗАГРУЗКУ ВНЕШНЕГО YAML, ЧТОБЫ ВРЕМЕННО ЕГО НЕ ПОКАЗЫВАТЬ
-    /*
+    // Загружаем внешний YAML-файл с OpenAPI спецификацией
     if (fs.existsSync(frontendOpenApiPath)) {
         try {
             const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
@@ -147,7 +146,6 @@ const getStorefrontSwaggerSpec = () => {
     } else {
         console.warn(`External OpenAPI spec file not found: ${frontendOpenApiPath}. It will be ignored.`);
     }
-    */
 
     // --- Инициализация базовой спецификации для JSDoc --- 
     // Эта спецификация будет основой, в которую jsdoc добавит свои находки.
@@ -192,6 +190,20 @@ const getStorefrontSwaggerSpec = () => {
       }
     };
 
+    // Находим место где yamlSpec или jsdocBaseDefinition содержит tags и добавляем новый тег
+    if (!jsdocBaseDefinition.tags) {
+        jsdocBaseDefinition.tags = [];
+    }
+
+    // Добавляем тег для OTP авторизации, если его еще нет
+    const otpTagName = "Customer OTP Auth";
+    if (!jsdocBaseDefinition.tags.some(tag => tag.name === otpTagName)) {
+        jsdocBaseDefinition.tags.push({
+            name: otpTagName,
+            description: "Operations related to customer authentication using One-Time Passwords (OTP)"
+        });
+    }
+
     const swaggerJsdocOptions: SwaggerJsdocOptionsType = {
         failOnErrors: true, 
         definition: { // Это определение перезапишет/дополнит jsdocBaseDefinition при генерации swaggerJSDoc
@@ -217,11 +229,12 @@ const getStorefrontSwaggerSpec = () => {
             path.join(rootDir, 'src/api/routes/store/**/*.ts'), 
             path.join(rootDir, 'src/models/**/*.ts'),             
             path.join(rootDir, 'src/modules/**/models/**/*.ts'),  
-            path.join(rootDir, 'src/modules/**/api/routes/store/**/*.ts'), 
-            // Добавляем путь к маршрутам плагина OTP для storefront (customer)
-            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.js'), // Возвращаем .js, т.к. плагины обычно компилируются
-            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.ts'), // Оставляем и .ts на всякий случай
-            // path.join(rootDir, 'src/modules/auth-phone-otp/service.ts'), // Удаляем путь к старому сервису
+            path.join(rootDir, 'src/modules/**/api/routes/store/**/*.ts'),
+            // Добавляем новые пути для OTP API
+            path.join(rootDir, 'src/api/routes/store/auth/customer/otp/*.ts'),
+            // Оставляем пути к плагину OTP
+            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.js'),
+            path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.ts'),
         ],
     };
 
@@ -279,13 +292,17 @@ export const GET = async (
   }
 }
 
-// Обработчик OPTIONS запроса (для CORS)
-export const OPTIONS = (
+// --- Обработчик OPTIONS для CORS ---
+export const OPTIONS = async (
   req: MedusaRequest,
   res: MedusaResponse
 ) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Разрешаем GET и OPTIONS
+  // Устанавливаем CORS заголовки
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-publishable-api-key');
-  res.status(204).send();
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 часа
+  
+  // Отправляем успешный ответ для preflight запросов
+  res.status(200).end();
 } 

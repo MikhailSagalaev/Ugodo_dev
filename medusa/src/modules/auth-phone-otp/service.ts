@@ -188,30 +188,82 @@ class SmsOtpAuthService extends AbstractAuthModuleProvider {
       };
     }
 
+    // --- Попытка создать AuthIdentity, если не существует ---
+    try {
+      await authIdentityProviderService.create({
+        entity_id: phoneNumber,
+      });
+      this.logger_.info(`AuthIdentity создан для ${phoneNumber}`);
+    } catch (err) {
+      // Если уже существует — логируем и продолжаем
+      if (err?.message?.toLowerCase().includes("already exists") || err?.message?.toLowerCase().includes("duplicate") || err?.code === 'DUPLICATE_ERROR') {
+        this.logger_.warn(`AuthIdentity уже существует для ${phoneNumber}, продолжаю генерацию OTP`);
+      } else {
+        this.logger_.error(`Ошибка при создании AuthIdentity: ${err?.message}`);
+        return {
+          success: false,
+          error: err?.message || "Unknown error"
+        };
+      }
+    }
+
+    // --- Генерация и отправка OTP ---
     const otpLength = this.options_.otpLength || parseInt(process.env.OTP_LENGTH || '' + DEFAULT_OTP_LENGTH, 10);
     const otpTtlSeconds = this.options_.otpTtlSeconds || parseInt(process.env.OTP_TTL_SECONDS || '' + DEFAULT_OTP_TTL_SECONDS, 10);
+    
+    let otpCode: string;
 
-    const otpCode = generate(otpLength, {
-      digits: true,
-      lowerCaseAlphabets: false,
-      upperCaseAlphabets: false,
-      specialChars: false,
-    });
-    //this.logger_.warn("Using mocked OTP '123456' because otp-generator is not installed or temporarily commented out.")
+    // --- Начало изменений для тестового режима ---
+    if (process.env.NODE_ENV === 'development') {
+      if (process.env.OTP_STATIC_CODE) {
+        otpCode = process.env.OTP_STATIC_CODE;
+        this.logger_.info(`Using static OTP for ${phoneNumber}: ${otpCode} (from OTP_STATIC_CODE)`);
+      } else {
+        otpCode = generate(otpLength, {
+          digits: true,
+          lowerCaseAlphabets: false,
+          upperCaseAlphabets: false,
+          specialChars: false,
+        });
+        this.logger_.info(`[DEVELOPMENT MODE] OTP for ${phoneNumber}: ${otpCode} (not sent via SMS)`);
+      }
+    } else {
+      otpCode = generate(otpLength, {
+        digits: true,
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false,
+      });
+    }
+    // --- Конец изменений для тестового режима ---
 
     const otpMessage = `Your OTP code is: ${otpCode}`;
     const cacheKey = `otp:${phoneNumber}`;
 
     try {
-      this.logger_.info(`Attempting to send OTP to ${phoneNumber}`);
-      await this.smscClient_.sendSms({
-        phones: phoneNumber,
-        mes: otpMessage,
-        sender: this.options_.senderName,
-      });
+      // --- Начало изменений для тестового режима (условие отправки SMS) ---
+      const isInDevelopmentMode = process.env.NODE_ENV === 'development';
+      const useStaticOtp = isInDevelopmentMode && process.env.OTP_STATIC_CODE;
+      const skipSmsSend = isInDevelopmentMode && process.env.OTP_SKIP_SMS_SEND === 'true'; // Явно проверяем на 'true'
+
+      if (!isInDevelopmentMode || (isInDevelopmentMode && !useStaticOtp && !skipSmsSend)) {
+        // В production или если в dev не используется статический OTP и не указано пропускать SMS, отправляем SMS
+        this.logger_.info(`Attempting to send OTP to ${phoneNumber}`);
+        await this.smscClient_.sendSms({
+          phones: phoneNumber,
+          mes: otpMessage,
+          sender: this.options_.senderName,
+        });
+        this.logger_.info(`OTP for ${phoneNumber} sent via SMS.`);
+      } else if (useStaticOtp) {
+        this.logger_.info(`SMS sending skipped for ${phoneNumber} in development mode (using static OTP).`);
+      } else if (skipSmsSend) {
+        this.logger_.info(`SMS sending skipped for ${phoneNumber} in development mode (OTP_SKIP_SMS_SEND is true).`);
+      }
+      // --- Конец изменений для тестового режима (условие отправки SMS) ---
 
       await this.cacheService_.set(cacheKey, { code: otpCode, attempts: 0 }, otpTtlSeconds);
-      this.logger_.info(`OTP for ${phoneNumber} sent and cached successfully.`);
+      this.logger_.info(`OTP for ${phoneNumber} (code: ${otpCode}) cached successfully.`);
 
       return {
         success: true

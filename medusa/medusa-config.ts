@@ -6,8 +6,8 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:8001",
-      adminCors: process.env.ADMIN_CORS!,
+      storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:8001,http://localhost:9000",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:7000,http://localhost:8000",
       authCors: process.env.AUTH_CORS || "http://localhost:8000,http://localhost:9000",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
@@ -48,6 +48,12 @@ module.exports = defineConfig({
       },
     },
     {
+      resolve: "@medusajs/inventory",
+    },
+    {
+      resolve: "@medusajs/stock-location",
+    },
+    {
       resolve: "./src/modules/product-review", 
     },
     {
@@ -78,7 +84,6 @@ module.exports = defineConfig({
           customer: { accessor: 'phone', entityIdAccessor: 'phone' }
         },
         http: {
-          alwaysReturnSuccess: true,
           warnOnError: true
         }
       }

@@ -434,15 +434,19 @@ export const GET = async (
   }
 }
 
-// Убедитесь, что нет других экспортров GET или обработчиков для /doc
-// Например, удалите или закомментируйте старую функцию GET_SWAGGER_UI, если она была
-
-// Обработчик OPTIONS запроса (для CORS)
-export const OPTIONS = (
+// --- Обработчик OPTIONS для CORS ---
+export const OPTIONS = async (
   req: MedusaRequest,
   res: MedusaResponse
 ) => {
-  res.status(200).send()
+  // Устанавливаем CORS заголовки
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-publishable-api-key');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 часа
+  
+  // Отправляем успешный ответ для preflight запросов
+  res.status(200).end();
 }
 
 // Экспортируем JSON-версию спецификации для использования в инструментах
