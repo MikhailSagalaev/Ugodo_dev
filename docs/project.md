@@ -84,9 +84,37 @@ graph TD
     - **Уведомления**: Требуется настройка плагинов для email (SendGrid, Mailchimp) и, возможно, SMS.
     - **Список желаний (Wishlist)**: Может требовать кастомной реализации или поиска плагина.
     - **Программа лояльности**: Бонусы, скидки – вероятно, потребует кастомной разработки или специализированного плагина.
-    - **Аутентификация**: Реализована двумя провайдерами:
-        - **Email/Password**: Стандартный модуль `@medusajs/medusa/auth-emailpass`.
-        - **SMS OTP**: Кастомный модуль `auth-phone-otp` (в директории `medusa/src/modules/auth-phone-otp/`) для авторизации и регистрации через SMS-коды. Использует библиотеку `@perseidesjs/auth-otp` для базовой логики и `smsc-client` для отправки SMS через SMSC.ru. Фронтенд компоненты находятся в `src/modules/account/components/login-sms/` и `src/app/[countryCode]/(main)/account/login-otp/page.tsx`.
+    - **Аутентификация**: Реализована двумя независимыми флоу:
+        - **Регистрация по SMS**: Отдельная форма и логика для регистрации нового пользователя по SMS (компонент RegisterSms, страница /account/register-sms).
+        - **Авторизация по SMS**: Отдельная форма и логика для входа по SMS (компонент LoginSms, страница /account/login-sms).
+      Пользователь явно выбирает нужный сценарий ("Вход по SMS" или "Регистрация по SMS"). UI и серверные actions разделены для login и register.
+      
+      **Flow регистрации по SMS (актуальный):**
+      1. Пользователь вводит номер телефона на странице регистрации.
+      2. Фронтенд вызывает `/auth/customer/otp/pre-register` — отправляется OTP-код.
+      3. Пользователь вводит полученный код.
+      4. Фронтенд вызывает `/auth/customer/otp/register` — получает `registration_token`.
+      5. Фронтенд вызывает `/store/customers` с `registration_token` и номером телефона — создаётся пользователь.
+      6. Фронтенд вызывает `/auth/customer/otp/authenticate` — выполняется автоматический вход.
+      7. Пользователь перенаправляется в личный кабинет.
+
+      ```mermaid
+      sequenceDiagram
+        participant U as User
+        participant FE as Frontend (Next.js)
+        participant BE as MedusaJS + PerseidesJS
+        U->>FE: Вводит телефон
+        FE->>BE: POST /auth/customer/otp/pre-register
+        BE-->>FE: 200 OK (OTP отправлен)
+        U->>FE: Вводит OTP
+        FE->>BE: POST /auth/customer/otp/register
+        BE-->>FE: 200 OK (registration_token)
+        FE->>BE: POST /store/customers (registration_token, phone)
+        BE-->>FE: 200 OK (customer создан)
+        FE->>BE: POST /auth/customer/otp/authenticate (phone, otp)
+        BE-->>FE: 200 OK (token)
+        FE->>U: Перенаправление в профиль
+      ```
 
 ### 2.3. База данных
 - **PostgreSQL**: Основная СУБД для MedusaJS.
@@ -111,10 +139,6 @@ graph TD
 - **Страница товара**: Детальное описание, изображения, опции, добавление в корзину (требует более детального описания по мере реализации).
 - **Корзина и оформление заказа**: Стандартный функционал Medusa, требующий настройки и кастомизации UI.
 - **Личный кабинет пользователя**: Обзор, профиль, адреса, заказы.
-- **SMS OTP Аутентификация**: Кастомный модуль для входа и регистрации пользователей с помощью одноразовых паролей, отправляемых по SMS. 
-    - **Бэкенд**: Модуль `auth-phone-otp` в Medusa, обрабатывающий запросы на генерацию, верификацию OTP и аутентификацию пользователя. Эндпоинты: `/store/auth/customer/otp/pre-register`, `/store/auth/customer/otp/register`, `/store/auth/customer/otp/verify`, `/store/auth/customer/otp/authenticate`.
-    - **Особенность (2025-06-01)**: Теперь при ошибке 'Actor already exists' на /pre-register фронтенд автоматически вызывает /verify для генерации и отправки OTP существующему пользователю. Flow полностью соответствует best practice PerseidesJS. Повторный запрос OTP на уже зарегистрированный номер работает корректно и не ломает UX.
-    - **Фронтенд**: Компоненты `LoginSMS` и страница `OtpLoginPage` для взаимодействия пользователя с системой OTP.
 
 ## 4. Технологический Стек
 - **Фронтенд**:
@@ -275,64 +299,28 @@ graph TD
 
 Детальное описание запросов, ответов и схем данных смотрите в файле `docs/otp_api.yaml`.
 
-## Регистрация и авторизация по SMS (OTP) — эталонный flow (2025-05-31)
+## Архитектура SMS-авторизации/регистрации (PerseidesJS)
 
-### Новый пошаговый процесс:
+### Общий флоу
+- Пользователь вводит телефон → POST /auth/customer/otp/pre-register
+  - Если 200 OK — регистрация (новый пользователь)
+  - Если 409/"Actor already exists" — логин (существующий пользователь)
+- Для логина: POST /auth/customer/otp/generate → POST /auth/customer/otp/verify
+- Для регистрации: POST /auth/customer/otp/register → POST /store/customers
 
-1. **Ввод телефона** — POST `/auth/customer/otp/pre-register`
-2. **Ввод OTP** — POST `/auth/customer/otp/register` (получаем токен)
-3. **Проверка Customer** — GET `/store/customers/me` с токеном
-   - Если 404: показывается форма для email/имя/фамилия, POST `/store/customers` с токеном
-   - Если найден: переход к следующему шагу
-4. **Аутентификация** — POST `/auth/customer/otp/authenticate` (тот же OTP, тот же токен)
-5. **Успех** — пользователь авторизован, токен сохранён
+### Обработка ошибок PerseidesJS
+- "Actor already exists" — пользователь уже зарегистрирован, переход к логину
+- "Auth identity not found" — пользователь не найден, предлагаем регистрацию
+- Ошибки OTP — неверный или истёкший код
+- Все ошибки явно отображаются в UI, логируются в консоль для отладки
 
-#### Пример схемы (Mermaid):
+### UX copy
+- Разные сообщения для регистрации и логина
+- Явные ошибки для пользователя (см. sms-auth/page.tsx)
 
-```mermaid
-sequenceDiagram
-  participant User
-  participant Frontend
-  participant MedusaAPI
-  User->>Frontend: Вводит телефон
-  Frontend->>MedusaAPI: POST /auth/customer/otp/pre-register
-  MedusaAPI-->>User: SMS с OTP
-  User->>Frontend: Вводит OTP
-  Frontend->>MedusaAPI: POST /auth/customer/otp/register
-  MedusaAPI-->>Frontend: token
-  Frontend->>MedusaAPI: GET /store/customers/me (с token)
-  alt Customer найден
-    Frontend->>MedusaAPI: POST /auth/customer/otp/authenticate
-    MedusaAPI-->>Frontend: token
-    Frontend-->>User: Успех
-  else Customer не найден
-    Frontend->>User: Форма email/имя/фамилия
-    User->>Frontend: Вводит email/имя/фамилию
-    Frontend->>MedusaAPI: POST /store/customers (с token)
-    MedusaAPI-->>Frontend: customer
-    Frontend->>MedusaAPI: POST /auth/customer/otp/authenticate
-    MedusaAPI-->>Frontend: token
-    Frontend-->>User: Успех
-  end
-```
+### Схема флоу (см. docs или комментарии в коде)
 
-#### Пример curl для создания Customer:
-
-```bash
-curl -X POST 'http://localhost:9000/store/customers' \
-  -H 'Authorization: Bearer <token>' \
-  -H 'Content-Type: application/json' \
-  -d '{"email": "user@example.com", "phone": "+79999999999", "first_name": "Имя", "last_name": "Фамилия"}'
-```
-
-### Особенности:
-- Email обязателен для новых пользователей (требование Medusa)
-- Для существующих — только телефон и OTP
-- UX: email/имя/фамилия запрашиваются только если Customer не найден
-
-### [2025-05-31] Только SMS-авторизация/регистрация
-- Вся регистрация и вход теперь возможны только по номеру телефона (SMS OTP).
-- Формы email/пароль полностью удалены из интерфейса и backend.
-- Все переходы и кнопки ведут только на SMS-авторизацию.
-- Email теперь используется только для восстановления доступа (опционально, можно добавить в профиле).
-- Преимущества: быстрый вход, отсутствие паролей, современный UX, меньше точек отказа для пользователя.
+### Рекомендации
+- Всегда начинать с pre-register
+- Не вызывать generate для несуществующего пользователя
+- Покрывать все сценарии в UI

@@ -12,6 +12,7 @@ import swaggerJSDoc, { type Options as SwaggerJsdocOptionsType } from "swagger-j
 const projectRoot = path.join(process.cwd(), '..');
 const frontendOpenApiPath = path.join(projectRoot, 'openapi (1).yaml'); // Фронтенд спецификация
 const rootDir = process.cwd(); // Текущая директория (medusa/)
+const perseidesOtpPath = path.join(rootDir, 'src/api/doc/storefront/perseides-otp.yaml');
 
 // --- Функция для генерации HTML для Storefront API ---
 const generateSwaggerUIHtmlForStorefront = () => {
@@ -128,37 +129,43 @@ const generateStorefrontSwaggerUIHtml = (jsonUrl: string) => {
 const getStorefrontSwaggerSpec = () => {
     // --- Загрузка базовой спецификации из YAML (если есть) ---
     let yamlSpec: any = {};
-    // Загружаем внешний YAML-файл с OpenAPI спецификацией
     if (fs.existsSync(frontendOpenApiPath)) {
         try {
             const yamlContent = fs.readFileSync(frontendOpenApiPath, 'utf-8');
             yamlSpec = yaml.load(yamlContent) as any;
-            console.log(`Successfully loaded and parsed external OpenAPI spec: ${frontendOpenApiPath}`);
-            // Базовая валидация, что это похоже на OpenAPI объект
             if (typeof yamlSpec !== 'object' || yamlSpec === null || !yamlSpec.openapi) {
-                console.warn(`Warning: Loaded YAML from ${frontendOpenApiPath} does not seem to be a valid OpenAPI spec. It will be ignored.`);
-                yamlSpec = {}; // Сбрасываем, если невалидно
+                yamlSpec = {};
             }
         } catch (e) {
-            console.error(`Error loading or parsing external OpenAPI spec '${frontendOpenApiPath}':`, e);
-            yamlSpec = {}; // Сбрасываем при ошибке
+            yamlSpec = {};
         }
-    } else {
-        console.warn(`External OpenAPI spec file not found: ${frontendOpenApiPath}. It will be ignored.`);
+    }
+
+    // --- Загрузка спецификации Perseides OTP ---
+    let otpSpec: any = {};
+    if (fs.existsSync(perseidesOtpPath)) {
+        try {
+            const otpContent = fs.readFileSync(perseidesOtpPath, 'utf-8');
+            otpSpec = yaml.load(otpContent) as any;
+            if (typeof otpSpec !== 'object' || otpSpec === null || !otpSpec.openapi) {
+                otpSpec = {};
+            }
+        } catch (e) {
+            otpSpec = {};
+        }
     }
 
     // --- Инициализация базовой спецификации для JSDoc --- 
     // Эта спецификация будет основой, в которую jsdoc добавит свои находки.
     // Мы не будем брать info, servers из yamlSpec, чтобы контролировать их из кода.
     let jsdocBaseDefinition: any = {
-      openapi: yamlSpec.openapi || "3.1.0", // Берем версию OpenAPI из YAML или дефолт
+      openapi: yamlSpec.openapi || "3.1.0",
       info: {
-        title: "Ugodo Storefront API (Generated)", // Это будет перезаписано swaggerJsdocOptions
+        title: "Ugodo Storefront API (Generated)",
         version: "1.0.0",
         description: "Combined API documentation for Ugodo storefront."
       },
-      servers: yamlSpec.servers && yamlSpec.servers.length > 0 ? yamlSpec.servers : [], // Серверы из YAML или пустой массив
-      // Компоненты из YAML будут использованы как основа
+      servers: yamlSpec.servers && yamlSpec.servers.length > 0 ? yamlSpec.servers : [],
       components: {
         schemas: { ...(yamlSpec.components?.schemas || {}) },
         securitySchemes: { ...(yamlSpec.components?.securitySchemes || {}) },
@@ -170,12 +177,30 @@ const getStorefrontSwaggerSpec = () => {
         links: { ...(yamlSpec.components?.links || {}) },
         callbacks: { ...(yamlSpec.components?.callbacks || {}) },
       },
-      // Пути из YAML будут использованы как основа
       paths: { ...(yamlSpec.paths || {}) },
-      // Теги из YAML будут использованы как основа
       tags: yamlSpec.tags || [],
-      // Глобальная безопасность из YAML пока не берем, jsdoc определит свою
     };
+
+    // --- Объединяем спецификацию Perseides OTP ---
+    if (otpSpec && otpSpec.paths) {
+      jsdocBaseDefinition.paths = { ...jsdocBaseDefinition.paths, ...otpSpec.paths };
+    }
+    if (otpSpec && otpSpec.components) {
+      for (const compKey of Object.keys(otpSpec.components)) {
+        jsdocBaseDefinition.components[compKey] = {
+          ...(jsdocBaseDefinition.components[compKey] || {}),
+          ...otpSpec.components[compKey],
+        };
+      }
+    }
+    if (otpSpec && otpSpec.tags) {
+      const tagNames = new Set((jsdocBaseDefinition.tags || []).map((t: any) => t.name));
+      for (const tag of otpSpec.tags) {
+        if (!tagNames.has(tag.name)) {
+          jsdocBaseDefinition.tags.push(tag);
+        }
+      }
+    }
 
     const apiKeySchemeName = "publishableApiKey";
     // Добавляем или перезаписываем схему для x-publishable-api-key, чтобы она точно была

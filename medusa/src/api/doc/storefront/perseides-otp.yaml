@@ -1,0 +1,194 @@
+openapi: 3.0.0
+info:
+  title: PerseidesJS Auth-OTP API
+  version: 1.0.0
+  description: Документация по всем методам SMS OTP авторизации через PerseidesJS Auth-OTP
+paths:
+  /auth/customer/otp/generate:
+    post:
+      tags:
+        - OTP Auth
+      summary: Generate OTP for existing customer (login)
+      description: Generates an OTP for an existing customer (login flow). Triggers event to send OTP to user.
+      operationId: postAuthCustomerOtpGenerate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number for receiving OTP
+                  example: '+79991234567'
+      responses:
+        '200':
+          description: OTP generated and event triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'OTP generated and event triggered'
+        '400':
+          description: Invalid request
+        '404':
+          description: Customer not found
+
+  /auth/customer/otp/verify:
+    post:
+      tags:
+        - OTP Auth
+      summary: Verify OTP for existing customer
+      description: Verifies the OTP for an existing customer (login flow).
+      operationId: postAuthCustomerOtpVerify
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: One-time password
+                  example: '1234'
+      responses:
+        '200':
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 'registration-token-abc123'
+        '400':
+          description: Invalid OTP or identifier
+
+  /auth/customer/otp/pre-register:
+    post:
+      tags:
+        - OTP Auth
+      summary: Pre-register process for new customer
+      description: Validates identifier for new customer and triggers OTP event (registration flow).
+      operationId: postAuthCustomerOtpPreRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number for receiving OTP
+                  example: '+79991234567'
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'OTP sent successfully'
+        '400':
+          description: Invalid request
+        '409':
+          description: Actor already exists
+
+  /auth/customer/otp/register:
+    post:
+      tags:
+        - OTP Auth
+      summary: Register new customer with OTP
+      description: Registers a new customer using the OTP and returns a registration token.
+      operationId: postAuthCustomerOtpRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: One-time password
+                  example: '1234'
+      responses:
+        '200':
+          description: Registration token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 'registration-token-abc123'
+        '400':
+          description: Invalid OTP or identifier
+
+  /auth/customer/otp/authenticate:
+    post:
+      tags:
+        - OTP Auth
+      summary: Authenticate customer with OTP after registration
+      description: Authenticates a customer using the OTP after registration and returns an access token.
+      operationId: postAuthCustomerOtpAuthenticate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: One-time password
+                  example: '1234'
+      responses:
+        '200':
+          description: Access token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: 'access-token-xyz456'
+        '400':
+          description: Invalid OTP or identifier 

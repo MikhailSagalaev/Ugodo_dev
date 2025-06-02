@@ -154,6 +154,7 @@ tags:
     x-associatedSchema:
       $ref: '#/components/schemas/StoreShippingOption'
 paths:
+
   /auth/customer/{auth_provider}:
     post:
       operationId: PostActor_typeAuth_provider
