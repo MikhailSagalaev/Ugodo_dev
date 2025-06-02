@@ -39,12 +39,17 @@ export default function PaginatedProducts({
   const [isLoading, setIsLoading] = useState(false)
   const [page, setPage] = useState(1)
   
-  // Определяем лимит в зависимости от типа страницы
   const limit = categoryIds || categoryId ? 32 : PRODUCT_LIMIT
   const [hasMore, setHasMore] = useState(totalCount > limit)
   
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
+  
+  useEffect(() => {
+    setProducts(initialProducts)
+    setPage(1)
+    setHasMore(totalCount > limit)
+  }, [initialProducts, totalCount, limit])
   
   useEffect(() => {
     const handleResize = () => {

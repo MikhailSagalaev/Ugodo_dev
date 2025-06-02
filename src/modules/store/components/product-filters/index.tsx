@@ -158,10 +158,16 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     <div className={`bg-white ${className}`}>
       {/* Кнопка открытия фильтров */}
       <div>
-        <Button
+        <button
           onClick={() => setIsOpen(true)}
-          variant="secondary"
-          className="w-full flex items-center justify-center gap-2 py-3"
+          className="flex items-center justify-center gap-2 bg-white focus:outline-none focus:ring-0 hover:text-[#C2E7DA] transition-colors"
+          style={{
+            fontSize: "16px",
+            fontWeight: 500,
+            lineHeight: 1,
+            padding: "8px 12px",
+            border: "none"
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -172,7 +178,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               {Object.values(filters).flat().filter(Boolean).length}
             </span>
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Модальное окно фильтров */}
