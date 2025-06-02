@@ -54,14 +54,14 @@ const CartDropdown = ({
 
   const pathname = usePathname()
 
-  // open cart dropdown when modifying the cart items, but only if we're not on the cart page
-  useEffect(() => {
-    if (itemRef.current !== totalItems && !pathname.includes("/cart")) {
-      setIsOpen(true)
-      timedClose()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalItems, itemRef.current])
+  // Убираем автооткрытие корзины при добавлении товара
+  // useEffect(() => {
+  //   if (itemRef.current !== totalItems && !pathname.includes("/cart")) {
+  //     setIsOpen(true)
+  //     timedClose()
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [totalItems, itemRef.current])
 
   return (
     <div className="h-full z-[100]">

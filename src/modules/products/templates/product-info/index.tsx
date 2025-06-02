@@ -17,14 +17,33 @@ const ProductInfo = ({ product, showHeader = false }: ProductInfoProps) => {
   // Формируем хлебные крошки, если нужно отображать заголовок
   const breadcrumbItems: BreadcrumbItem[] = []
   
-  if (showHeader && product.collection) {
-    breadcrumbItems.push({
-      name: product.collection.title,
-      path: `/collections/${product.collection.handle}`
-    })
-  }
-  
   if (showHeader) {
+    // Добавляем категорию товара
+    if (product.categories && product.categories.length > 0) {
+      const category = product.categories[0]
+      
+      // Если есть родительская категория, добавляем её
+      if (category.parent_category) {
+        breadcrumbItems.push({
+          name: category.parent_category.name,
+          path: `/categories/${category.parent_category.handle}`
+        })
+      }
+      
+      // Добавляем саму категорию
+      breadcrumbItems.push({
+        name: category.name,
+        path: `/categories/${category.handle}`
+      })
+    } else if (product.collection) {
+      // Если нет категории, но есть коллекция
+      breadcrumbItems.push({
+        name: product.collection.title,
+        path: `/collections/${product.collection.handle}`
+      })
+    }
+    
+    // Добавляем название товара
     breadcrumbItems.push({
       name: product.title,
       path: pathname
@@ -38,39 +57,17 @@ const ProductInfo = ({ product, showHeader = false }: ProductInfoProps) => {
           {/* Хлебные крошки */}
           <Breadcrumbs items={breadcrumbItems} className="mb-4" />
           
-          {/* Категория и отзывы */}
+          {/* Тип товара */}
           <div className="flex flex-col small:flex-row small:items-center gap-4 mb-2">
-            {product.collection && (
-              <div className="uppercase text-xs tracking-widest font-medium" 
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 500,
-                  letterSpacing: "1.4px",
-                  lineHeight: 1.5,
-                  textTransform: "uppercase"
-                }}>
-                {product.collection.title}
+            {product.type?.value && (
+              <div className="uppercase text-xs tracking-widest font-medium text-[11px] font-medium leading-tight">
+                {product.type.value}
               </div>
             )}
-            
-            {/* Отзывы */}
-            <div className="flex items-center">
-              <div className="flex items-center">
-                <span className="text-lg mr-1">★★★★</span>
-                <span className="text-lg mr-2">☆</span>
-              </div>
-              <span className="text-xs font-medium">• 6 отзывов</span>
-            </div>
           </div>
           
           {/* Название продукта */}
-          <h1 className="text-3xl small:text-5xl font-medium leading-tight tracking-tight mb-8"
-              style={{
-                fontSize: "50px",
-                fontWeight: 500,
-                letterSpacing: "-0.2px",
-                lineHeight: 1.1
-              }}>
+          <h1 className="text-3xl small:text-5xl font-medium leading-tight tracking-tight mb-8 text-[50px] font-medium leading-tight">
             {product.title}
           </h1>
         </>

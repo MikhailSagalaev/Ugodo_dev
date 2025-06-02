@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { listProducts } from "@lib/data/products"
+import { Button } from "@medusajs/ui"
+import { listProductsWithInventory } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
-import { Button } from "@medusajs/ui"
+import { HttpTypes } from "@medusajs/types"
 
 const PRODUCT_LIMIT = 16
 
@@ -20,6 +21,7 @@ export default function PaginatedProducts({
   totalCount,
   collectionId,
   categoryId,
+  categoryIds,
   productsIds,
   countryCode,
   region,
@@ -28,6 +30,7 @@ export default function PaginatedProducts({
   totalCount: number
   collectionId?: string
   categoryId?: string
+  categoryIds?: string[]
   productsIds?: string[]
   countryCode: string
   region: any
@@ -35,7 +38,11 @@ export default function PaginatedProducts({
   const [products, setProducts] = useState(initialProducts)
   const [isLoading, setIsLoading] = useState(false)
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(totalCount > PRODUCT_LIMIT)
+  
+  // Определяем лимит в зависимости от типа страницы
+  const limit = categoryIds || categoryId ? 32 : PRODUCT_LIMIT
+  const [hasMore, setHasMore] = useState(totalCount > limit)
+  
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
   
@@ -59,14 +66,16 @@ export default function PaginatedProducts({
     const nextPage = page + 1
     
     const queryParams: PaginatedProductsParams = {
-      limit: PRODUCT_LIMIT,
+      limit: limit,
     }
 
     if (collectionId) {
       queryParams["collection_id"] = [collectionId]
     }
 
-    if (categoryId) {
+    if (categoryIds && categoryIds.length > 0) {
+      queryParams["category_id"] = categoryIds
+    } else if (categoryId) {
       queryParams["category_id"] = [categoryId]
     }
 
@@ -75,17 +84,22 @@ export default function PaginatedProducts({
     }
 
     try {
-      const { response } = await listProducts({
+      const { response } = await listProductsWithInventory({
         pageParam: nextPage,
-        queryParams,
+        queryParams: queryParams as HttpTypes.StoreProductParams,
         countryCode,
       })
-
-      setProducts([...products, ...response.products])
-      setPage(nextPage)
-      setHasMore(response.products.length === PRODUCT_LIMIT && products.length + response.products.length < totalCount)
+      
+      if (response.products.length > 0) {
+        setProducts(prev => [...prev, ...response.products])
+        setPage(nextPage)
+        setHasMore(response.products.length === limit && products.length + response.products.length < totalCount)
+      } else {
+        setHasMore(false)
+      }
     } catch (error) {
-      console.error("Error loading more products:", error)
+      console.error('Ошибка загрузки товаров:', error)
+      setHasMore(false)
     } finally {
       setIsLoading(false)
     }

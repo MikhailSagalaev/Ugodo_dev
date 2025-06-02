@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -24,8 +24,54 @@ interface CategoryClientProps {
   countryCode: string
   products: HttpTypes.StoreProduct[]
   totalCount: number
-  otherCategories: HttpTypes.StoreProductCategory[]
+  subcategories: HttpTypes.StoreProductCategory[]
   region: HttpTypes.StoreRegion
+  categoryIds: string[]
+  allCategories: HttpTypes.StoreProductCategory[]
+}
+
+// Функция для построения полной иерархии категорий
+function buildCategoryHierarchy(
+  category: HttpTypes.StoreProductCategory,
+  allCategories: HttpTypes.StoreProductCategory[]
+): HttpTypes.StoreProductCategory[] {
+  const hierarchy: HttpTypes.StoreProductCategory[] = []
+  let currentCategory: HttpTypes.StoreProductCategory | undefined = category
+  
+  while (currentCategory) {
+    hierarchy.unshift(currentCategory)
+    
+    if (currentCategory.parent_category_id) {
+      const parentCategory = allCategories.find(cat => cat.id === currentCategory!.parent_category_id)
+      currentCategory = parentCategory
+    } else {
+      break
+    }
+  }
+  
+  return hierarchy
+}
+
+// Функция для сокращения хлебных крошек
+function buildBreadcrumbs(categoryHierarchy: HttpTypes.StoreProductCategory[]) {
+  const breadcrumbs = [
+    { name: "Главная", path: "/" },
+    { name: "Каталог", path: "/store" },
+    ...categoryHierarchy.map(cat => ({
+      name: cat.name,
+      path: `/categories/${cat.handle}`
+    }))
+  ]
+  
+  if (breadcrumbs.length > 5) {
+    return [
+      breadcrumbs[0],
+      { name: "...", path: "#" },
+      ...breadcrumbs.slice(-2)
+    ]
+  }
+  
+  return breadcrumbs
 }
 
 export default function CategoryClient({
@@ -33,8 +79,10 @@ export default function CategoryClient({
   countryCode,
   products,
   totalCount,
-  otherCategories,
-  region
+  subcategories,
+  region,
+  categoryIds,
+  allCategories
 }: CategoryClientProps) {
   const [filteredProducts, setFilteredProducts] = useState(products)
   const [currentFilters, setCurrentFilters] = useState<FilterState>({
@@ -54,10 +102,13 @@ export default function CategoryClient({
     setFilteredProducts(filtered)
   }
 
+  const categoryHierarchy = buildCategoryHierarchy(category, allCategories)
+  const breadcrumbs = buildBreadcrumbs(categoryHierarchy)
+
   return (
     <>
       <div 
-        className="relative w-full h-[415px] flex items-end justify-center pb-8"
+        className="relative w-full h-[415px] flex items-center justify-center"
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
         }}
@@ -66,15 +117,23 @@ export default function CategoryClient({
         
         <div className="absolute bottom-8 left-6 z-10">
           <nav className="flex items-center space-x-2 text-white text-sm mb-4">
-            <LocalizedClientLink href="/" className="hover:text-[#C2E7DA] transition-colors">
-              Главная
-            </LocalizedClientLink>
-            <span>/</span>
-            <LocalizedClientLink href="/store" className="hover:text-[#C2E7DA] transition-colors">
-              Каталог
-            </LocalizedClientLink>
-            <span>/</span>
-            <span>{category.name}</span>
+            {breadcrumbs.map((crumb, index) => (
+              <span key={index} className="flex items-center">
+                {index > 0 && <span className="mx-2">/</span>}
+                {crumb.path === "#" ? (
+                  <span className="text-white/70">{crumb.name}</span>
+                ) : index === breadcrumbs.length - 1 ? (
+                  <span>{crumb.name}</span>
+                ) : (
+                  <LocalizedClientLink 
+                    href={crumb.path} 
+                    className="hover:text-[#C2E7DA] transition-colors"
+                  >
+                    {crumb.name}
+                  </LocalizedClientLink>
+                )}
+              </span>
+            ))}
           </nav>
         </div>
         
@@ -91,20 +150,20 @@ export default function CategoryClient({
         </h1>
       </div>
 
-      {otherCategories.length > 0 && (
+      {subcategories.length > 0 && (
         <div className="bg-white border-b border-gray-200 py-6">
           <div className="content-container">
-            <div className="flex gap-4 overflow-x-auto hide-scrollbar">
-              {otherCategories.map((cat, index) => (
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide">
+              {subcategories.map((subcat, index) => (
                 <LocalizedClientLink
-                  key={cat.id}
-                  href={`/categories/${cat.handle}`}
+                  key={subcat.id}
+                  href={`/categories/${subcat.handle}`}
                   className={`
                     flex-shrink-0 px-6 py-4 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-[120px] text-center
                     ${categoryColors[index % categoryColors.length]}
                   `}
                 >
-                  {cat.name}
+                  {subcat.name}
                 </LocalizedClientLink>
               ))}
             </div>
@@ -135,7 +194,7 @@ export default function CategoryClient({
           </div>
           
           <div className="flex items-center">
-            <span className="text-lg font-medium text-gray-900">{filteredProducts.length} товаров</span>
+            <span className="text-lg font-medium text-gray-900">{totalCount} товаров</span>
           </div>
           
           <div></div>
@@ -144,8 +203,8 @@ export default function CategoryClient({
         <Suspense fallback={<SkeletonProductGrid />}>
           <PaginatedProducts
             initialProducts={filteredProducts}
-            totalCount={filteredProducts.length}
-            categoryId={category.id}
+            totalCount={totalCount}
+            categoryIds={categoryIds}
             countryCode={countryCode}
             region={region}
           />

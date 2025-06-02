@@ -115,8 +115,10 @@ const MobileActions: React.FC<MobileActionsProps> = ({
       quantity: 1,
       countryCode: countryCode,
     })
+    
+    window.dispatchEvent(new CustomEvent('cartUpdated'))
+    
     setIsAdding(false)
-    // Закрываем шторку после добавления
     setIsDrawerOpen(false)
   }
   

@@ -24,6 +24,7 @@ import { ChevronLeft } from 'lucide-react'
 import ProductRating from "@modules/products/components/product-rating"
 import QuantitySelector from "@modules/products/components/quantity-selector"
 import { getProductReviews } from "@lib/data/reviews"
+import CartNotification from "@modules/common/components/cart-notification"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -53,6 +54,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
   
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -62,6 +64,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const [isClient, setIsClient] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
   const [promoCodeCopied, setPromoCodeCopied] = useState(false);
+  
+  // Состояние для уведомления о добавлении в корзину
+  const [showCartNotification, setShowCartNotification] = useState(false);
 
   // Карусель для мобильной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -153,6 +158,16 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     loadReviewCount()
   }, [product.id])
 
+  // Загружаем реальные количества товаров
+  useEffect(() => {
+    // Получаем количества из данных продукта, которые уже пришли с сервера
+    const quantities: Record<string, number> = {};
+    product.variants?.forEach((variant) => {
+      quantities[variant.id] = variant.inventory_quantity || 0;
+    });
+    setVariantQuantities(quantities);
+  }, [product.id, product.variants])
+
   // Функция копирования промокода
   const handlePromoCodeClick = async () => {
     try {
@@ -171,124 +186,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       [optionId]: value
     }))
   }
-
-  // Функция для отображения всех опций как кнопки
-  const renderOptionSelector = (option: HttpTypes.StoreProductOption) => {
-    const isColorOption = option.title.toLowerCase().includes('цвет') || 
-                         option.title.toLowerCase().includes('color')
-    
-    if (isColorOption) {
-      return (
-        <div className="mb-6">
-          <ColorSelector 
-            product={product}
-            selectedOptions={selectedOptions}
-            onOptionChange={handleOptionChange}
-          />
-        </div>
-      )
-    }
-
-    // Для всех остальных опций отображаем как кнопки
-    const optionValues = new Set<string>()
-    product.variants?.forEach(variant => {
-      variant.options?.forEach(optionValue => {
-        if (optionValue.option_id === option.id) {
-          optionValues.add(optionValue.value)
-        }
-      })
-    })
-
-    return (
-      <div className="mb-6">
-        <div className="text-gray-500 uppercase mb-3" style={{
-          fontSize: "11px",
-          fontWeight: 500,
-          letterSpacing: "1.4px",
-          lineHeight: 1.5,
-          textTransform: "uppercase"
-        }}>
-          {option.title}
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {Array.from(optionValues).map((value) => (
-            <button
-              key={value}
-              onClick={() => handleOptionChange(option.id, value)}
-              className={`px-4 py-2 border transition-colors duration-200 ${
-                selectedOptions[option.id] === value
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 hover:border-black'
-              }`}
-              style={{ fontSize: "14px" }}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  const handleAddToCart = async () => {
-    if (!product.variants || product.variants.length === 0) return;
-    
-    setIsAddingToCart(true);
-    try {
-      await addToCart({
-        variantId: product.variants[0].id,
-        quantity: quantity,
-        countryCode: params.countryCode as string,
-      });
-      setAddSuccess(true);
-      
-      setTimeout(() => {
-        setAddSuccess(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Ошибка добавления в корзину:", error);
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-
-  const handleWishlistToggle = async () => {
-    if (!customer) return;
-    
-    setIsLoadingWishlist(true);
-    
-    try {
-      if (isInWishlist && wishlistItemId) {
-        await removeFromWishlist(wishlistItemId);
-        setIsInWishlist(false);
-        setWishlistItemId(null);
-      } else {
-        await addToWishlist(product.id);
-        const items = await getWishlist();
-        const item = items.find(i => i.product_id === product.id);
-        if (item) {
-          setIsInWishlist(true);
-          setWishlistItemId(item.id);
-        }
-      }
-    } catch (error) {
-      console.error("Ошибка при обновлении избранного:", error);
-    } finally {
-      setIsLoadingWishlist(false);
-    }
-  };
-
-  const scrollThumbnailsUp = () => {
-    if (visibleThumbStartIndex > 0) {
-      setVisibleThumbStartIndex(visibleThumbStartIndex - 1);
-    }
-  };
-  
-  const scrollThumbnailsDown = () => {
-    if (product.images && visibleThumbStartIndex < product.images.length - 4) {
-      setVisibleThumbStartIndex(visibleThumbStartIndex + 1);
-    }
-  };
 
   // Проверяем наличие выбранного варианта
   const getSelectedVariant = () => {
@@ -309,7 +206,23 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   }
 
   const selectedVariant = getSelectedVariant()
-  const isInStock = selectedVariant?.inventory_quantity ? selectedVariant.inventory_quantity > 0 : true
+  const selectedVariantQuantity = selectedVariant ? variantQuantities[selectedVariant.id] : 0
+  const isInStock = selectedVariantQuantity > 0
+
+  useEffect(() => {
+    if (selectedVariant && quantity > selectedVariantQuantity) {
+      setQuantity(Math.min(quantity, selectedVariantQuantity > 0 ? selectedVariantQuantity : 1));
+    }
+  }, [selectedVariant?.id, selectedVariantQuantity]);
+
+  // Показываем количество товаров в консоли для отладки
+  if (variantQuantities && Object.keys(variantQuantities).length > 0) {
+    product.variants?.forEach((variant, index) => {
+      const variantName = variant.title || `Вариант ${index + 1}`
+      const quantity = variantQuantities[variant.id] || 0
+      const stockStatus = quantity > 0 ? "В НАЛИЧИИ" : "НЕТ В НАЛИЧИИ"
+    })
+  }
 
   const scrollToImage = (index: number) => {
     const imageElement = document.getElementById(`modal-image-${index}`);
@@ -331,14 +244,33 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   const breadcrumbItems: BreadcrumbItem[] = []
   
-  if (product.collection) {
+  if (product.categories && product.categories.length > 0) {
+    const category = product.categories[0]
+    
+    if (category.parent_category) {
+      breadcrumbItems.push({
+        name: category.parent_category.name,
+        path: `/categories/${category.parent_category.handle}`
+      })
+    }
+    
+    breadcrumbItems.push({
+      name: category.name,
+      path: `/categories/${category.handle}`
+    })
+  } else if (product.collection) {
     breadcrumbItems.push({
       name: product.collection.title || "Категория",
       path: `/collections/${product.collection.handle}`
     })
   }
   
-  const productCategory = "Shirts"
+  breadcrumbItems.push({
+    name: product.title,
+    path: `/products/${product.handle}`
+  })
+  
+  const productType = product.type?.value || ""
   const productTitle = product.title || ""
   const productSubtitle = product.subtitle || ""
   const variants = product.variants || []
@@ -453,8 +385,139 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     )
   }
 
+  // Функция для отображения всех опций как кнопки
+  const renderOptionSelector = (option: HttpTypes.StoreProductOption) => {
+    const isColorOption = option.title.toLowerCase().includes('цвет') || 
+                         option.title.toLowerCase().includes('color')
+    
+    if (isColorOption) {
+      return (
+        <div className="mb-6">
+          <ColorSelector 
+            product={product}
+            selectedOptions={selectedOptions}
+            onOptionChange={handleOptionChange}
+          />
+        </div>
+      )
+    }
+
+    // Для всех остальных опций отображаем как кнопки
+    const optionValues = new Set<string>()
+    product.variants?.forEach(variant => {
+      variant.options?.forEach(optionValue => {
+        if (optionValue.option_id === option.id) {
+          optionValues.add(optionValue.value)
+        }
+      })
+    })
+
+    return (
+      <div className="mb-6">
+        <div className="text-gray-500 uppercase mb-3" style={{
+          fontSize: "11px",
+          fontWeight: 500,
+          letterSpacing: "1.4px",
+          lineHeight: 1.5,
+          textTransform: "uppercase"
+        }}>
+          {option.title}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {Array.from(optionValues).map((value) => (
+            <button
+              key={value}
+              onClick={() => handleOptionChange(option.id, value)}
+              className={`px-4 py-2 border transition-colors duration-200 ${
+                selectedOptions[option.id] === value
+                  ? 'border-black bg-black text-white'
+                  : 'border-gray-300 hover:border-black'
+              }`}
+              style={{ fontSize: "14px" }}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const handleAddToCart = async () => {
+    if (!selectedVariant || !isInStock || quantity > selectedVariantQuantity) return;
+    
+    setIsAddingToCart(true);
+    try {
+      await addToCart({
+        variantId: selectedVariant.id,
+        quantity: quantity,
+        countryCode: params.countryCode as string,
+      });
+      
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
+      setAddSuccess(true);
+      setShowCartNotification(true);
+      
+      setTimeout(() => {
+        setAddSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Ошибка добавления в корзину:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!customer) return;
+    
+    setIsLoadingWishlist(true);
+    
+    try {
+      if (isInWishlist && wishlistItemId) {
+        await removeFromWishlist(wishlistItemId);
+        setIsInWishlist(false);
+        setWishlistItemId(null);
+      } else {
+        await addToWishlist(product.id);
+        const items = await getWishlist();
+        const item = items.find(i => i.product_id === product.id);
+        if (item) {
+          setIsInWishlist(true);
+          setWishlistItemId(item.id);
+        }
+      }
+    } catch (error) {
+      console.error("Ошибка при обновлении избранного:", error);
+    } finally {
+      setIsLoadingWishlist(false);
+    }
+  };
+
+  const scrollThumbnailsUp = () => {
+    if (visibleThumbStartIndex > 0) {
+      setVisibleThumbStartIndex(visibleThumbStartIndex - 1);
+    }
+  };
+  
+  const scrollThumbnailsDown = () => {
+    if (product.images && visibleThumbStartIndex < product.images.length - 4) {
+      setVisibleThumbStartIndex(visibleThumbStartIndex + 1);
+    }
+  };
+
   return (
     <div className={`pb-16 ${isMobile ? 'pb-20' : ''}`}>
+      {/* Уведомление о добавлении в корзину */}
+      <CartNotification
+        product={product}
+        variant={selectedVariant || undefined}
+        quantity={quantity}
+        isVisible={showCartNotification}
+        onClose={() => setShowCartNotification(false)}
+      />
+
       {isMobile ? (
         <div>
           <div className="flex items-center justify-between mb-4 pt-2 px-4">
@@ -475,15 +538,18 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
 
           <div className="mb-2 px-4">
-            <div className="uppercase text-[#7f7f7f]" style={{
-              fontSize: "9px",
-              fontWeight: 500,
-              letterSpacing: "1.4px",
-              lineHeight: 1.5,
-              textTransform: "uppercase"
-            }}>
-              {productCategory}
-            </div>
+            {productType && (
+              <div className="uppercase"
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 500,
+                    letterSpacing: "1.4px",
+                    lineHeight: 1.5,
+                    textTransform: "uppercase"
+                  }}>
+                {productType}
+              </div>
+            )}
           </div>
 
           <h1 className="mb-6 px-4" style={{
@@ -573,7 +639,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <ProductPrice 
                 product={product} 
                 region={region} 
-                variant={product.variants?.[0]}
+                variant={selectedVariant || undefined}
               />
             </div>
           </div>
@@ -603,9 +669,19 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   <input 
                     type="number" 
                     min="1" 
+                    max={selectedVariantQuantity > 0 ? selectedVariantQuantity : 1}
                     value={quantity} 
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="w-full h-full text-center outline-none"
+                    onChange={(e) => {
+                      const newQuantity = parseInt(e.target.value) || 1;
+                      setQuantity(newQuantity);
+                    }}
+                    onBlur={(e) => {
+                      const newQuantity = parseInt(e.target.value) || 1;
+                      const maxQuantity = selectedVariantQuantity > 0 ? selectedVariantQuantity : 1;
+                      setQuantity(Math.min(Math.max(newQuantity, 1), maxQuantity));
+                    }}
+                    disabled={!isInStock}
+                    className="w-full h-full text-center outline-none disabled:bg-gray-100 disabled:text-gray-400"
                   />
                 </div>
               </div>
@@ -817,15 +893,18 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             {/* Левая часть - изображения */}
             <div className="w-1/2">
               <div className="mb-2">
-                <div className="uppercase text-[#7f7f7f]" style={{
-                  fontSize: "9px",
-                  fontWeight: 500,
-                  letterSpacing: "1.4px",
-                  lineHeight: 1.5,
-                  textTransform: "uppercase"
-                }}>
-                  {productCategory}
-                </div>
+                {productType && (
+                  <div className="uppercase"
+                      style={{
+                        fontSize: "9px",
+                        fontWeight: 500,
+                        letterSpacing: "1.4px",
+                        lineHeight: 1.5,
+                        textTransform: "uppercase"
+                      }}>
+                    {productType}
+                  </div>
+                )}
               </div>
 
               <h1 className="mb-6" style={{
@@ -918,7 +997,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   <ProductPrice 
                     product={product} 
                     region={region} 
-                    variant={product.variants?.[0]}
+                    variant={selectedVariant || undefined}
                   />
                 </div>
               </div>
@@ -948,9 +1027,19 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       <input 
                         type="number" 
                         min="1" 
+                        max={selectedVariantQuantity > 0 ? selectedVariantQuantity : 1}
                         value={quantity} 
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        className="w-full h-full text-center outline-none"
+                        onChange={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          setQuantity(newQuantity);
+                        }}
+                        onBlur={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          const maxQuantity = selectedVariantQuantity > 0 ? selectedVariantQuantity : 1;
+                          setQuantity(Math.min(Math.max(newQuantity, 1), maxQuantity));
+                        }}
+                        disabled={!isInStock}
+                        className="w-full h-full text-center outline-none disabled:bg-gray-100 disabled:text-gray-400"
                       />
                     </div>
                   </div>
@@ -1017,9 +1106,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={isAddingToCart || !isInStock}
+                  disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
                   className={`flex-1 h-12 font-medium transition-colors duration-200 ${
-                    isAddingToCart || !isInStock
+                    isAddingToCart || !isInStock || quantity > selectedVariantQuantity
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : addSuccess
                       ? 'bg-green-500 text-white'
@@ -1032,7 +1121,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     textTransform: "uppercase"
                   }}
                 >
-                  {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : addSuccess ? 'ДОБАВЛЕНО!' : !isInStock ? 'НЕТ В НАЛИЧИИ' : 'В КОРЗИНУ'}
+                  {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : addSuccess ? 'ДОБАВЛЕНО!' : !isInStock ? 'НЕТ В НАЛИЧИИ' : quantity > selectedVariantQuantity ? 'ПРЕВЫШЕН ЛИМИТ' : 'В КОРЗИНУ'}
                 </button>
 
                 <button
@@ -1148,9 +1237,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <div className="flex flex-col w-1/2" style={{ paddingLeft: "20px" }}>
               <div className="flex items-center mb-3">
                 <div className="flex items-center">
-                  <ProductRating productId={product.id} showCount={false} size="lg" />
                   {reviewCount > 0 && (
                     <>
+                      <ProductRating productId={product.id} showCount={false} size="lg" />
                       <span className="mx-2">•</span>
                       <span className="text-sm">{reviewCount} отзывов</span>
                     </>
@@ -1159,16 +1248,18 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               </div>
                 
               <div className="flex items-center mb-2">
-                <div className="uppercase"
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 500,
-                      letterSpacing: "1.4px",
-                      lineHeight: 1.5,
-                      textTransform: "uppercase"
-                    }}>
-                  {productCategory}
-                </div>
+                {productType && (
+                  <div className="uppercase"
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        letterSpacing: "1.4px",
+                        lineHeight: 1.5,
+                        textTransform: "uppercase"
+                      }}>
+                    {productType}
+                  </div>
+                )}
               </div>
                 
               <h1 className="text-3xl small:text-5xl font-medium leading-tight tracking-tight"
@@ -1377,9 +1468,19 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                           <input 
                             type="number" 
                             min="1" 
+                            max={selectedVariantQuantity > 0 ? selectedVariantQuantity : 1}
                             value={quantity} 
-                            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                            className="w-full h-full text-center outline-none"
+                            onChange={(e) => {
+                              const newQuantity = parseInt(e.target.value) || 1;
+                              setQuantity(newQuantity);
+                            }}
+                            onBlur={(e) => {
+                              const newQuantity = parseInt(e.target.value) || 1;
+                              const maxQuantity = selectedVariantQuantity > 0 ? selectedVariantQuantity : 1;
+                              setQuantity(Math.min(Math.max(newQuantity, 1), maxQuantity));
+                            }}
+                            disabled={!isInStock}
+                            className="w-full h-full text-center outline-none disabled:bg-gray-100 disabled:text-gray-400"
                           />
                         </div>
                       </div>
@@ -1401,7 +1502,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       <ProductPrice 
                         product={product} 
                         region={region} 
-                        variant={product.variants?.[0]}
+                        variant={selectedVariant || undefined}
                       />
                     </div>
                   </div>
@@ -1458,7 +1559,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   
                   <div className="flex mb-6 gap-2">
                     <button 
-                      className={`${addSuccess ? 'bg-[#C2E7DA]' : isInStock ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+                      className={`${addSuccess ? 'bg-[#C2E7DA]' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
                       style={{
                         width: "305px",
                         height: "50px",
@@ -1469,9 +1570,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         textTransform: "uppercase"
                       }}
                       onClick={handleAddToCart}
-                      disabled={isAddingToCart || !isInStock}
+                      disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
                     >
-                      {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : 'Добавить в корзину'}
+                      {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
                     </button>
                     <button 
                       className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
@@ -1657,7 +1758,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 lineHeight: 1.5,
                 textTransform: "uppercase"
               }}>
-                {productCategory}
+                {productType}
               </div>
               <h1 className="text-3xl font-medium" style={{
                 fontSize: isMobile ? "20px" : "50px",
@@ -1850,7 +1951,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
           <div className="flex gap-2">
             <button 
-              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : isInStock ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
               style={{
                 height: "50px",
                 fontSize: "11px",
@@ -1860,9 +1961,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 textTransform: "uppercase"
               }}
               onClick={handleAddToCart}
-              disabled={isAddingToCart || !isInStock}
+              disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
             >
-              {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : 'Добавить в корзину'}
+              {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
             </button>
             <button 
               className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"

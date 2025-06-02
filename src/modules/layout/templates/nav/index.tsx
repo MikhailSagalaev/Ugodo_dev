@@ -45,7 +45,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
   const handleCatalogMouseLeave = useCallback(() => {
     closeTimeoutRef.current = setTimeout(() => {
       setShowCatalogDropdown(false)
-    }, 150)
+    }, 500)
   }, [])
 
   const handleDropdownMouseEnter = useCallback(() => {
@@ -58,7 +58,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
   const handleDropdownMouseLeave = useCallback(() => {
     closeTimeoutRef.current = setTimeout(() => {
       setShowCatalogDropdown(false)
-    }, 150)
+    }, 500)
   }, [])
 
   useEffect(() => {
