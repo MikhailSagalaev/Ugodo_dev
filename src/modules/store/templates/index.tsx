@@ -1,5 +1,5 @@
 import { getRegion } from "@lib/data/regions"
-import { listProducts } from "@lib/data/products"
+import { listProductsWithInventory } from "@lib/data/products"
 import { listCategories } from "@lib/data/categories"
 import StoreClient from "./store-client"
 
@@ -14,7 +14,7 @@ const StoreTemplate = async ({
     return <div>Регион не найден</div>
   }
 
-  const { response: { products, count: totalCount } } = await listProducts({
+  const { response: { products, count: totalCount } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
       limit: 16,

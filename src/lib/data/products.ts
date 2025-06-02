@@ -63,7 +63,7 @@ export const listProducts = async ({
           offset,
           region_id: region?.id,
           fields:
-            "id,title,subtitle,description,handle,status,thumbnail,weight,length,height,width,hs_code,mid_code,material,collection_id,type_id,discountable,external_id,created_at,updated_at,deleted_at,metadata,*variants.calculated_price,*variants.inventory_quantity,*variants.prices,*variants.options,*variants.metadata,*variants.sku,*images.id,*images.url,*images.metadata,*options,*tags,*type,*collection,*categories.id,*categories.name,*categories.handle",
+            "id,title,subtitle,description,handle,status,thumbnail,weight,length,height,width,hs_code,mid_code,material,collection_id,type_id,discountable,external_id,created_at,updated_at,deleted_at,metadata,*variants.calculated_price,*variants.inventory_quantity,+variants.inventory_quantity,*variants.prices,*variants.options,*variants.metadata,*variants.sku,*images.id,*images.url,*images.metadata,*options,*tags,*type,*collection,*categories.id,*categories.name,*categories.handle",
           ...queryParams,
         },
         headers,
@@ -249,3 +249,49 @@ export async function addProductReview(
 
   return review
 }
+
+export const listProductsWithInventory = async ({
+  pageParam = 1,
+  queryParams,
+  countryCode,
+  regionId,
+}: {
+  pageParam?: number
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+  countryCode?: string
+  regionId?: string
+}): Promise<{
+  response: { products: HttpTypes.StoreProduct[]; count: number }
+  nextPage: number | null
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+}> => {
+  const { response, nextPage, queryParams: returnedQueryParams } = await listProducts({
+    pageParam,
+    queryParams,
+    countryCode,
+    regionId,
+  });
+
+  const productsWithInventory = await Promise.all(
+    response.products.map(async (product) => {
+      try {
+        const { product: productWithInventory } = await sdk.store.product.retrieve(product.id, {
+          fields: `*variants.calculated_price,+variants.inventory_quantity`,
+        });
+        return productWithInventory;
+      } catch (error) {
+        console.error(`Ошибка получения количества для товара ${product.id}:`, error);
+        return product;
+      }
+    })
+  );
+
+  return {
+    response: {
+      products: productsWithInventory,
+      count: response.count,
+    },
+    nextPage,
+    queryParams: returnedQueryParams,
+  };
+};

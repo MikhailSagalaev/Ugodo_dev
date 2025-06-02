@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from "react"
-import { listProducts } from "@lib/data/products"
-import { getRegion } from "@lib/data/regions"
 import { HttpTypes } from "@medusajs/types"
+import { listProductsWithInventory } from "@lib/data/products"
+import { getRegion } from "@lib/data/regions"
 import { Heading } from "@medusajs/ui"
 import ProductPreview from "../product-preview"
 import useEmblaCarousel from 'embla-carousel-react'
@@ -68,7 +68,7 @@ export default function RelatedProducts({
         
         queryParams.is_giftcard = false
 
-        const { response } = await listProducts({
+        const { response } = await listProductsWithInventory({
           queryParams: queryParams as HttpTypes.StoreProductParams,
           countryCode,
         })

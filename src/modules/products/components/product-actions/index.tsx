@@ -13,6 +13,7 @@ import ProductPrice from "../product-price"
 import MobileActions from "./mobile-actions"
 import { Heart } from "lucide-react"
 import { getWishlist, addToWishlist, removeFromWishlist, retrieveCustomer } from "@lib/data/customer"
+import CartNotification from "@modules/common/components/cart-notification"
 // import { StoreCustomer } from "../../../../types/medusa" // <-- Убираем некорректный импорт
 
 type ProductActionsProps = {
@@ -47,6 +48,7 @@ export default function ProductActions({
   const [isLoadingWishlist, setIsLoadingWishlist] = React.useState(false)
   const [isLoadingCustomer, setIsLoadingCustomer] = React.useState(true)
   const [isInitialized, setIsInitialized] = React.useState(false)
+  const [showCartNotification, setShowCartNotification] = useState(false)
 
   // Инициализация опций только один раз при монтировании
   useEffect(() => {
@@ -153,6 +155,9 @@ export default function ProductActions({
       quantity: 1,
       countryCode,
     })
+
+    window.dispatchEvent(new CustomEvent('cartUpdated'))
+    setShowCartNotification(true)
 
     setIsAdding(false)
     if (typeof onAddToCartSuccess === 'function') {
@@ -265,6 +270,15 @@ export default function ProductActions({
 
   return (
     <>
+      {/* Уведомление о добавлении в корзину */}
+      <CartNotification
+        product={product}
+        variant={selectedVariant}
+        quantity={1}
+        isVisible={showCartNotification}
+        onClose={() => setShowCartNotification(false)}
+      />
+
       <div className="flex flex-col gap-y-4" ref={actionsRef}>
         {product.variants && product.variants.length > 1 && (
           <div className="flex flex-col gap-y-4">

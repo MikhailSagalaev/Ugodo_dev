@@ -17,7 +17,6 @@ export default function ProductPrice({
   region,
   className,
 }: ProductPriceProps) {
-  // Получаем расширенные данные о ценах
   const {
     cheapestPrice,
     variantPrice,
@@ -29,38 +28,63 @@ export default function ProductPrice({
     region,
   })
 
-  // Выбираем цену для отображения (логика остается прежней)
   const selectedPrice = variant ? variantPrice : cheapestPrice
 
-  // Проверяем, что есть числовая цена для рендеринга
   if (!selectedPrice || typeof selectedPrice.calculated_amount === 'undefined') {
     return <div className="block w-32 h-9 bg-gray-100 animate-pulse" />
   }
 
-  // Определяем, нужно ли показывать "От"
   const showFromPrefix = !variant && 
                          product.variants && 
                          product.variants.length > 1 && 
                          minPriceAmount !== maxPriceAmount;
 
-  // Формируем строку цены
   const formattedPrice = selectedPrice.calculated_price.replace(/[^\d,]/g, '');
   
+  const hasDiscount = selectedPrice.price_type === 'sale' && 
+                     selectedPrice.original_amount && 
+                     selectedPrice.original_amount > selectedPrice.calculated_amount;
+
+  const discountPercentage = hasDiscount && selectedPrice.original_amount
+    ? Math.round(((selectedPrice.original_amount - selectedPrice.calculated_amount) / selectedPrice.original_amount) * 100)
+    : 0;
+
   return (
-    <div className={clx("flex items-center", className)}>
-      {/* Отображаем цену с правильным форматированием и префиксом "От" */}
-      <span
-        className="text-4xl font-medium"
-        data-testid="product-price"
-      >
-        {formattedPrice} ₽
-      </span>
+    <div className={clx("flex", className)}>
+      <div className="flex flex-col">
+        <span
+          className="text-[30px] font-[500]"
+          data-testid="product-price"
+        >
+          {formattedPrice} ₽
+        </span>
+        {hasDiscount && (
+          <span 
+            className="text-[#C2E7DA] text-[14px] leading-[1.1] lowercase"
+          >
+            со скидкой {discountPercentage}%
+          </span>
+        )}
+      </div>
       
-      {/* Отображаем старую зачеркнутую цену рядом, если это распродажа и цена действительно отличается */}
-      {selectedPrice.price_type === 'sale' && selectedPrice.original_amount && selectedPrice.original_amount > selectedPrice.calculated_amount && (
-        <div className="ml-3">
-          <span className="text-sm">{selectedPrice.original_price}</span>
-          <span className="text-xs text-gray-500 ml-1">по максимальной карте</span>
+      {hasDiscount && (
+        <div className="flex flex-col ml-3">
+          <span 
+            className="text-[30px] font-[500] line-through"
+            style={{
+              color: "#b3b3b3"
+            }}
+          >
+            {selectedPrice.original_price?.replace(/[^\d,]/g, '')} ₽
+          </span>
+          <span 
+            className="text-[14px] leading-[1.1] lowercase"
+            style={{
+              color: "#b3b3b3"
+            }}
+          >
+            без скидки
+          </span>
         </div>
       )}
     </div>

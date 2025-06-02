@@ -113,6 +113,9 @@ export default function ProductActionsInner({
       quantity: 1,
       countryCode: countryCode,
     })
+    
+    window.dispatchEvent(new CustomEvent('cartUpdated'))
+    
     setIsAdding(false)
   }
 

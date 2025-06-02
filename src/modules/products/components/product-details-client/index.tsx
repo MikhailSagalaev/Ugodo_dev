@@ -175,6 +175,9 @@ export default function ProductDetailsClient({ product, region }: ProductDetails
     if (!selectedVariant?.id) return
     setIsAdding(true)
     await addToCart({ variantId: selectedVariant.id, quantity, countryCode })
+    
+    window.dispatchEvent(new CustomEvent('cartUpdated'))
+    
     setIsAdding(false)
   }
 

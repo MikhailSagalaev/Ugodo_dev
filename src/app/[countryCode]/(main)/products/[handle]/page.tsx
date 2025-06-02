@@ -128,10 +128,22 @@ export default async function ProductPage(props: Props) {
     notFound()
   }
 
+  // Получаем продукт с количеством товаров на сервере
+  let productWithInventory = pricedProduct;
+  try {
+    const { product } = await sdk.store.product.retrieve(pricedProduct.id, {
+      fields: `*variants.calculated_price,+variants.inventory_quantity,*categories.id,*categories.name,*categories.handle,*categories.parent_category.id,*categories.parent_category.name,*categories.parent_category.handle`,
+    });
+    productWithInventory = product;
+  } catch (error) {
+    console.error('Ошибка получения количества товаров на сервере:', error);
+    // Используем исходный продукт если не удалось получить количество
+  }
+
   // Возвращаем рендеринг ProductTemplate
   return (
     <ProductTemplate
-      product={pricedProduct}
+      product={productWithInventory}
       region={region}
       countryCode={params.countryCode}
     />

@@ -4,7 +4,7 @@ import { Container, Heading } from "@medusajs/ui"
 
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
-import { listProducts } from "@lib/data/products"
+import { listProducts, listProductsWithInventory } from "@lib/data/products"
 import Hero from "@modules/home/components/hero"
 import CategoryStories from "@modules/home/components/category-stories"
 import ProductSection from "@modules/home/components/product-section"
@@ -33,7 +33,7 @@ export default async function Home({ params }: { params: { countryCode: string }
     return notFound()
   }
 
-  const { response: { products: newProducts } } = await listProducts({
+  const { response: { products: newProducts } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
       limit: 8,
@@ -44,7 +44,7 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  const { response: { products: saleProducts } } = await listProducts({
+  const { response: { products: saleProducts } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
       limit: 4,
@@ -54,7 +54,7 @@ export default async function Home({ params }: { params: { countryCode: string }
     return { response: { products: [] } }
   })
 
-  const { response: { products: popularProducts } } = await listProducts({
+  const { response: { products: popularProducts } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
       limit: 8,
@@ -69,7 +69,7 @@ export default async function Home({ params }: { params: { countryCode: string }
 
   const marketplaceBestsellers = popularProducts.slice(0, 8)
 
-  const { response: { products: catalogProducts, count: totalCount } } = await listProducts({
+  const { response: { products: catalogProducts, count: totalCount } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
       limit: 16,

@@ -13,8 +13,6 @@ export const listCategories = async (query?: Record<string, any>) => {
 
   const limit = query?.limit || 100
 
-  console.log('🔍 Загружаем ВСЕ категории через прямой fetch...')
-
   return fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'}/store/product-categories?include_descendants_tree=true&fields=id,name,handle,description,parent_category_id,category_children.id,category_children.name,category_children.handle,category_children.description&limit=${limit}`, {
     method: 'GET',
     headers: {
@@ -25,24 +23,10 @@ export const listCategories = async (query?: Record<string, any>) => {
     next,
     cache: "force-cache",
   })
-  .then(response => {
-    console.log('📡 Ответ API категорий:', response.status, response.statusText)
-    return response.json()
-  })
-  .then(({ product_categories }) => {
-    console.log('📦 Получено ВСЕХ категорий через fetch:', product_categories?.length || 0)
-    console.log('📋 Структура категорий:', product_categories?.map((cat: any) => ({
-      id: cat.id,
-      name: cat.name,
-      handle: cat.handle,
-      parent_category_id: cat.parent_category_id,
-      children_count: cat.category_children?.length || 0,
-      children: cat.category_children?.map((child: any) => ({ id: child.id, name: child.name })) || []
-    })))
-    return product_categories || []
-  })
+  .then(response => response.json())
+  .then(({ product_categories }) => product_categories || [])
   .catch((error) => {
-    console.error('❌ Ошибка загрузки категорий через fetch:', error)
+    console.error('Ошибка загрузки категорий:', error)
     return []
   })
 }
@@ -54,9 +38,7 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
     ...(await getAuthHeaders()),
   }
 
-  console.log('🔍 Ищем категорию по handle через fetch:', handle)
-
-  return fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'}/store/product-categories?handle=${handle}&fields=id,name,handle,description,category_children.id,category_children.name,category_children.handle,category_children.description`, {
+  return fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://api.ugodo.ru'}/store/product-categories?handle=${handle}&fields=id,name,handle,description,parent_category_id,category_children.id,category_children.name,category_children.handle,category_children.description`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -65,24 +47,10 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
     },
     cache: "force-cache",
   })
-  .then(response => {
-    console.log('📡 Ответ поиска категории:', response.status, response.statusText)
-    return response.json()
-  })
-  .then(({ product_categories }) => {
-    console.log('📦 Найдено категорий по handle через fetch:', product_categories?.length || 0)
-    if (product_categories && product_categories.length > 0) {
-      console.log('📋 Найденная категория:', {
-        id: product_categories[0].id,
-        name: product_categories[0].name,
-        handle: product_categories[0].handle,
-        children_count: product_categories[0].category_children?.length || 0
-      })
-    }
-    return product_categories?.[0] || null
-  })
+  .then(response => response.json())
+  .then(({ product_categories }) => product_categories?.[0] || null)
   .catch((error) => {
-    console.error('❌ Ошибка поиска категории по handle через fetch:', error)
+    console.error('Ошибка поиска категории по handle:', error)
     return null
   })
 }

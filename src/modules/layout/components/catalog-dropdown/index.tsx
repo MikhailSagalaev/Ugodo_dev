@@ -21,23 +21,13 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
   useEffect(() => {
     if (isVisible && categories.length === 0) {
       setLoading(true)
-      console.log('🔄 Загружаем категории с фронтенда...')
       fetch('/api/categories')
-        .then(res => {
-          console.log('📡 Ответ API категорий:', res.status, res.statusText)
-          return res.json()
-        })
+        .then(res => res.json())
         .then((data) => {
-          console.log('📥 Данные категорий на фронтенде:', data)
-          console.log('📊 Количество категорий:', data?.length || 0)
-          if (data && data.length > 0) {
-            console.log('🏷️ Первая категория:', data[0])
-            console.log('👨‍👩‍👧‍👦 Родительские категории:', data.filter((cat: any) => !cat.parent_category_id))
-          }
           setCategories(data || [])
         })
         .catch((error) => {
-          console.error("❌ Ошибка загрузки категорий на фронтенде:", error)
+          console.error("Ошибка загрузки категорий:", error)
         })
         .finally(() => {
           setLoading(false)
@@ -62,7 +52,6 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
 
   if (!isVisible) return null
 
-  // Фильтруем только родительские категории (без parent_category_id)
   const parentCategories = categories.filter(cat => !cat.parent_category_id)
 
   return (
@@ -70,7 +59,10 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
       ref={dropdownRef}
       className="absolute top-[134px] left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-[100]"
       onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseLeave={() => {
+        setHoveredCategory(null)
+        if (onMouseLeave) onMouseLeave()
+      }}
     >
       <div className="content-container py-8">
         {loading ? (
@@ -88,11 +80,10 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                     key={category.id}
                     className="relative"
                     onMouseEnter={() => setHoveredCategory(category.id)}
-                    onMouseLeave={() => setHoveredCategory(null)}
                   >
                     <LocalizedClientLink
                       href={`/categories/${category.handle}`}
-                      className="flex items-center justify-between p-3 text-lg text-black hover:bg-gray-50 hover:text-[#C2E7DA] transition-colors font-medium rounded-md"
+                      className="flex items-center justify-between p-3 text-black hover:bg-gray-50 hover:text-[#C2E7DA] transition-colors rounded-md text-sm font-medium"
                       onClick={onClose}
                     >
                       <span>{category.name}</span>
@@ -109,7 +100,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <LocalizedClientLink
                   href="/store"
-                  className="inline-flex items-center px-6 py-3 bg-[#BAFF29] hover:bg-[#C2E7DA] text-black font-medium rounded-md transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-[#BAFF29] hover:bg-[#C2E7DA] text-black font-medium rounded-md transition-colors text-sm"
                   onClick={onClose}
                 >
                   Смотреть весь каталог
@@ -120,7 +111,10 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
             {/* Средняя колонка - подкатегории */}
             <div className="w-1/3 px-6">
               {hoveredCategory && (
-                <div className="space-y-2">
+                <div 
+                  className="space-y-2"
+                  onMouseEnter={() => setHoveredCategory(hoveredCategory)}
+                >
                   {(() => {
                     const hoveredCat = parentCategories.find(cat => cat.id === hoveredCategory)
                     const children = hoveredCat?.category_children || []
@@ -129,14 +123,11 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                     
                     return (
                       <>
-                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-                          {hoveredCat?.name}
-                        </h3>
                         {children.map((child) => (
                           <LocalizedClientLink
                             key={child.id}
                             href={`/categories/${child.handle}`}
-                            className="block p-2 text-base text-black hover:bg-gray-50 hover:text-[#C2E7DA] transition-colors rounded-md"
+                            className="block p-2 text-black hover:bg-gray-50 hover:text-[#C2E7DA] transition-colors rounded-md text-sm font-medium"
                             onClick={onClose}
                           >
                             {child.name}
@@ -150,7 +141,11 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
             </div>
             
             {/* Правая колонка - баннер */}
-            <div className="w-1/3 flex items-center justify-center">
+            <div 
+              className="w-1/3 flex items-center justify-center"
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+            >
               <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
                 <Image
                   src="/images/banners/banner.png"
@@ -167,4 +162,4 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
   )
 }
 
-export default CatalogDropdown 
+export default CatalogDropdown
