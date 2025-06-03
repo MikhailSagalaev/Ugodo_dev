@@ -413,7 +413,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               {expandedSections[key] ? '−' : '+'}
             </span>
             <span 
-              className="font-medium text-gray-900 uppercase tracking-wide group-hover:text-[#C2E7DA] transition-colors"
+              className="font-medium text-gray-900 lowercase tracking-wide group-hover:text-[#C2E7DA] transition-colors"
               style={{ fontSize: '20px', fontWeight: 500 }}
             >
               {title}
