@@ -1,8 +1,16 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { HttpTypes } from '@medusajs/types'
 import { Button } from '@medusajs/ui'
+import noUiSlider from 'nouislider'
+import 'nouislider/dist/nouislider.css'
+
+declare global {
+  interface HTMLElement {
+    noUiSlider?: any
+  }
+}
 
 type FilterOption = {
   value: string
@@ -38,7 +46,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   className = '',
   currentCategory
 }) => {
-  const [filters, setFilters] = useState<FilterState>({
+  const emptyFilters: FilterState = {
     colors: [],
     sizes: [],
     materials: [],
@@ -51,22 +59,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     season: [],
     skinType: [],
     purpose: []
-  })
+  }
 
-  const [localFilters, setLocalFilters] = useState<FilterState>({
-    colors: [],
-    sizes: [],
-    materials: [],
-    brands: [],
-    priceRange: null,
-    categories: [],
-    hasDiscount: false,
-    inStock: false,
-    gender: [],
-    season: [],
-    skinType: [],
-    purpose: []
-  })
+  const [filters, setFilters] = useState<FilterState>(emptyFilters)
+  const [localFilters, setLocalFilters] = useState<FilterState>(emptyFilters)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const [isOpen, setIsOpen] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -82,6 +79,63 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   const [showAllOptions, setShowAllOptions] = useState<Record<string, boolean>>({})
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({})
+
+  const getDynamicPriceRange = React.useMemo(() => {
+    const filtersWithoutPrice = { ...localFilters, priceRange: null }
+    const filteredProducts = products.filter(product => {
+      if (filtersWithoutPrice.hasDiscount && !product.metadata?.has_discount) return false
+      if (filtersWithoutPrice.inStock && product.variants?.every(v => (v.inventory_quantity || 0) <= 0)) return false
+      
+      if (filtersWithoutPrice.colors.length > 0) {
+        const hasColor = product.variants?.some(variant =>
+          variant.options?.some(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            return (optionTitle?.includes('цвет') || optionTitle?.includes('color')) && 
+                   filtersWithoutPrice.colors.includes(option.value)
+          })
+        )
+        if (!hasColor) return false
+      }
+      
+      if (filtersWithoutPrice.sizes.length > 0) {
+        const hasSize = product.variants?.some(variant =>
+          variant.options?.some(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            return (optionTitle?.includes('размер') || optionTitle?.includes('size')) && 
+                   filtersWithoutPrice.sizes.includes(option.value)
+          })
+        )
+        if (!hasSize) return false
+      }
+      
+      if (filtersWithoutPrice.brands.length > 0 && !filtersWithoutPrice.brands.includes(product.metadata?.brand as string)) return false
+      if (filtersWithoutPrice.materials.length > 0 && !filtersWithoutPrice.materials.includes(product.material || '')) return false
+      if (filtersWithoutPrice.gender.length > 0 && !filtersWithoutPrice.gender.includes(product.metadata?.gender as string)) return false
+      if (filtersWithoutPrice.season.length > 0 && !filtersWithoutPrice.season.includes(product.metadata?.season as string)) return false
+      if (filtersWithoutPrice.skinType.length > 0 && !filtersWithoutPrice.skinType.includes(product.metadata?.skin_type as string)) return false
+      if (filtersWithoutPrice.purpose.length > 0 && !filtersWithoutPrice.purpose.includes(product.metadata?.purpose as string)) return false
+      
+      return true
+    })
+
+    const prices: number[] = []
+    filteredProducts.forEach(product => {
+      product.variants?.forEach(variant => {
+        const priceAmount = variant.calculated_price?.calculated_amount
+        if (priceAmount && priceAmount > 0) {
+          prices.push(typeof priceAmount === 'string' ? parseFloat(priceAmount) : priceAmount)
+        }
+      })
+    })
+
+    if (prices.length === 0) {
+      return [0, 10000] as [number, number]
+    }
+
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    return [Math.floor(minPrice), Math.ceil(maxPrice)] as [number, number]
+  }, [localFilters.colors, localFilters.sizes, localFilters.brands, localFilters.materials, localFilters.gender, localFilters.season, localFilters.skinType, localFilters.purpose, localFilters.hasDiscount, localFilters.inStock, products])
 
   const extractFilterOptions = () => {
     const colors = new Set<string>()
@@ -197,7 +251,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const handleLocalFilterChange = (filterType: keyof FilterState, value: any) => {
     const newFilters = { ...localFilters }
     
-    if (filterType === 'priceRange' || filterType === 'hasDiscount' || filterType === 'inStock') {
+    if (filterType === 'priceRange') {
+      newFilters[filterType] = value
+    } else if (filterType === 'hasDiscount' || filterType === 'inStock') {
       newFilters[filterType] = value
     } else {
       const currentValues = newFilters[filterType] as string[]
@@ -233,10 +289,29 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       purpose: []
     }
     setLocalFilters(emptyFilters)
+    
+    setShowAllOptions({})
+    setSearchTerms({})
   }
 
   const getFilteredProductsCount = () => {
-    return products.filter(product => {
+    const hasActiveFilters = localFilters.colors.length > 0 || 
+                            localFilters.sizes.length > 0 || 
+                            localFilters.brands.length > 0 || 
+                            localFilters.materials.length > 0 || 
+                            localFilters.gender.length > 0 || 
+                            localFilters.season.length > 0 || 
+                            localFilters.skinType.length > 0 || 
+                            localFilters.purpose.length > 0 || 
+                            localFilters.hasDiscount || 
+                            localFilters.inStock ||
+                            localFilters.priceRange
+
+    if (!hasActiveFilters) {
+      return products.length
+    }
+
+    const filteredProducts = products.filter(product => {
       if (localFilters.hasDiscount && !product.metadata?.has_discount) return false
       if (localFilters.inStock && product.variants?.every(v => (v.inventory_quantity || 0) <= 0)) return false
       
@@ -276,7 +351,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       if (localFilters.purpose.length > 0 && !localFilters.purpose.includes(product.metadata?.purpose as string)) return false
       
       return true
-    }).length
+    })
+
+    return filteredProducts.length
   }
 
   const hasActiveLocalFilters = Object.values(localFilters).some(filter => 
@@ -320,6 +397,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   ) => {
     if (!availableFilters.includes(key) || options.length === 0) return null
 
+    const availableValues = getAvailableOptions(filterKey)
     const filteredOptions = getFilteredOptions(options, key)
     const hasMore = options.length > 5 && !showAllOptions[key]
     const searchTerm = searchTerms[key] || ''
@@ -330,20 +408,22 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           onClick={() => toggleSection(key)}
           className="flex items-center justify-between w-full text-left mb-4 group"
         >
-          <span 
-            className="font-medium text-gray-900 uppercase tracking-wide group-hover:text-[#C2E7DA] transition-colors"
-            style={{ fontSize: '20px', fontWeight: 500 }}
-          >
-            {title}
-          </span>
-          <span className="text-gray-400">
-            {expandedSections[key] ? '−' : '+'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-gray-400">
+              {expandedSections[key] ? '−' : '+'}
+            </span>
+            <span 
+              className="font-medium text-gray-900 uppercase tracking-wide group-hover:text-[#C2E7DA] transition-colors"
+              style={{ fontSize: '20px', fontWeight: 500 }}
+            >
+              {title}
+            </span>
+          </div>
         </button>
         
         {expandedSections[key] && (
           <div className="space-y-3">
-            {options.length > 5 && (
+            {options.length > 5 && showAllOptions[key] && (
               <div className="mb-4">
                 <input
                   type="text"
@@ -355,22 +435,32 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               </div>
             )}
             
-            {filteredOptions.map(option => (
-              <label key={option.value} className="flex items-center cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={(localFilters[filterKey] as string[]).includes(option.value)}
-                  onChange={() => handleLocalFilterChange(filterKey, option.value)}
-                  className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black focus:ring-2"
-                />
-                <span 
-                  className="ml-3 text-gray-700 group-hover:text-black transition-colors"
-                  style={{ fontSize: '14px' }}
-                >
-                  {option.label}
-                </span>
-              </label>
-            ))}
+            {filteredOptions.map(option => {
+              const isAvailable = availableValues.includes(option.value)
+              const isSelected = ((localFilters[filterKey] as string[]) || []).includes(option.value)
+              
+              return (
+                <label key={option.value} className={`flex items-center cursor-pointer group ${!isAvailable && !isSelected ? 'opacity-40' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    disabled={!isAvailable && !isSelected}
+                    onChange={() => handleLocalFilterChange(filterKey, option.value)}
+                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black focus:ring-2 disabled:opacity-50"
+                  />
+                  <span 
+                    className={`ml-3 transition-colors ${
+                      !isAvailable && !isSelected 
+                        ? 'text-gray-400' 
+                        : 'text-gray-700 group-hover:text-black'
+                    }`}
+                    style={{ fontSize: '14px' }}
+                  >
+                    {option.label}
+                  </span>
+                </label>
+              )
+            })}
             
             {hasMore && (
               <button 
@@ -419,59 +509,60 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   )
 
   const PriceSlider = () => {
-    const priceRange = filterOptions.priceRange || [0, 10000]
-    const [minPrice, maxPrice] = priceRange
-    const currentMin = localFilters.priceRange?.[0] || minPrice
-    const currentMax = localFilters.priceRange?.[1] || maxPrice
-    const [isDragging, setIsDragging] = useState<'min' | 'max' | null>(null)
-    const sliderRef = React.useRef<HTMLDivElement>(null)
+    const dynamicPriceRange = getDynamicPriceRange
+    const [minPrice, maxPrice] = dynamicPriceRange
+    const currentMin = localFilters.priceRange?.[0] ?? minPrice
+    const currentMax = localFilters.priceRange?.[1] ?? maxPrice
+    const sliderRef = useRef<HTMLDivElement>(null)
 
-    const getValueFromPosition = (clientX: number) => {
-      if (!sliderRef.current) return minPrice
-      const rect = sliderRef.current.getBoundingClientRect()
-      const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-      return minPrice + percentage * (maxPrice - minPrice)
-    }
+    useEffect(() => {
+      if (!sliderRef.current) return
 
-    const handleMouseDown = (e: React.MouseEvent, type: 'min' | 'max') => {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDragging(type)
-    }
-
-    const handleMouseMove = React.useCallback((e: MouseEvent) => {
-      if (!isDragging || !sliderRef.current) return
-      
-      const newValue = getValueFromPosition(e.clientX)
-      
-      if (isDragging === 'min') {
-        const value = Math.max(minPrice, Math.min(newValue, currentMax - 50))
-        handleLocalFilterChange('priceRange', [Math.round(value), currentMax])
-      } else {
-        const value = Math.min(maxPrice, Math.max(newValue, currentMin + 50))
-        handleLocalFilterChange('priceRange', [currentMin, Math.round(value)])
+      if (sliderRef.current.noUiSlider) {
+        sliderRef.current.noUiSlider.destroy()
       }
-    }, [isDragging, currentMin, currentMax, minPrice, maxPrice])
 
-    const handleMouseUp = React.useCallback(() => {
-      setIsDragging(null)
-    }, [])
+      noUiSlider.create(sliderRef.current, {
+        start: [currentMin, currentMax],
+        connect: true,
+        range: {
+          min: minPrice,
+          max: maxPrice
+        },
+        step: 1,
+        format: {
+          to: (value: number) => Math.round(value),
+          from: (value: string) => Number(value)
+        }
+      })
 
-    React.useEffect(() => {
-      if (isDragging) {
-        document.addEventListener('mousemove', handleMouseMove)
-        document.addEventListener('mouseup', handleMouseUp)
-        document.body.style.userSelect = 'none'
-        return () => {
-          document.removeEventListener('mousemove', handleMouseMove)
-          document.removeEventListener('mouseup', handleMouseUp)
-          document.body.style.userSelect = ''
+      const target = sliderRef.current
+      if (target) {
+        target.style.background = '#e5e7eb'
+        target.style.border = 'none'
+        target.style.boxShadow = 'none'
+        target.style.height = '2px'
+        target.style.borderRadius = '0'
+      }
+
+      sliderRef.current.noUiSlider.on('slide', (values: string[]) => {
+        const min = Number(values[0])
+        const max = Number(values[1])
+        handleLocalFilterChange('priceRange', [min, max])
+      })
+
+      sliderRef.current.noUiSlider.on('set', (values: string[]) => {
+        const min = Number(values[0])
+        const max = Number(values[1])
+        handleLocalFilterChange('priceRange', [min, max])
+      })
+
+      return () => {
+        if (sliderRef.current?.noUiSlider) {
+          sliderRef.current.noUiSlider.destroy()
         }
       }
-    }, [isDragging, handleMouseMove, handleMouseUp])
-
-    const minPercentage = ((currentMin - minPrice) / (maxPrice - minPrice)) * 100
-    const maxPercentage = ((currentMax - minPrice) / (maxPrice - minPrice)) * 100
+    }, [minPrice, maxPrice, currentMin, currentMax])
 
     return (
       <div className="mb-8">
@@ -479,106 +570,182 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           <span>от {currentMin} ₽</span>
           <span>до {currentMax} ₽</span>
         </div>
-        <div 
-          ref={sliderRef}
-          className="relative h-6 flex items-center"
-          style={{ userSelect: 'none' }}
-        >
-          <div className="absolute w-full h-1 bg-gray-200 rounded"></div>
-          <div 
-            className="absolute h-1 bg-black rounded pointer-events-none"
-            style={{
-              left: `${minPercentage}%`,
-              right: `${100 - maxPercentage}%`
-            }}
-          ></div>
-          
-          <div
-            className={`absolute w-5 h-5 bg-white border-2 border-black rounded-full shadow-md transition-all duration-75 ${
-              isDragging === 'min' ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-105'
-            }`}
-            style={{
-              left: `calc(${minPercentage}% - 10px)`,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: isDragging === 'min' ? 3 : 2
-            }}
-            onMouseDown={(e) => handleMouseDown(e, 'min')}
-          />
-          
-          <div
-            className={`absolute w-5 h-5 bg-white border-2 border-black rounded-full shadow-md transition-all duration-75 ${
-              isDragging === 'max' ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-105'
-            }`}
-            style={{
-              left: `calc(${maxPercentage}% - 10px)`,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: isDragging === 'max' ? 3 : 1
-            }}
-            onMouseDown={(e) => handleMouseDown(e, 'max')}
-          />
+        <div className="px-2">
+          <div ref={sliderRef} className="price-slider" />
         </div>
+        <style jsx>{`
+          .price-slider :global(.noUi-target) {
+            background: #e5e7eb !important;
+            border: none !important;
+            box-shadow: none !important;
+            height: 2px !important;
+            border-radius: 0 !important;
+          }
+          .price-slider :global(.noUi-base) {
+            height: 2px !important;
+          }
+          .price-slider :global(.noUi-connects) {
+            height: 2px !important;
+          }
+          .price-slider :global(.noUi-connect) {
+            background: #000 !important;
+            height: 2px !important;
+          }
+          .price-slider :global(.noUi-origin) {
+            height: 2px !important;
+          }
+          .price-slider :global(.noUi-handle) {
+            background: #fff !important;
+            border: 2px solid #000 !important;
+            border-radius: 50% !important;
+            box-shadow: none !important;
+            width: 20px !important;
+            height: 20px !important;
+            top: -9px !important;
+            right: -10px !important;
+            cursor: pointer !important;
+          }
+          .price-slider :global(.noUi-handle:before),
+          .price-slider :global(.noUi-handle:after) {
+            display: none !important;
+          }
+          .price-slider :global(.noUi-touch-area) {
+            height: 20px !important;
+            width: 20px !important;
+          }
+        `}</style>
       </div>
     )
   }
 
+  const getAvailableOptions = (filterType: keyof FilterState) => {
+    const filtersWithoutCurrent = { ...localFilters }
+    
+    if (Array.isArray(filtersWithoutCurrent[filterType])) {
+      filtersWithoutCurrent[filterType] = [] as any
+    }
+    
+    const availableProducts = products.filter(product => {
+      if (filtersWithoutCurrent.hasDiscount && !product.metadata?.has_discount) return false
+      if (filtersWithoutCurrent.inStock && product.variants?.every(v => (v.inventory_quantity || 0) <= 0)) return false
+      
+      if (filtersWithoutCurrent.priceRange) {
+        const [minPrice, maxPrice] = filtersWithoutCurrent.priceRange
+        const productPrice = product.variants?.[0]?.calculated_price?.calculated_amount
+        if (!productPrice || productPrice < minPrice || productPrice > maxPrice) return false
+      }
+      
+      if (filtersWithoutCurrent.colors.length > 0) {
+        const hasColor = product.variants?.some(variant =>
+          variant.options?.some(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            return (optionTitle?.includes('цвет') || optionTitle?.includes('color')) && 
+                   filtersWithoutCurrent.colors.includes(option.value)
+          })
+        )
+        if (!hasColor) return false
+      }
+      
+      if (filtersWithoutCurrent.sizes.length > 0) {
+        const hasSize = product.variants?.some(variant =>
+          variant.options?.some(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            return (optionTitle?.includes('размер') || optionTitle?.includes('size')) && 
+                   filtersWithoutCurrent.sizes.includes(option.value)
+          })
+        )
+        if (!hasSize) return false
+      }
+      
+      if (filtersWithoutCurrent.brands.length > 0 && !filtersWithoutCurrent.brands.includes(product.metadata?.brand as string)) return false
+      if (filtersWithoutCurrent.materials.length > 0 && !filtersWithoutCurrent.materials.includes(product.material || '')) return false
+      if (filtersWithoutCurrent.gender.length > 0 && !filtersWithoutCurrent.gender.includes(product.metadata?.gender as string)) return false
+      if (filtersWithoutCurrent.season.length > 0 && !filtersWithoutCurrent.season.includes(product.metadata?.season as string)) return false
+      if (filtersWithoutCurrent.skinType.length > 0 && !filtersWithoutCurrent.skinType.includes(product.metadata?.skin_type as string)) return false
+      if (filtersWithoutCurrent.purpose.length > 0 && !filtersWithoutCurrent.purpose.includes(product.metadata?.purpose as string)) return false
+      
+      return true
+    })
+
+    const availableValues = new Set<string>()
+    
+    availableProducts.forEach(product => {
+      if (filterType === 'colors') {
+        product.variants?.forEach(variant => {
+          variant.options?.forEach(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            if (optionTitle?.includes('цвет') || optionTitle?.includes('color')) {
+              availableValues.add(option.value)
+            }
+          })
+        })
+      } else if (filterType === 'sizes') {
+        product.variants?.forEach(variant => {
+          variant.options?.forEach(option => {
+            const optionTitle = product.options?.find(opt => opt.id === option.option_id)?.title?.toLowerCase()
+            if (optionTitle?.includes('размер') || optionTitle?.includes('size')) {
+              availableValues.add(option.value)
+            }
+          })
+        })
+      } else if (filterType === 'brands' && product.metadata?.brand) {
+        availableValues.add(product.metadata.brand as string)
+      } else if (filterType === 'materials' && product.material) {
+        availableValues.add(product.material)
+      } else if (filterType === 'gender' && product.metadata?.gender) {
+        availableValues.add(product.metadata.gender as string)
+      } else if (filterType === 'season' && product.metadata?.season) {
+        availableValues.add(product.metadata.season as string)
+      } else if (filterType === 'skinType' && product.metadata?.skin_type) {
+        availableValues.add(product.metadata.skin_type as string)
+      } else if (filterType === 'purpose' && product.metadata?.purpose) {
+        availableValues.add(product.metadata.purpose as string)
+      }
+    })
+
+    return Array.from(availableValues)
+  }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const categoryKey = currentCategory?.handle || 'all'
+      localStorage.setItem(`productFilters_${categoryKey}`, JSON.stringify(filters))
+    }
+  }, [filters, currentCategory?.handle])
+
+  useEffect(() => {
+    if (!isInitialized) {
+      const categoryKey = currentCategory?.handle || 'all'
+      const saved = localStorage.getItem(`productFilters_${categoryKey}`)
+      if (saved) {
+        try {
+          const savedFilters = JSON.parse(saved)
+          setFilters(savedFilters)
+          setLocalFilters(savedFilters)
+          onFiltersChange(savedFilters)
+        } catch (e) {
+          console.error('Error parsing saved filters:', e)
+        }
+      }
+      setIsInitialized(true)
+    }
+  }, [currentCategory?.handle, isInitialized, onFiltersChange])
+
+  useEffect(() => {
+    if (isInitialized) {
+      setFilters(emptyFilters)
+      setLocalFilters(emptyFilters)
+      onFiltersChange(emptyFilters)
+    }
+  }, [currentCategory?.handle])
+
   return (
     <div className={`bg-white ${className}`}>
-      <style jsx>{`
-        .range-slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #fff;
-          cursor: grab;
-          border: 2px solid #000;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          position: relative;
-          z-index: 3;
-        }
-        .range-slider::-webkit-slider-thumb:active {
-          cursor: grabbing;
-          background: #f5f5f5;
-        }
-        .range-slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #fff;
-          cursor: grab;
-          border: 2px solid #000;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .range-slider::-moz-range-thumb:active {
-          cursor: grabbing;
-          background: #f5f5f5;
-        }
-        .range-slider::-webkit-slider-track {
-          background: transparent;
-          border: none;
-        }
-        .range-slider::-moz-range-track {
-          background: transparent;
-          border: none;
-        }
-        .range-slider:focus {
-          outline: none;
-        }
-        .price-slider-thumb {
-          transition: background-color 0.2s ease;
-        }
-        .price-slider-thumb:hover {
-          background-color: #f5f5f5;
-        }
-        .price-slider-thumb:active {
-          background-color: #e5e5e5;
-        }
-      `}</style>
-      
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setLocalFilters(filters)
+          setIsOpen(true)
+        }}
         className="flex items-center justify-center gap-2 bg-white focus:outline-none focus:ring-0 hover:text-[#C2E7DA] transition-colors"
         style={{
           fontSize: "16px",

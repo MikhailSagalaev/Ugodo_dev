@@ -101,7 +101,7 @@ export function filterProducts(
       let productPrice = 0
       
       if (product.variants?.[0]?.calculated_price?.calculated_amount) {
-        productPrice = product.variants[0].calculated_price.calculated_amount / 100
+        productPrice = product.variants[0].calculated_price.calculated_amount
       }
       
       if (productPrice < minPrice || productPrice > maxPrice) {
