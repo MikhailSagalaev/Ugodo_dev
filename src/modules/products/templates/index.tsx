@@ -37,6 +37,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   region,
   countryCode,
 }) => {
+  console.log('Полный объект product:', product)
+
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
   const [customer, setCustomer] = useState<HttpTypes.StoreCustomer | null>(null);

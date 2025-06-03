@@ -137,11 +137,15 @@ export default function CategoryClient({
     colors: [],
     sizes: [],
     materials: [],
+    brands: [],
     priceRange: null,
     categories: [],
     hasDiscount: false,
     inStock: false,
-    expressDelivery: false
+    gender: [],
+    season: [],
+    skinType: [],
+    purpose: []
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -299,6 +303,7 @@ export default function CategoryClient({
             <ProductFilters
               products={products}
               onFiltersChange={handleFiltersChange}
+              currentCategory={category}
             />
             
             <div className="relative sort-dropdown">

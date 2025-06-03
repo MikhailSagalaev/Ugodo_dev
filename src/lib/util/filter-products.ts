@@ -47,6 +47,46 @@ export function filterProducts(
       }
     }
 
+    // Фильтр по брендам
+    if (filters.brands.length > 0) {
+      const productBrand = product.metadata?.brand as string
+      if (!productBrand || !filters.brands.includes(productBrand)) {
+        return false
+      }
+    }
+
+    // Фильтр по полу
+    if (filters.gender.length > 0) {
+      const productGender = product.metadata?.gender as string
+      if (!productGender || !filters.gender.includes(productGender)) {
+        return false
+      }
+    }
+
+    // Фильтр по сезону
+    if (filters.season.length > 0) {
+      const productSeason = product.metadata?.season as string
+      if (!productSeason || !filters.season.includes(productSeason)) {
+        return false
+      }
+    }
+
+    // Фильтр по типу кожи
+    if (filters.skinType.length > 0) {
+      const productSkinType = product.metadata?.skin_type as string
+      if (!productSkinType || !filters.skinType.includes(productSkinType)) {
+        return false
+      }
+    }
+
+    // Фильтр по цели
+    if (filters.purpose.length > 0) {
+      const productPurpose = product.metadata?.purpose as string
+      if (!productPurpose || !filters.purpose.includes(productPurpose)) {
+        return false
+      }
+    }
+
     // Фильтр по категориям
     if (filters.categories.length > 0) {
       const productCategories = product.categories?.map(cat => cat.name) || []

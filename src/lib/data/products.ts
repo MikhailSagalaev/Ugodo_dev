@@ -276,7 +276,7 @@ export const listProductsWithInventory = async ({
     response.products.map(async (product) => {
       try {
         const { product: productWithInventory } = await sdk.store.product.retrieve(product.id, {
-          fields: `*variants.calculated_price,+variants.inventory_quantity`,
+          fields: `*variants.calculated_price,+variants.inventory_quantity,+metadata`,
         });
         return productWithInventory;
       } catch (error) {

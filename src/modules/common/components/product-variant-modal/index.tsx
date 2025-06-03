@@ -75,6 +75,12 @@ export default function ProductVariantModal({
     }
   }, [isOpen, setIsOpen])
 
+  useEffect(() => {
+    if (selectedVariant && quantity > (selectedVariant.inventory_quantity || 0)) {
+      setQuantity(Math.min(quantity, selectedVariant.inventory_quantity || 1))
+    }
+  }, [selectedVariant?.id, selectedVariant?.inventory_quantity])
+
   const handleOptionChange = (optionId: string, value: string) => {
     setSelectedOptions(prev => ({
       ...prev,
@@ -84,6 +90,9 @@ export default function ProductVariantModal({
 
   const handleAddToCart = async () => {
     if (!selectedVariant || !isInStock) return
+    
+    const maxQuantity = selectedVariant.inventory_quantity || 0
+    if (quantity > maxQuantity) return
 
     setIsAddingToCart(true)
     try {
@@ -264,6 +273,7 @@ export default function ProductVariantModal({
                             <input 
                               type="number" 
                               min="1" 
+                              max={selectedVariant?.inventory_quantity || 1}
                               value={quantity} 
                               onChange={(e) => {
                                 const newQuantity = parseInt(e.target.value) || 1
@@ -271,7 +281,8 @@ export default function ProductVariantModal({
                               }}
                               onBlur={(e) => {
                                 const newQuantity = parseInt(e.target.value) || 1
-                                setQuantity(Math.min(Math.max(newQuantity, 1), 999))
+                                const maxQuantity = selectedVariant?.inventory_quantity || 1
+                                setQuantity(Math.min(Math.max(newQuantity, 1), maxQuantity))
                               }}
                               disabled={!isInStock}
                               className="w-full h-full text-center outline-none disabled:bg-gray-100 disabled:text-gray-400"
@@ -302,9 +313,9 @@ export default function ProductVariantModal({
                         <div className="flex gap-4 mb-6">
                           <button
                             onClick={handleAddToCart}
-                            disabled={isAddingToCart || !isInStock}
+                            disabled={isAddingToCart || !isInStock || quantity > (selectedVariant?.inventory_quantity || 0)}
                             className={`flex-1 h-12 font-medium transition-colors duration-200 ${
-                              isAddingToCart || !isInStock
+                              isAddingToCart || !isInStock || quantity > (selectedVariant?.inventory_quantity || 0)
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-black text-white hover:bg-gray-800'
                             }`}
@@ -315,7 +326,10 @@ export default function ProductVariantModal({
                               textTransform: "uppercase"
                             }}
                           >
-                            {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : !isInStock ? 'НЕТ В НАЛИЧИИ' : 'В КОРЗИНУ'}
+                            {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : 
+                             !isInStock ? 'НЕТ В НАЛИЧИИ' : 
+                             quantity > (selectedVariant?.inventory_quantity || 0) ? 'ПРЕВЫШЕН ЛИМИТ' : 
+                             'В КОРЗИНУ'}
                           </button>
 
                           <button

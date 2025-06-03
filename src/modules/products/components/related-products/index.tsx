@@ -30,6 +30,7 @@ export default function RelatedProducts({
     align: 'start',
     loop: true,
     slidesToScroll: 1,
+    containScroll: 'trimSnaps'
   })
 
   useEffect(() => {
@@ -60,10 +61,13 @@ export default function RelatedProducts({
         if (!showAllProducts) {
           if (product.categories && product.categories.length > 0) {
             queryParams.category_id = product.categories.map(cat => cat.id)
+            queryParams.limit = 100
           } else {
             setLoading(false)
             return
           }
+        } else {
+          queryParams.limit = 32
         }
         
         queryParams.is_giftcard = false
@@ -73,9 +77,14 @@ export default function RelatedProducts({
           countryCode,
         })
 
-        const filteredProducts = response.products.filter(
+        let filteredProducts = response.products.filter(
           (responseProduct) => responseProduct.id !== product.id
         )
+
+        if (showAllProducts && filteredProducts.length > 0) {
+          const shuffled = [...filteredProducts].sort(() => 0.5 - Math.random())
+          filteredProducts = shuffled.slice(0, 16)
+        }
 
         setProducts(filteredProducts)
       } catch (error) {
@@ -88,7 +97,6 @@ export default function RelatedProducts({
     loadProducts()
   }, [product.id, countryCode, showAllProducts])
 
-  // Группируем продукты по 4 для десктопа
   const itemsPerGroup = 4;
   const productGroups = []
   for (let i = 0; i < products.length; i += itemsPerGroup) {
@@ -190,6 +198,9 @@ export default function RelatedProducts({
                           </div>
                         )
                       })}
+                      {group.length < 4 && Array.from({ length: 4 - group.length }).map((_, emptyIndex) => (
+                        <div key={`empty-${groupIndex}-${emptyIndex}`} className="w-full"></div>
+                      ))}
                     </div>
                   </div>
                 ))}
