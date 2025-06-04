@@ -6,4 +6,4 @@ export default function Loading() {
       <Spinner size={36} />
     </div>
   )
-}
+} 

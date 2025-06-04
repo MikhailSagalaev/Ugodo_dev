@@ -73,6 +73,13 @@ module.exports = defineConfig({
         ],
       },
     },
+    {
+      resolve: "./src/modules/product-media",
+      options: {},
+      definition: {
+        isQueryable: true
+      }
+    },
   ],
   plugins: [
     {
