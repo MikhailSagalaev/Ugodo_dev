@@ -101,7 +101,11 @@ export default function ProductPreview({
     e.preventDefault();
     e.stopPropagation();
     
-    if (!isInStock) return;
+    // Если товара нет в наличии, открываем модалку для предзаказа
+    if (!isInStock) {
+      setIsModalOpen(true);
+      return;
+    }
     
     // Если есть только один вариант и он в наличии
     if (product.variants?.length === 1) {
@@ -253,17 +257,25 @@ export default function ProductPreview({
             </div>
           </LocalizedClientLink>
 
-          {badgeType === "new" && (
-            <div className="absolute top-3 left-3 bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
-              NEW
-            </div>
-          )}
+          <div className="absolute top-3 left-3 flex gap-1 z-10">
+            {badgeType === "new" && (
+              <div className="bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase rounded-sm">
+                NEW
+              </div>
+            )}
 
-          {badgeType === "hit" && (
-            <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase z-10 rounded-sm">
-              HIT
-            </div>
-          )}
+            {badgeType === "hit" && (
+              <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase rounded-sm">
+                HIT
+              </div>
+            )}
+
+            {!isInStock && (
+              <div className="text-white text-xs font-bold px-2 py-1 uppercase rounded-sm" style={{ backgroundColor: '#6290C3' }}>
+                ПРЕДЗАКАЗ
+              </div>
+            )}
+          </div>
 
           {badgeType === "discount" && cheapestPrice?.percentage_diff && (
             <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
@@ -298,25 +310,18 @@ export default function ProductPreview({
             </svg>
           </button>
 
-          {!isInStock && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <div className="bg-black/70 px-2 sm:px-4 py-2 rounded">
-                <span className="text-white font-medium">Упс, продукт закончился</span>
-              </div>
-            </div>
-          )}
-
-          {(isInStock && (isTabletOrMobile || isHovered)) && (
+          {(isTabletOrMobile || isHovered) && (
             <div className={isTabletOrMobile ? "absolute right-3 bottom-3 z-10" : "absolute bottom-5 right-5 z-10"}>
               <button
                 onClick={handleAddToCart}
                 className={
                   isTabletOrMobile
-                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent ${!isInStock ? 'bg-gray-400 opacity-50 cursor-not-allowed' : 'bg-[#1A1341]'}`
-                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${!isInStock ? 'bg-gray-400 opacity-50 cursor-not-allowed' : isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'}`
+                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent ${!isInStock ? '' : 'bg-[#1A1341]'}`
+                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${!isInStock ? '' : isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'}`
                 }
-                aria-label="Добавить в корзину"
-                disabled={isAddingToCart || !isInStock}
+                style={!isInStock ? { backgroundColor: '#6290C3' } : {}}
+                aria-label={!isInStock ? "Сделать предзаказ" : "Добавить в корзину"}
+                disabled={isAddingToCart}
               >
                 {isAddingToCart ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -349,7 +354,7 @@ export default function ProductPreview({
               return (
                 <div
                   key={idx}
-                  className="w-4 sm:w-5 h-4 sm:h-5 rounded-sm border border-gray-300 flex-shrink-0 shadow-sm mr-1.5"
+                  className="w-4 sm:w-5 h-4 sm:h-5 rounded-full border border-gray-300 flex-shrink-0 shadow-sm mr-1.5"
                   style={{
                     backgroundColor: colorValue,
                     boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
@@ -371,7 +376,7 @@ export default function ProductPreview({
           {/* Кликабельная категория/тип */}
           {productType && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div className={`text-[11px] sm:text-[11px] ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-[#C2E7DA]`}>
+              <div className={`text-[11px] sm:text-[11px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-[#C2E7DA]`}>
                 {productType}
               </div>
             </LocalizedClientLink>
@@ -379,10 +384,19 @@ export default function ProductPreview({
           
           {/* Кликабельное название */}
           <LocalizedClientLink href={`/products/${product?.handle}`}>
-            <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-[#C2E7DA]`}>
+            <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-[#C2E7DA]`}>
               {product.title}
             </h3>
           </LocalizedClientLink>
+          
+          {/* Подзаголовок */}
+          {product.subtitle && (
+            <LocalizedClientLink href={`/products/${product?.handle}`}>
+              <div className={`text-[18px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-gray-500'} transition-colors duration-200 lowercase cursor-pointer hover:text-[#C2E7DA]`}>
+                {product.subtitle}
+              </div>
+            </LocalizedClientLink>
+          )}
           
           {/* Кликабельная цена */}
           {cheapestPrice && (

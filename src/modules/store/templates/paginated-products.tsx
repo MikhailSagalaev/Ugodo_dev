@@ -118,21 +118,18 @@ export default function PaginatedProducts({
             grid
             ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px]' : 
               isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px]' : 
-              'grid-cols-4 px-16'}
+              'grid-cols-4 px-0'}
             w-full
             justify-center
           `}
-          style={!isTabletOrMobile && !isTablet ? { gap: 'clamp(15px, 2vw, 30px)' } : {}}
+          style={!isTabletOrMobile && !isTablet ? { gap: 'clamp(18px, 2.5vw, 30px)' } : {}}
           >
             {products.map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
               return (
                 <div key={p.id} className="flex justify-center">
                   <div 
-                    className="w-full aspect-[3/4]"
-                    style={!isTabletOrMobile && !isTablet ? { 
-                      width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)'
-                    } : {}}
+                    className={`w-full aspect-[3/4] ${!isTabletOrMobile && !isTablet ? 'product-card-catalog' : ''}`}
                   >
                     <ProductPreview 
                       product={p} 

@@ -6,7 +6,7 @@ export default function Login() {
   return (
     <div className="w-full max-w-md flex flex-col items-center gap-y-6 p-4 md:p-0">
       <Link href="/account/login-sms" className="w-full">
-        <Button variant="primary" className="w-full">Вход по SMS</Button>
+        <Button variant="primary" className="w-full rounded-full">Вход по SMS</Button>
       </Link>
     </div>
   )

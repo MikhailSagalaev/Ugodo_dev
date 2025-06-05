@@ -40,8 +40,8 @@ export default async function StoreProductsDisplay({
       </div>
 
       <ul
-        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 w-full justify-center"
-        style={{ gap: 'clamp(30px, 4vw, 80px)' }}
+        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 w-full justify-center px-0 lg:px-0"
+        style={{ gap: 'clamp(35px, 5vw, 90px)' }}
         data-testid="products-list"
       >
         {products.map((p, index) => {
@@ -50,8 +50,7 @@ export default async function StoreProductsDisplay({
           return (
             <li key={p.id} className="flex justify-center">
               <div 
-                className="w-full aspect-[3/4]"
-                style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}
+                className="w-full aspect-[3/4] product-card-container"
               >
                 <ProductPreview 
                   product={p} 

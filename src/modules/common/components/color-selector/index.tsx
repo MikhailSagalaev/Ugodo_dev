@@ -95,85 +95,102 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   const selectedValue = selectedOptions[colorOption.id] || colorValuesArray[0] || ''
   
   return (
-    <div className="relative" style={{ width: isMobile ? "100%" : "360px" }}>
+    <div className="mb-6">
       <div 
-        className="border-b border-gray-300 pb-3"
-        style={{ width: isMobile ? "100%" : "360px", height: "50px" }}
+        className="text-gray-500 uppercase mb-3"
+        style={{
+          fontSize: "11px",
+          fontWeight: 500,
+          letterSpacing: "1.4px",
+          lineHeight: 1.5,
+          textTransform: "uppercase"
+        }}
       >
-        <div className="flex items-center h-full">
-          <div className="relative flex-1">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center justify-between w-full bg-white transition-colors duration-200 hover:text-[#C2E7DA]"
-            >
-              <div className="flex items-center">
-                <div 
-                  className="w-4 h-4 mr-3"
-                  style={getColorStyle(selectedValue)}
-                />
-                <span 
-                  className="transition-colors duration-200"
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    letterSpacing: "1.4px",
-                    lineHeight: 1.5,
-                    textTransform: "uppercase"
-                  }}
-                >
-                  {selectedValue || 'Выберите цвет'}
-                </span>
-              </div>
-              <svg 
-                className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            
-            {isOpen && (
-              <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 border-t-0 z-50 max-h-48 overflow-y-auto">
-                {colorValuesArray.map((colorValue) => (
-                  <button
-                    key={colorValue}
-                    onClick={() => {
-                      onOptionChange(colorOption.id, colorValue)
-                      setIsOpen(false)
-                    }}
-                    className="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-left transition-colors duration-200 hover:text-[#C2E7DA]"
-                  >
-                    <div 
-                      className="w-4 h-4 mr-3"
-                      style={getColorStyle(colorValue)}
-                    />
-                    <span 
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 500,
-                        letterSpacing: "1.4px",
-                        lineHeight: 1.5,
-                        textTransform: "uppercase"
-                      }}
-                    >
-                      {colorValue}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        ЦВЕТ
       </div>
       
-      {isOpen && (
+      <div className="relative" style={{ width: isMobile ? "100%" : "480px" }}>
         <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+          className="border-b border-gray-300 pb-3"
+          style={{ width: isMobile ? "100%" : "480px", height: "50px" }}
+        >
+          <div className="flex items-center h-full">
+            <div className="relative flex-1">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center justify-between w-full bg-white transition-colors duration-200 hover:text-[#C2E7DA]"
+              >
+                <div className="flex items-center">
+                  <div 
+                    className="w-4 h-4 mr-3 rounded-full"
+                    style={getColorStyle(selectedValue)}
+                  />
+                  <span 
+                    className="transition-colors duration-200"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      letterSpacing: "1.4px",
+                      lineHeight: 1.5,
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    {selectedValue || 'Выберите цвет'}
+                  </span>
+                </div>
+                <svg 
+                  className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {isOpen && (
+                <div className="absolute left-0 right-0 bg-white border border-gray-300 z-50 max-h-48 overflow-y-auto" style={{ 
+                  top: "calc(100% + 8px)"
+                }}>
+                  {colorValuesArray.map((colorValue) => (
+                    <button
+                      key={colorValue}
+                      onClick={() => {
+                        onOptionChange(colorOption.id, colorValue)
+                        setIsOpen(false)
+                      }}
+                      className="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-left transition-colors duration-200 hover:text-[#C2E7DA]"
+                    >
+                      <div 
+                        className="w-4 h-4 mr-3 rounded-full"
+                        style={getColorStyle(colorValue)}
+                      />
+                      <span 
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          letterSpacing: "1.4px",
+                          lineHeight: 1.5,
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        {colorValue}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </div>
     </div>
   )
 }

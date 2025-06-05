@@ -25,6 +25,7 @@ import ProductRating from "@modules/products/components/product-rating"
 import QuantitySelector from "@modules/products/components/quantity-selector"
 import { getProductReviews } from "@lib/data/reviews"
 import CartNotification from "@modules/common/components/cart-notification"
+import PreorderModal from "@modules/common/components/preorder-modal"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -38,6 +39,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   countryCode,
 }) => {
   console.log('Полный объект product:', product)
+  console.log('Product metadata:', product.metadata)
+  console.log('Product variants:', product.variants)
+  console.log('Bulk discount check:', product.metadata?.bulk_discount)
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
@@ -69,6 +73,35 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   
   // Состояние для уведомления о добавлении в корзину
   const [showCartNotification, setShowCartNotification] = useState(false);
+  const [isPreorderModalOpen, setIsPreorderModalOpen] = useState(false);
+  
+  // Состояние для расчета итоговой цены
+  const [totalPrice, setTotalPrice] = useState<number | null>(null);
+
+  // Функция для определения, нужно ли показывать QuantitySelector
+  const shouldShowQuantitySelector = () => {
+    // Теперь QuantitySelector не используется, опции показываются через renderOptionSelector
+    return product.metadata?.bulk_discount === "true"
+  }
+
+  // Функция для расчета итоговой цены
+  const calculateTotalPrice = () => {
+    if (!selectedVariant) return null
+    
+    const hasQuantityOption = product.options?.some(option => 
+      option.title?.toLowerCase().includes('количество')
+    )
+    
+    if (hasQuantityOption) {
+      // Если есть опция количества, цена = цена варианта × количество упаковок
+      const variantPrice = selectedVariant.calculated_price?.calculated_amount || 0
+      return variantPrice * quantity
+    } else {
+      // Если нет опции количества, используем обычную логику
+      const variantPrice = selectedVariant.calculated_price?.calculated_amount || 0
+      return variantPrice * quantity
+    }
+  }
 
   // Карусель для мобильной версии
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -216,6 +249,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       setQuantity(Math.min(quantity, selectedVariantQuantity > 0 ? selectedVariantQuantity : 1));
     }
   }, [selectedVariant?.id, selectedVariantQuantity]);
+
+  // Обновляем итоговую цену при изменении варианта или количества
+  useEffect(() => {
+    const newTotalPrice = calculateTotalPrice()
+    setTotalPrice(newTotalPrice)
+  }, [selectedVariant?.id, quantity]);
 
   // Показываем количество товаров в консоли для отладки
   if (variantQuantities && Object.keys(variantQuantities).length > 0) {
@@ -394,15 +433,16 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     
     if (isColorOption) {
       return (
-        <div className="mb-6">
-          <ColorSelector 
-            product={product}
-            selectedOptions={selectedOptions}
-            onOptionChange={handleOptionChange}
-          />
-        </div>
+        <ColorSelector 
+          product={product}
+          selectedOptions={selectedOptions}
+          onOptionChange={handleOptionChange}
+        />
       )
     }
+
+    // Проверяем, является ли это опцией количества
+    const isQuantityOption = option.title.toLowerCase().includes('количество')
 
     // Для всех остальных опций отображаем как кнопки
     const optionValues = new Set<string>()
@@ -412,6 +452,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           optionValues.add(optionValue.value)
         }
       })
+    })
+
+    // Сортируем значения для опции количества
+    const sortedValues = Array.from(optionValues).sort((a, b) => {
+      if (isQuantityOption) {
+        return parseInt(a) - parseInt(b)
+      }
+      return a.localeCompare(b)
     })
 
     return (
@@ -426,46 +474,134 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           {option.title}
         </div>
         <div className="flex gap-2 flex-wrap">
-          {Array.from(optionValues).map((value) => (
-            <button
-              key={value}
-              onClick={() => handleOptionChange(option.id, value)}
-              className={`px-4 py-2 border transition-colors duration-200 ${
-                selectedOptions[option.id] === value
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 hover:border-black'
-              }`}
-              style={{ fontSize: "14px" }}
-            >
-              {value}
-            </button>
-          ))}
+          {sortedValues.map((value) => {
+            // Для опции количества показываем цену и скидку
+            if (isQuantityOption) {
+              const variant = product.variants?.find(v => 
+                v.options?.some(opt => 
+                  opt.option_id === option.id && opt.value === value
+                )
+              )
+              const price = variant?.calculated_price?.calculated_amount || 0
+              const quantity = parseInt(value)
+              
+              // Вычисляем скидку относительно цены за единицу самого маленького количества
+              const baseVariant = product.variants?.find(v => 
+                v.options?.some(opt => 
+                  opt.option_id === option.id && opt.value === "1"
+                )
+              )
+              const basePrice = baseVariant?.calculated_price?.calculated_amount || price
+              const basePricePerUnit = basePrice
+              const pricePerUnit = Math.round(price / quantity)
+              
+              let discount = 0
+              if (basePricePerUnit > 0 && pricePerUnit < basePricePerUnit) {
+                discount = Math.round(((basePricePerUnit - pricePerUnit) / basePricePerUnit) * 100)
+              }
+
+              const formatPrice = (price: number) => {
+                return new Intl.NumberFormat('ru-RU', {
+                  style: 'currency',
+                  currency: region.currency_code?.toUpperCase() || 'RUB',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(price)
+              }
+
+              return (
+                <button
+                  key={value}
+                  onClick={() => handleOptionChange(option.id, value)}
+                  className={`relative border-2 rounded-lg transition-all duration-200 text-center flex-shrink-0 ${
+                    selectedOptions[option.id] === value
+                      ? 'border-black bg-gray-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  style={{ 
+                    minHeight: "80px",
+                    minWidth: "100px",
+                    maxWidth: "120px"
+                  }}
+                >
+                  {/* Плашка выгоды сверху */}
+                  {discount > 0 && (
+                    <div 
+                      className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-black text-xs font-bold px-2 py-1 rounded-sm whitespace-nowrap"
+                      style={{ 
+                        backgroundColor: '#BAFF29',
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        zIndex: 10
+                      }}
+                    >
+                      ВЫГОДА {discount}%
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col items-center justify-center h-full p-3 pt-6">
+                    <div className="text-base font-bold mb-0.5">
+                      {value}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatPrice(Math.round(price / quantity))} / шт
+                    </div>
+                  </div>
+                </button>
+              )
+            }
+
+            // Для остальных опций обычные кнопки
+            return (
+              <button
+                key={value}
+                onClick={() => handleOptionChange(option.id, value)}
+                className={`px-4 py-2 border transition-colors duration-200 ${
+                  selectedOptions[option.id] === value
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-300 hover:border-black'
+                }`}
+                style={{ fontSize: "14px" }}
+              >
+                {value}
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
   const handleAddToCart = async () => {
-    if (!selectedVariant || !isInStock || quantity > selectedVariantQuantity) return;
+    if (!selectedVariant) return;
+    
+    // Для товаров в наличии проверяем количество
+    if (isInStock && quantity > selectedVariantQuantity) return;
     
     setIsAddingToCart(true);
     try {
-      await addToCart({
-        variantId: selectedVariant.id,
-        quantity: quantity,
-        countryCode: params.countryCode as string,
-      });
-      
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
-      setAddSuccess(true);
-      setShowCartNotification(true);
-      
-      setTimeout(() => {
-        setAddSuccess(false);
-      }, 2000);
+      if (isInStock) {
+        // Обычное добавление в корзину
+        await addToCart({
+          variantId: selectedVariant.id,
+          quantity: quantity,
+          countryCode: params.countryCode as string,
+        });
+        
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        setAddSuccess(true);
+        setShowCartNotification(true);
+        
+        setTimeout(() => {
+          setAddSuccess(false);
+        }, 2000);
+      } else {
+        // Открываем модалку предзаказа
+        setIsPreorderModalOpen(true);
+        return;
+      }
     } catch (error) {
-      console.error("Ошибка добавления в корзину:", error);
+      console.error("Ошибка:", error);
     } finally {
       setIsAddingToCart(false);
     }
@@ -577,21 +713,28 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
           <div className="mb-6 relative">
             <div className="relative">
-              {isNew && (
-                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
-                  NEW
-                </div>
-              )}
-              {isHit && !isNew && (
-                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
-                  HIT
-                </div>
-              )}
-              {!isNew && !isHit && discountPercentage && (
-                <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
-                  -{discountPercentage}%
-                </div>
-              )}
+              <div className="absolute top-4 left-4 z-10 flex gap-2">
+                {isNew && (
+                  <div className="inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
+                    NEW
+                  </div>
+                )}
+                {isHit && (
+                  <div className="inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
+                    HIT
+                  </div>
+                )}
+                {discountPercentage && (
+                  <div className="inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
+                    -{discountPercentage}%
+                  </div>
+                )}
+                {!isInStock && (
+                  <div className="inline-flex px-2 py-1 text-white text-xs font-bold uppercase" style={{ backgroundColor: '#6290C3' }}>
+                    ПРЕДЗАКАЗ
+                  </div>
+                )}
+              </div>
               
               <div className="relative w-full overflow-hidden" style={{ height: "533px" }} ref={emblaRef}>
                 <div className="flex h-full">
@@ -642,12 +785,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 product={product} 
                 region={region} 
                 variant={selectedVariant || undefined}
+                quantity={quantity}
+                showTotalPrice={true}
               />
             </div>
           </div>
 
           <div className="mb-6 px-4">
-            {product.metadata?.bulk_discount === "true" ? (
+            {shouldShowQuantitySelector() ? (
               <QuantitySelector
                 product={product}
                 region={region}
@@ -665,7 +810,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   lineHeight: 1.5,
                   textTransform: "uppercase"
                 }}>
-                  КОЛИЧЕСТВО / ШТ
+                  {(() => {
+                    const hasQuantityOption = product.options?.some(option => 
+                      option.title?.toLowerCase().includes('количество')
+                    )
+                    return hasQuantityOption ? "КОЛИЧЕСТВО УПАКОВОК" : "КОЛИЧЕСТВО"
+                  })()}
                 </div>
                 <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
                   <input 
@@ -932,21 +1082,28 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
               <div className="mb-6 relative">
                 <div className="relative">
-                  {isNew && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
-                      NEW
-                    </div>
-                  )}
-                  {isHit && !isNew && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
-                      HIT
-                    </div>
-                  )}
-                  {!isNew && !isHit && discountPercentage && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
-                      -{discountPercentage}%
-                    </div>
-                  )}
+                  <div className="absolute top-4 left-4 z-10 flex gap-2">
+                    {isNew && (
+                      <div className="inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
+                        NEW
+                      </div>
+                    )}
+                    {isHit && (
+                      <div className="inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
+                        HIT
+                      </div>
+                    )}
+                    {discountPercentage && (
+                      <div className="inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
+                        -{discountPercentage}%
+                      </div>
+                    )}
+                    {!isInStock && (
+                      <div className="inline-flex px-2 py-1 text-white text-xs font-bold uppercase" style={{ backgroundColor: '#6290C3' }}>
+                        ПРЕДЗАКАЗ
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="relative w-full aspect-[3/4] overflow-hidden" ref={emblaRef}>
                     <div className="flex h-full">
@@ -1000,12 +1157,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     product={product} 
                     region={region} 
                     variant={selectedVariant || undefined}
+                    quantity={quantity}
+                    showTotalPrice={true}
                   />
                 </div>
               </div>
 
               <div className="mb-6">
-                {product.metadata?.bulk_discount === "true" ? (
+                {shouldShowQuantitySelector() ? (
                   <QuantitySelector
                     product={product}
                     region={region}
@@ -1023,7 +1182,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       lineHeight: 1.5,
                       textTransform: "uppercase"
                     }}>
-                      КОЛИЧЕСТВО / ШТ
+                      {(() => {
+                        const hasQuantityOption = product.options?.some(option => 
+                          option.title?.toLowerCase().includes('количество')
+                        )
+                        return hasQuantityOption ? "КОЛИЧЕСТВО УПАКОВОК" : "КОЛИЧЕСТВО"
+                      })()}
                     </div>
                     <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
                       <input 
@@ -1108,12 +1272,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
+                  disabled={isAddingToCart || (isInStock && quantity > selectedVariantQuantity)}
                   className={`flex-1 h-12 font-medium transition-colors duration-200 ${
-                    isAddingToCart || !isInStock || quantity > selectedVariantQuantity
+                    isAddingToCart || (isInStock && quantity > selectedVariantQuantity)
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : addSuccess
                       ? 'bg-green-500 text-white'
+                      : !isInStock
+                      ? 'bg-cyan-600 text-white hover:bg-cyan-700'
                       : 'bg-black text-white hover:bg-gray-800'
                   }`}
                   style={{
@@ -1123,7 +1289,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     textTransform: "uppercase"
                   }}
                 >
-                  {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : addSuccess ? 'ДОБАВЛЕНО!' : !isInStock ? 'НЕТ В НАЛИЧИИ' : quantity > selectedVariantQuantity ? 'ПРЕВЫШЕН ЛИМИТ' : 'В КОРЗИНУ'}
+                  {isAddingToCart ? (isInStock ? 'ДОБАВЛЕНИЕ...' : 'ОФОРМЛЕНИЕ...') : addSuccess ? (isInStock ? 'ДОБАВЛЕНО!' : 'ПРЕДЗАКАЗ ОФОРМЛЕН!') : !isInStock ? 'СДЕЛАТЬ ПРЕДЗАКАЗ' : quantity > selectedVariantQuantity ? 'ПРЕВЫШЕН ЛИМИТ' : 'В КОРЗИНУ'}
                 </button>
 
                 <button
@@ -1358,21 +1524,28 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               
               <div className="relative flex flex-col">
                 <div className="relative">
-                  {isNew && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
-                      NEW
-                    </div>
-                  )}
-                  {isHit && !isNew && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
-                      HIT
-                    </div>
-                  )}
-                  {!isNew && !isHit && discountPercentage && (
-                    <div className="absolute top-4 left-4 z-10 inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
-                      -{discountPercentage}%
-                    </div>
-                  )}
+                  <div className="absolute top-4 left-4 z-10 flex gap-2">
+                    {isNew && (
+                      <div className="inline-flex px-2 py-1 bg-[#BAFF29] text-black text-xs font-bold uppercase">
+                        NEW
+                      </div>
+                    )}
+                    {isHit && (
+                      <div className="inline-flex px-2 py-1 bg-red-500 text-white text-xs font-bold uppercase">
+                        HIT
+                      </div>
+                    )}
+                    {discountPercentage && (
+                      <div className="inline-flex px-2 py-1 bg-[#FF3998] text-white text-xs font-bold uppercase">
+                        -{discountPercentage}%
+                      </div>
+                    )}
+                    {!isInStock && (
+                      <div className="inline-flex px-2 py-1 text-white text-xs font-bold uppercase" style={{ backgroundColor: '#6290C3' }}>
+                        ПРЕДЗАКАЗ
+                      </div>
+                    )}
+                  </div>
                   
                   <div style={{ width: "632px", height: "843px", position: "relative" }} className="group">
                     {product.images && product.images.length > 0 && (
@@ -1446,7 +1619,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               <div style={{ padding: "60px 90px 0" }}>
                 <div className="w-[400px]">
                   <div className="mb-6">
-                    {product.metadata?.bulk_discount === "true" ? (
+                    {shouldShowQuantitySelector() ? (
                       <QuantitySelector
                         product={product}
                         region={region}
@@ -1464,7 +1637,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                           lineHeight: 1.5,
                           textTransform: "uppercase"
                         }}>
-                          КОЛИЧЕСТВО / ШТ
+                          {(() => {
+                            const hasQuantityOption = product.options?.some(option => 
+                              option.title?.toLowerCase().includes('количество')
+                            )
+                            return hasQuantityOption ? "КОЛИЧЕСТВО УПАКОВОК" : "КОЛИЧЕСТВО"
+                          })()}
                         </div>
                         <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
                           <input 
@@ -1505,6 +1683,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         product={product} 
                         region={region} 
                         variant={selectedVariant || undefined}
+                        quantity={quantity}
+                        showTotalPrice={true}
                       />
                     </div>
                   </div>
@@ -1561,7 +1741,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   
                   <div className="flex mb-6 gap-2">
                     <button 
-                      className={`${addSuccess ? 'bg-[#C2E7DA]' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+                      className={`${addSuccess ? 'bg-[#C2E7DA]' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
                       style={{
                         width: "305px",
                         height: "50px",
@@ -1572,9 +1752,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         textTransform: "uppercase"
                       }}
                       onClick={handleAddToCart}
-                      disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
+                      disabled={isAddingToCart || (isInStock && quantity > selectedVariantQuantity)}
                     >
-                      {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
+                      {isAddingToCart ? (isInStock ? 'Добавление...' : 'Оформление...') : addSuccess ? (isInStock ? 'Добавлено ✓' : 'Предзаказ оформлен ✓') : !isInStock ? 'Сделать предзаказ' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
                     </button>
                     <button 
                       className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
@@ -1953,7 +2133,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
           <div className="flex gap-2">
             <button 
-              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
               style={{
                 height: "50px",
                 fontSize: "11px",
@@ -1963,9 +2143,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 textTransform: "uppercase"
               }}
               onClick={handleAddToCart}
-              disabled={isAddingToCart || !isInStock || quantity > selectedVariantQuantity}
+              disabled={isAddingToCart || (isInStock && quantity > selectedVariantQuantity)}
             >
-              {isAddingToCart ? 'Добавление...' : addSuccess ? 'Добавлено ✓' : !isInStock ? 'Нет в наличии' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
+              {isAddingToCart ? (isInStock ? 'Добавление...' : 'Оформление...') : addSuccess ? (isInStock ? 'Добавлено ✓' : 'Предзаказ оформлен ✓') : !isInStock ? 'Сделать предзаказ' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
             </button>
             <button 
               className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
@@ -1991,6 +2171,22 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
         </div>
       )}
+
+      {/* Модалка предзаказа */}
+      <PreorderModal
+        product={product}
+        variant={selectedVariant || undefined}
+        quantity={quantity}
+        isOpen={isPreorderModalOpen}
+        setIsOpen={setIsPreorderModalOpen}
+        onSuccess={() => {
+          setAddSuccess(true);
+          setShowCartNotification(true);
+          setTimeout(() => {
+            setAddSuccess(false);
+          }, 2000);
+        }}
+      />
     </div>
   )
 }

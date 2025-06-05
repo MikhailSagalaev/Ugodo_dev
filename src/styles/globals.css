@@ -164,3 +164,39 @@
     padding-right: 0 !important;
   }
 }
+
+/* Стили для карточек товаров */
+.product-card-container {
+  width: clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px);
+}
+
+/* Увеличиваем карточки на 20% только на ПК (от 1024px) */
+@media (min-width: 1024px) {
+  .product-card-container {
+    width: clamp(194px, calc(194px + (281 - 194) * ((100vw - 1120px) / (1920 - 1120))), 281px);
+  }
+}
+
+/* Стили для карточек в новинках и популярном */
+.product-card-featured {
+  width: clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px);
+}
+
+@media (min-width: 1024px) {
+  .product-card-featured {
+    width: clamp(186px, calc(186px + (269 - 186) * ((100vw - 1120px) / (1920 - 1120))), 269px);
+  }
+}
+
+/* Стили для карточек в каталоге */
+.product-card-catalog {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .product-card-catalog {
+    width: 312px;
+    flex-shrink: 0;
+  }
+}
