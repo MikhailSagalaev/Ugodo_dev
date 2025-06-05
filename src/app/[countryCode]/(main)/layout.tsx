@@ -36,9 +36,10 @@ export default async function MainLayout({
   params,
 }: {
   children: ReactNode
-  params: { countryCode: string }
+  params: Promise<{ countryCode: string }>
 }) {
   try {
+    const { countryCode } = await params
     const customer = await retrieveCustomer()
     const cart = await retrieveCart()
     let shippingOptions: StoreCartShippingOption[] = []
@@ -55,7 +56,7 @@ export default async function MainLayout({
     return (
       <>
         <Suspense>
-          <NavWithHome countryCode={params.countryCode} />
+          <NavWithHome countryCode={countryCode} />
         </Suspense>
         {customer && cart && (
           <CartMismatchBanner customer={customer} cart={cart} />

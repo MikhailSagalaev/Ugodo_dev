@@ -80,6 +80,13 @@ module.exports = defineConfig({
         isQueryable: true
       }
     },
+    {
+      resolve: "./src/modules/product-video",
+      options: {},
+      definition: {
+        isQueryable: true
+      }
+    },
   ],
   plugins: [
     {

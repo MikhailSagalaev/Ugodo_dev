@@ -16,6 +16,12 @@ interface SmscResponse {
 
 let apiInstance: any;
 
+// Проверяем тестовый режим из переменных окружения
+// Автоматически включается в development режиме, если не задано явно
+const TEST_MODE = process.env.SMS_TEST_MODE === 'true' || 
+                 (process.env.NODE_ENV === 'development' && process.env.SMS_TEST_MODE !== 'false');
+const TEST_OTP = '123456';
+
 function getApiInstance() {
   if (!apiInstance) {
     const SmscApiModule = require('../../../smsc_api.js'); // Загружаем модуль
@@ -42,6 +48,13 @@ function getApiInstance() {
 }
 
 export async function sendOtpSms(phoneNumber: string, otp: string): Promise<void> {
+  // В тестовом режиме просто логируем и возвращаем успех
+  if (TEST_MODE) {
+    console.log(`[SmscClient] TEST MODE: SMS would be sent to ${phoneNumber} with OTP: ${otp}`);
+    console.log(`[SmscClient] TEST MODE: Use OTP ${TEST_OTP} for testing`);
+    return Promise.resolve();
+  }
+
   const api = getApiInstance();
   const message = `Ваш код подтверждения: ${otp}`;
 

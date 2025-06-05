@@ -5,14 +5,17 @@
  */
 
 import { model } from "@medusajs/framework/utils"
-import { MediaType } from "../types/media-type"
 
 const ProductMedia = model.define("product_media", {
   id: model.id().primaryKey(),
-  type: model.enum(MediaType),
+  type: model.enum(["image", "video"]),
   url: model.text(),
   product_id: model.text().index("IDX_PRODUCT_MEDIA_PRODUCT_ID"),
   title: model.text().nullable(),
+  description: model.text().nullable(),
+  alt_text: model.text().nullable(),
+  sort_order: model.number().default(0),
+  is_thumbnail: model.boolean().default(false),
   metadata: model.json().nullable(),
 })
 

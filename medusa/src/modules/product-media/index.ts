@@ -1,7 +1,6 @@
+import ProductMediaModuleService from "./service"
 import { Module } from "@medusajs/framework/utils"
 import ProductMedia from "./models/product-media"
-import { MediaType } from "./types/media-type"
-import ProductMediaModuleService from "./service"
 
 export const PRODUCT_MEDIA_MODULE = "productMedia"
 
@@ -13,4 +12,4 @@ export const linkable = {
   productMedia: ProductMedia,
 }
 
-export { ProductMedia, MediaType } 
+export { ProductMedia } 
