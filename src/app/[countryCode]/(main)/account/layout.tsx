@@ -17,4 +17,4 @@ export default async function AccountPageLayout({
       <Toaster />
     </AccountLayout>
   )
-}
+} 

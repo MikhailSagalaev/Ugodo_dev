@@ -1,11 +1,17 @@
+/**
+ * @file: get-product-price.ts
+ * @description: Утилита для получения и форматирования цен на продукты.
+ * @dependencies: @medusajs/types, @medusajs/medusa, ./money, ./get-precentage-diff
+ * @created: [Дата создания файла, если известна, иначе дата изменения]
+ */
 import { HttpTypes } from "@medusajs/types"
 import { Region } from "@medusajs/medusa"
 import { convertToLocale } from "@lib/util/money"
-import { getPercentageDiff } from "./get-precentage-diff" // Убедитесь, что путь правильный
+import { getPercentageDiff } from "./get-precentage-diff"
 
-// Новый, расширенный тип возвращаемого значения
+// Тип возвращаемого значения
 type ProductPriceData = {
-  calculated_price: string // Отформатированная цена со скидкой (если есть)
+  calculated_price: string // Отформатированная цена
   original_price: string // Отформатированная оригинальная цена (если есть скидка)
   calculated_amount: number // Числовое значение цены
   original_amount: number | null // Числовое значение оригинальной цены
@@ -22,7 +28,7 @@ type ProductPriceData = {
   currency_code?: undefined
 }
 
-// Новая функция для получения цен, ориентированная на calculated_price
+// Функция для получения цен, ориентированная на calculated_price
 export const getProductPrice = ({
   product,
   variantId,
@@ -32,14 +38,12 @@ export const getProductPrice = ({
   variantId?: string
   region: HttpTypes.StoreRegion | Region
 }): {
-  // Добавляем min/max amount
   cheapestPrice: ProductPriceData
   variantPrice: ProductPriceData
   minPriceAmount?: number
   maxPriceAmount?: number
 } => {
   if (!product || !product.variants?.length || !region) {
-    // Возвращаем заглушку, если данных недостаточно
     const naPrice: ProductPriceData = { calculated_price: "N/A" };
     return { cheapestPrice: naPrice, variantPrice: naPrice };
   }
@@ -47,40 +51,46 @@ export const getProductPrice = ({
   const getPriceForVariant = (variant: HttpTypes.StoreProductVariant): ProductPriceData => {
     const calculatedPriceData = variant.calculated_price;
 
-    if (!calculatedPriceData || typeof calculatedPriceData.calculated_amount !== 'number') {
-      return { calculated_price: "Not available in region" };
+    if (calculatedPriceData && typeof calculatedPriceData.calculated_amount === 'number') {
+      const priceToUse = calculatedPriceData.calculated_amount;
+      const originalPriceToUse = calculatedPriceData.original_amount;
+      const priceType = typeof originalPriceToUse === 'number' && originalPriceToUse > priceToUse ? "sale" : "default";
+
+      const localeFormat = (amount: number | null | undefined) => {
+          if (amount === null || amount === undefined) return '';
+          try {
+              return new Intl.NumberFormat(region.metadata?.locale || 'ru-RU', { 
+                  style: 'currency',
+                  currency: region.currency_code,
+                  minimumFractionDigits: region.currency_code.toLowerCase() === 'rub' ? 0 : 2, 
+                  maximumFractionDigits: region.currency_code.toLowerCase() === 'rub' ? 0 : 2,
+              }).format(amount);
+          } catch (error) {
+              console.error("Error formatting price:", error);
+              return convertToLocale({ amount: amount, currency_code: region.currency_code });
+          }
+      };
+      
+      const finalOriginalAmount = originalPriceToUse ?? priceToUse;
+      const isSaleType = priceType === "sale";
+
+      let percentageDiffValue: number | undefined = undefined;
+      if (isSaleType && typeof originalPriceToUse === 'number' && typeof priceToUse === 'number') {
+        percentageDiffValue = getPercentageDiff(originalPriceToUse, priceToUse);
+      }
+
+      return {
+        calculated_price: localeFormat(priceToUse),
+        original_price: localeFormat(finalOriginalAmount), 
+        calculated_amount: priceToUse, 
+        original_amount: finalOriginalAmount, 
+        price_type: priceType,
+        percentage_diff: percentageDiffValue,
+        currency_code: region.currency_code,
+      };
     }
-
-    const localeFormat = (amount: number | null | undefined) => {
-        if (amount === null || amount === undefined) return '';
-        // Используем Intl.NumberFormat для правильного форматирования
-        try {
-            return new Intl.NumberFormat(region.metadata?.locale || 'ru-RU', { 
-                style: 'currency',
-                currency: region.currency_code,
-                minimumFractionDigits: region.currency_code.toLowerCase() === 'rub' ? 0 : 2, 
-                maximumFractionDigits: region.currency_code.toLowerCase() === 'rub' ? 0 : 2,
-            }).format(amount); // УБИРАЕМ ДЕЛЕНИЕ НА 100
-        } catch (error) {
-            console.error("Error formatting price:", error);
-            // Возврат к старому формату (тоже без деления)
-            return convertToLocale({ amount: amount, currency_code: region.currency_code });
-        }
-    };
-    
-    const originalAmount = calculatedPriceData.original_amount;
-    const calculatedAmount = calculatedPriceData.calculated_amount;
-    const isSale = typeof originalAmount === 'number' && originalAmount > calculatedAmount;
-
-    return {
-      calculated_price: localeFormat(calculatedAmount),
-      original_price: isSale ? localeFormat(originalAmount) : localeFormat(calculatedAmount), 
-      calculated_amount: calculatedAmount, // Возвращаем число
-      original_amount: originalAmount ?? null, // Возвращаем число или null
-      price_type: isSale ? "sale" : "default",
-      percentage_diff: isSale && originalAmount ? getPercentageDiff(originalAmount, calculatedAmount) : undefined,
-      currency_code: region.currency_code,
-    };
+    // Если calculated_price невалиден или отсутствует
+    return { calculated_price: "Not available in region" };
   };
 
   // --- Логика поиска самой дешевой и ДОРОГОЙ цены --- 
@@ -89,19 +99,18 @@ export const getProductPrice = ({
   let maxPriceAmount = -Infinity;
 
   for (const variant of product.variants) {
-     const priceAmount = variant.calculated_price?.calculated_amount;
-     if (typeof priceAmount === 'number') {
-       if (priceAmount < minPriceAmount) {
-         minPriceAmount = priceAmount;
+     const priceData = getPriceForVariant(variant); 
+     if (typeof priceData.calculated_amount === 'number') {
+       if (priceData.calculated_amount < minPriceAmount) {
+         minPriceAmount = priceData.calculated_amount;
          cheapestVariant = variant;
        }
-       if (priceAmount > maxPriceAmount) {
-         maxPriceAmount = priceAmount;
+       if (priceData.calculated_amount > maxPriceAmount) {
+         maxPriceAmount = priceData.calculated_amount;
        }
      }
   }
 
-  // Если цены не найдены (ни одного валидного amount)
   if (minPriceAmount === Infinity) minPriceAmount = 0;
   if (maxPriceAmount === -Infinity) maxPriceAmount = 0;
 
@@ -111,12 +120,11 @@ export const getProductPrice = ({
 
   const selectedVariant = variantId
     ? product.variants.find((v) => v.id === variantId)
-    : undefined;
+    : product.variants[0]; 
 
   const variantPrice = selectedVariant
     ? getPriceForVariant(selectedVariant)
     : { calculated_price: "Select variant" }; 
 
-  // Возвращаем min и max
   return { cheapestPrice, variantPrice, minPriceAmount, maxPriceAmount };
 };
