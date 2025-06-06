@@ -38,6 +38,10 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# medusa config files (environment-specific)
+medusa/medusa-config.ts
+medusa/medusa-config.js
+
 # vercel
 .vercel
 
