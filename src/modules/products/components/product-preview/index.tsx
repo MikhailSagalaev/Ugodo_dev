@@ -264,36 +264,30 @@ export default function ProductPreview({
           </LocalizedClientLink>
 
           <div className="absolute top-3 left-3 flex gap-1 z-10">
-            {badgeType === "new" && (
-              <div className="bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase rounded-sm">
-                NEW
-              </div>
-            )}
-
-            {badgeType === "hit" && (
-              <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase rounded-sm">
-                HIT
-              </div>
-            )}
-
             {!isInStock && (
               <div className="text-white text-xs font-bold px-2 py-1 uppercase rounded-sm" style={{ backgroundColor: '#6290C3' }}>
                 ПРЕДЗАКАЗ
               </div>
             )}
+            
+            {isInStock && badgeType === "new" && (
+              <div className="bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase rounded-sm">
+                NEW
+              </div>
+            )}
+
+            {isInStock && badgeType === "hit" && (
+              <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase rounded-sm">
+                HIT
+              </div>
+            )}
+
+            {isInStock && badgeType === "discount" && (
+              <div className="bg-[#FF3998] text-white px-2 py-1 text-xs font-bold rounded-sm">
+                СКИДКА
+              </div>
+            )}
           </div>
-
-          {badgeType === "discount" && (
-            <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
-              СКИДКА
-            </div>
-          )}
-
-          {badgeType === "none" && (
-            <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
-              АКЦИЯ
-            </div>
-          )}
 
           <button
             onClick={toggleWishlist}
