@@ -5,10 +5,14 @@ import { Dialog, Transition } from '@headlessui/react'
 import Image from 'next/image'
 import { HttpTypes } from "@medusajs/types"
 import { getProductPrice } from "@lib/util/get-product-price"
+import { getSingleUnitVariant } from "@lib/util/get-single-unit-variant"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { addToCart } from "@lib/data/cart"
 import { useParams } from "next/navigation"
 import { Button } from "@medusajs/ui"
+import PreorderModal from "@modules/common/components/preorder-modal"
+import ColorSelector from "@modules/common/components/color-selector"
+import ProductPrice from "@modules/products/components/product-price"
 
 type ProductVariantModalProps = {
   product: HttpTypes.StoreProduct
@@ -29,6 +33,22 @@ export default function ProductVariantModal({
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isWished, setIsWished] = useState(false)
+  const [isPreorderModalOpen, setIsPreorderModalOpen] = useState(false)
+  
+  useEffect(() => {
+    if (isOpen && product.options) {
+      const singleUnitVariant = getSingleUnitVariant(product);
+      if (singleUnitVariant) {
+        const initialOptions: Record<string, string> = {};
+        singleUnitVariant.options?.forEach(optionValue => {
+          if (optionValue.option_id) {
+            initialOptions[optionValue.option_id] = optionValue.value;
+          }
+        });
+        setSelectedOptions(initialOptions);
+      }
+    }
+  }, [isOpen, product])
   
   const params = useParams()
 
@@ -37,7 +57,6 @@ export default function ProductVariantModal({
     region: region,
   })
 
-  // Получаем выбранный вариант
   const getSelectedVariant = () => {
     if (!product.variants || product.variants.length === 0) return null
     
@@ -54,9 +73,9 @@ export default function ProductVariantModal({
   }
 
   const selectedVariant = getSelectedVariant()
-  const isInStock = selectedVariant && (selectedVariant.inventory_quantity || 0) > 0
+  const isInStock = Boolean(selectedVariant && (selectedVariant.inventory_quantity || 0) > 0)
+  const isOutOfStock = !isInStock
 
-  // Закрытие по Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -75,6 +94,12 @@ export default function ProductVariantModal({
     }
   }, [isOpen, setIsOpen])
 
+  useEffect(() => {
+    if (selectedVariant && quantity > (selectedVariant.inventory_quantity || 0)) {
+      setQuantity(Math.min(quantity, selectedVariant.inventory_quantity || 1))
+    }
+  }, [selectedVariant?.id, selectedVariant?.inventory_quantity])
+
   const handleOptionChange = (optionId: string, value: string) => {
     setSelectedOptions(prev => ({
       ...prev,
@@ -83,23 +108,34 @@ export default function ProductVariantModal({
   }
 
   const handleAddToCart = async () => {
-    if (!selectedVariant || !isInStock) return
+    if (!selectedVariant) return
+    
+    if (isInStock) {
+      const maxQuantity = selectedVariant.inventory_quantity || 0
+      if (quantity > maxQuantity) return
+    }
 
     setIsAddingToCart(true)
     try {
-      await addToCart({
-        variantId: selectedVariant.id,
-        quantity: quantity,
-        countryCode: params.countryCode as string,
-      })
+      if (isInStock) {
+        await addToCart({
+          variantId: selectedVariant.id,
+          quantity: quantity,
+          countryCode: params.countryCode as string,
+        })
+        window.dispatchEvent(new CustomEvent('cartUpdated'))
+      } else {
+        setIsOpen(false)
+        setIsPreorderModalOpen(true)
+        return
+      }
 
-      window.dispatchEvent(new CustomEvent('cartUpdated'))
       setIsOpen(false)
       if (onAddToCartSuccess) {
         onAddToCartSuccess()
       }
     } catch (error) {
-      console.error("Ошибка добавления в корзину:", error)
+      console.error("Ошибка:", error)
     } finally {
       setIsAddingToCart(false)
     }
@@ -109,10 +145,19 @@ export default function ProductVariantModal({
     setIsWished(!isWished)
   }
 
-  // Рендер селектора опций
   const renderOptionSelector = (option: HttpTypes.StoreProductOption) => {
     const isColorOption = option.title.toLowerCase().includes('цвет') || 
                          option.title.toLowerCase().includes('color')
+
+    if (isColorOption) {
+      return (
+        <ColorSelector 
+          product={product}
+          selectedOptions={selectedOptions}
+          onOptionChange={handleOptionChange}
+        />
+      )
+    }
 
     const optionValues = new Set<string>()
     product.variants?.forEach(variant => {
@@ -124,7 +169,7 @@ export default function ProductVariantModal({
     })
 
     return (
-      <div className="mb-6">
+      <div className="mb-6" style={{ overflow: "visible" }}>
         <div 
           className="text-gray-500 uppercase mb-3"
           style={{
@@ -137,27 +182,115 @@ export default function ProductVariantModal({
         >
           {option.title}
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {Array.from(optionValues).map((value) => (
-            <button
-              key={value}
-              onClick={() => handleOptionChange(option.id, value)}
-              className={`px-4 py-2 border transition-colors duration-200 ${
-                selectedOptions[option.id] === value
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 hover:border-black'
-              }`}
-              style={{ fontSize: "14px" }}
-            >
-              {value}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap pt-4" style={{ overflow: "visible", position: "relative" }}>
+          {Array.from(optionValues).sort((a, b) => {
+            const isQuantityOption = option.title?.toLowerCase().includes('количество')
+            if (isQuantityOption) {
+              return parseInt(a) - parseInt(b)
+            }
+            return a.localeCompare(b)
+          }).map((value) => {
+            const isQuantityOption = option.title?.toLowerCase().includes('количество')
+            
+            if (isQuantityOption) {
+              const quantity = parseInt(value) || 1
+              
+              const variantForOption = product.variants?.find(variant => 
+                variant.options?.some(opt => 
+                  opt.option_id === option.id && opt.value === value
+                )
+              )
+              
+              const price = variantForOption?.calculated_price?.calculated_amount || 0
+              
+              const baseVariant = product.variants?.find(variant => 
+                variant.options?.some(opt => 
+                  opt.option_id === option.id && opt.value === "1"
+                )
+              )
+              const basePrice = baseVariant?.calculated_price?.calculated_amount || price
+              const basePricePerUnit = basePrice
+              const pricePerUnit = price / quantity
+              
+              let discount = 0
+              if (basePricePerUnit > 0 && pricePerUnit < basePricePerUnit) {
+                discount = Math.round(((basePricePerUnit - pricePerUnit) / basePricePerUnit) * 100)
+              }
+
+              const formatPrice = (price: number) => {
+                return new Intl.NumberFormat('ru-RU', {
+                  style: 'currency',
+                  currency: region.currency_code?.toUpperCase() || 'RUB',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(price)
+              }
+
+              return (
+                <button
+                  key={value}
+                  onClick={() => handleOptionChange(option.id, value)}
+                  className={`relative border-2 rounded-lg transition-all duration-200 text-center flex-shrink-0 ${
+                    selectedOptions[option.id] === value
+                      ? 'border-black bg-gray-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  style={{ 
+                    minHeight: "80px",
+                    minWidth: "100px",
+                    maxWidth: "120px",
+                    position: "relative",
+                    overflow: "visible"
+                  }}
+                >
+                  {discount > 0 && (
+                    <div 
+                      className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-black text-xs font-bold px-2 py-1 rounded-sm whitespace-nowrap"
+                      style={{ 
+                        backgroundColor: '#BAFF29',
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        zIndex: 50
+                      }}
+                    >
+                      ВЫГОДА {discount}%
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col items-center justify-center h-full p-3 pt-6">
+                    <div className="text-base font-bold mb-0.5">
+                      {value}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatPrice(Math.round(price / quantity))} / шт
+                    </div>
+                  </div>
+                </button>
+              )
+            }
+
+            return (
+              <button
+                key={value}
+                onClick={() => handleOptionChange(option.id, value)}
+                className={`px-4 py-2 border transition-colors duration-200 ${
+                  selectedOptions[option.id] === value
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-300 hover:border-black'
+                }`}
+                style={{ fontSize: "14px" }}
+              >
+                {value}
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
   return (
+    <>
     <Transition show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-[9999]" onClose={setIsOpen}>
         <Transition.Child
@@ -220,7 +353,7 @@ export default function ProductVariantModal({
                     </div>
 
                     {/* Содержимое */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1" style={{ paddingTop: "10px", overflowY: "auto", overflowX: "visible" }}>
                       {/* Картинка товара */}
                       <div className="w-full">
                         {product.images?.[0] && (
@@ -237,7 +370,7 @@ export default function ProductVariantModal({
                       </div>
 
                       {/* Информация о товаре */}
-                      <div className="px-8 py-6">
+                      <div className="px-8 py-6" style={{ paddingTop: "30px", overflow: "visible", position: "relative" }}>
                         
                         {/* Опции товара */}
                         {product.options?.map((option) => (
@@ -258,12 +391,18 @@ export default function ProductVariantModal({
                               textTransform: "uppercase"
                             }}
                           >
-                            КОЛИЧЕСТВО / ШТ
+                            {(() => {
+                              const hasQuantityOption = product.options?.some(option => 
+                                option.title?.toLowerCase().includes('количество')
+                              )
+                              return hasQuantityOption ? "КОЛИЧЕСТВО УПАКОВОК" : "КОЛИЧЕСТВО"
+                            })()}
                           </div>
                           <div className="inline-flex items-center justify-center border border-gray-300 w-16 h-10">
                             <input 
                               type="number" 
                               min="1" 
+                              max={selectedVariant?.inventory_quantity || 1}
                               value={quantity} 
                               onChange={(e) => {
                                 const newQuantity = parseInt(e.target.value) || 1
@@ -271,7 +410,8 @@ export default function ProductVariantModal({
                               }}
                               onBlur={(e) => {
                                 const newQuantity = parseInt(e.target.value) || 1
-                                setQuantity(Math.min(Math.max(newQuantity, 1), 999))
+                                const maxQuantity = selectedVariant?.inventory_quantity || 1
+                                setQuantity(Math.min(Math.max(newQuantity, 1), maxQuantity))
                               }}
                               disabled={!isInStock}
                               className="w-full h-full text-center outline-none disabled:bg-gray-100 disabled:text-gray-400"
@@ -279,43 +419,45 @@ export default function ProductVariantModal({
                           </div>
                         </div>
 
-                        {/* Цена */}
                         <div className="mb-6">
-                          {cheapestPrice && (
-                            <div className="flex items-baseline gap-2">
-                              <span 
-                                className="text-black"
-                                style={{ fontSize: "30px", fontWeight: 500 }}
-                              >
-                                {cheapestPrice.calculated_price}
-                              </span>
-                              {cheapestPrice.price_type === 'sale' && cheapestPrice.original_price && (
-                                <span className="text-gray-400 line-through text-lg">
-                                  {cheapestPrice.original_price}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          <div 
+                            className="font-medium"
+                            style={{ fontSize: "30px" }}
+                          >
+                            <ProductPrice 
+                              product={product} 
+                              region={region} 
+                              variant={selectedVariant || undefined}
+                              quantity={quantity}
+                              showTotalPrice={true}
+                            />
+                          </div>
                         </div>
 
                         {/* Кнопки */}
                         <div className="flex gap-4 mb-6">
                           <button
                             onClick={handleAddToCart}
-                            disabled={isAddingToCart || !isInStock}
+                            disabled={isAddingToCart || (isInStock && quantity > (selectedVariant?.inventory_quantity || 0))}
                             className={`flex-1 h-12 font-medium transition-colors duration-200 ${
-                              isAddingToCart || !isInStock
+                              isAddingToCart || (isInStock && quantity > (selectedVariant?.inventory_quantity || 0))
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-black text-white hover:bg-gray-800'
+                                : !isInStock 
+                                  ? 'text-white'
+                                  : 'bg-black text-white hover:bg-gray-800'
                             }`}
                             style={{
                               fontSize: "11px",
                               fontWeight: 500,
                               letterSpacing: "1.4px",
-                              textTransform: "uppercase"
+                              textTransform: "uppercase",
+                              ...(isOutOfStock ? { backgroundColor: '#6290C3' } : {})
                             }}
                           >
-                            {isAddingToCart ? 'ДОБАВЛЕНИЕ...' : !isInStock ? 'НЕТ В НАЛИЧИИ' : 'В КОРЗИНУ'}
+                            {isAddingToCart ? (isInStock ? 'ДОБАВЛЕНИЕ...' : 'ОФОРМЛЕНИЕ...') : 
+                             !isInStock ? 'СДЕЛАТЬ ПРЕДЗАКАЗ' : 
+                             quantity > (selectedVariant?.inventory_quantity || 0) ? 'ПРЕВЫШЕН ЛИМИТ' : 
+                             'В КОРЗИНУ'}
                           </button>
 
                           <button
@@ -374,5 +516,20 @@ export default function ProductVariantModal({
         </div>
       </Dialog>
     </Transition>
+
+    {/* Модалка предзаказа */}
+    <PreorderModal
+      product={product}
+      variant={selectedVariant || undefined}
+      quantity={quantity}
+      isOpen={isPreorderModalOpen}
+      setIsOpen={setIsPreorderModalOpen}
+      onSuccess={() => {
+        if (onAddToCartSuccess) {
+          onAddToCartSuccess()
+        }
+      }}
+    />
+  </>
   )
 } 

@@ -137,11 +137,15 @@ export default function CategoryClient({
     colors: [],
     sizes: [],
     materials: [],
+    brands: [],
     priceRange: null,
     categories: [],
     hasDiscount: false,
     inStock: false,
-    expressDelivery: false
+    gender: [],
+    season: [],
+    skinType: [],
+    purpose: []
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -155,8 +159,7 @@ export default function CategoryClient({
   ]
 
   const getRandomSubcategories = (categories: HttpTypes.StoreProductCategory[], count: number) => {
-    const shuffled = [...categories].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, count)
+    return categories.slice(0, count)
   }
 
   const handleWheelScroll = (e: WheelEvent) => {
@@ -299,6 +302,7 @@ export default function CategoryClient({
             <ProductFilters
               products={products}
               onFiltersChange={handleFiltersChange}
+              currentCategory={category}
             />
             
             <div className="relative sort-dropdown">
@@ -342,7 +346,7 @@ export default function CategoryClient({
           
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <span className="text-gray-900 text-base font-medium">
-              {totalCount} товаров
+              {filteredProducts.length} товаров
             </span>
           </div>
           
@@ -352,7 +356,7 @@ export default function CategoryClient({
         <Suspense fallback={<SkeletonProductGrid />}>
           <PaginatedProducts
             initialProducts={filteredProducts}
-            totalCount={totalCount}
+            totalCount={filteredProducts.length}
             categoryIds={categoryIds}
             countryCode={countryCode}
             region={region}

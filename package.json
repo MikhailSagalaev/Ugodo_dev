@@ -51,6 +51,7 @@
     "medusa-plugin-reviews": "^1.0.0",
     "medusa-react": "^9.0.18",
     "next": "15.0.3",
+    "nouislider": "^15.8.1",
     "pg": "^8.11.3",
     "qs": "^6.12.1",
     "react": "19.0.0-rc-66855b96-20241106",

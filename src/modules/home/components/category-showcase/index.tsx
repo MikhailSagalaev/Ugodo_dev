@@ -103,7 +103,7 @@ export default function CategoryShowcase({
                   (product.categories && product.categories.length > 0 ? 
                     product.categories[0].name : undefined);
                 return (
-                  <div key={product.id} className="flex-shrink-0" style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}>
+                  <div key={product.id} className="flex-shrink-0 product-card-featured">
                     <div className="aspect-[3/4] w-full">
                       <ProductPreview 
                         product={product} 
@@ -144,7 +144,7 @@ export default function CategoryShowcase({
                 <div className="flex">
                   {productGroups.map((group, groupIndex) => (
                     <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                      <div className="flex justify-center px-16" style={{ gap: 'clamp(18px, 2.5vw, 35px)' }}>
+                      <div className="flex justify-center px-0" style={{ gap: 'clamp(18px, 2.5vw, 30px)' }}>
                         {group.map((product) => {
                           const categoryTitle = product.type?.value || 
                             (product.categories && product.categories.length > 0 ? 
@@ -153,10 +153,7 @@ export default function CategoryShowcase({
                           return (
                             <div 
                               key={product.id} 
-                              className="flex justify-center"
-                              style={{ 
-                                width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)'
-                              }}
+                              className="flex justify-center product-card-featured"
                             >
                               <ProductPreview 
                                 product={product} 

@@ -132,7 +132,7 @@ export default async function ProductPage(props: Props) {
   let productWithInventory = pricedProduct;
   try {
     const { product } = await sdk.store.product.retrieve(pricedProduct.id, {
-      fields: `*variants.calculated_price,+variants.inventory_quantity,*categories.id,*categories.name,*categories.handle,*categories.parent_category.id,*categories.parent_category.name,*categories.parent_category.handle`,
+      fields: `*variants.calculated_price,+variants.inventory_quantity,*categories.id,*categories.name,*categories.handle,*categories.parent_category.id,*categories.parent_category.name,*categories.parent_category.handle,+metadata`,
     });
     productWithInventory = product;
   } catch (error) {

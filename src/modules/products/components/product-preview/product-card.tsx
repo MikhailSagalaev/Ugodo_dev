@@ -71,6 +71,17 @@ export default function ProductCard({
     
     if (!product.variants?.[0]) return;
     
+    if (!isInStock) {
+      // Логика предзаказа
+      console.log('Предзаказ товара:', {
+        variantId: product.variants[0].id,
+        quantity: 1,
+        product: product.title
+      });
+      // TODO: Здесь будет логика отправки предзаказа на сервер
+      return;
+    }
+    
     setIsAddingToCart(true);
     try {
       await addToCart({
@@ -115,26 +126,34 @@ export default function ProductCard({
         onMouseLeave={handleMouseLeave}
       >
         <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-          <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-100">
+          <div className="relative w-full overflow-hidden aspect-[3/4]">
             <Thumbnail
               thumbnail={product.thumbnail}
               images={product.images}
               size="full"
               isFeatured={isFeatured}
-              className={`absolute inset-0 size-full object-cover transition-transform duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
+              className={`transition-transform duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
             />
 
-            {badgeType === "new" && (
-              <div className="absolute top-3 left-3 bg-[#BAFF29] text-black px-2 py-1 text-xs font-bold z-10 rounded-sm">
-                NEW
-              </div>
-            )}
+            <div className="absolute top-3 left-3 flex gap-1 z-10">
+              {badgeType === "new" && (
+                <div className="bg-[#BAFF29] text-black px-2 py-1 text-xs font-bold rounded-sm">
+                  NEW
+                </div>
+              )}
 
-            {badgeType === "hit" && (
-              <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
-                HIT
-              </div>
-            )}
+              {badgeType === "hit" && (
+                <div className="bg-red-500 text-white px-2 py-1 text-xs font-bold rounded-sm">
+                  HIT
+                </div>
+              )}
+
+              {!isInStock && (
+                <div className="text-white px-2 py-1 text-xs font-bold rounded-sm" style={{ backgroundColor: '#6290C3' }}>
+                  ПРЕДЗАКАЗ
+                </div>
+              )}
+            </div>
 
             {badgeType === "discount" && cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
               <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
@@ -163,24 +182,17 @@ export default function ProductCard({
               </svg>
             </button>
 
-            {!isInStock && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div className="bg-black/70 px-2 sm:px-4 py-2 rounded">
-                  <span className="text-white font-medium">Нет в наличии</span>
-                </div>
-              </div>
-            )}
-
-            {(isInStock && (isTabletOrMobile || isHovered)) && (
+            {(isTabletOrMobile || isHovered) && (
               <div className={isTabletOrMobile ? "absolute right-3 bottom-3 z-10" : "absolute bottom-5 right-5 z-10"}>
                 <button
                   onClick={handleAddToCart}
                   className={
                     isTabletOrMobile
-                      ? `w-[35px] h-[35px] flex items-center justify-center bg-[#1A1341] transition-colors duration-200 rounded-md border border-transparent`
-                      : `w-11 h-11 flex items-center justify-center transition-colors duration-200 ${isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'} rounded-md`
+                      ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent ${!isInStock ? '' : 'bg-[#1A1341]'}`
+                      : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${!isInStock ? '' : isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'}`
                   }
-                  aria-label="Добавить в корзину"
+                  style={!isInStock ? { backgroundColor: '#6290C3' } : {}}
+                  aria-label={!isInStock ? "Сделать предзаказ" : "Добавить в корзину"}
                   disabled={isAddingToCart}
                 >
                   {isAddingToCart ? (

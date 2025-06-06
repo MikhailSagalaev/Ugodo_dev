@@ -83,7 +83,7 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
             >
               {isColorOption ? (
                 <span 
-                  className="block w-full h-full rounded-[4px]" // Внутренний блок для цвета
+                  className="block w-full h-full rounded-full" // Внутренний блок для цвета
                   style={getColorStyle(v)} 
                 />
               ) : (

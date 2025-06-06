@@ -96,13 +96,12 @@ export default async function CategoryTemplate({
   }
 
   const totalCount = products.length
-  const displayProducts = products.slice(0, 32)
 
   return (
     <CategoryClient
       category={category}
       countryCode={countryCode}
-      products={displayProducts}
+      products={products}
       totalCount={totalCount}
       subcategories={directSubcategories}
       region={region}

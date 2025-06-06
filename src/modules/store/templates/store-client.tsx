@@ -87,11 +87,15 @@ export default function StoreClient({
     colors: [],
     sizes: [],
     materials: [],
+    brands: [],
     priceRange: null,
     categories: [],
     hasDiscount: false,
     inStock: false,
-    expressDelivery: false
+    gender: [],
+    season: [],
+    skinType: [],
+    purpose: []
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -105,8 +109,7 @@ export default function StoreClient({
   ]
 
   const getRandomCategories = (categories: HttpTypes.StoreProductCategory[], count: number) => {
-    const shuffled = [...categories].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, count)
+    return categories.slice(0, count)
   }
 
   const handleWheelScroll = (e: WheelEvent) => {
