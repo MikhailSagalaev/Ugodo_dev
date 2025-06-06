@@ -2,20 +2,19 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 
 const TEST_MODE = process.env.SMS_TEST_MODE === 'true' || 
                  (process.env.NODE_ENV === 'development' && process.env.SMS_TEST_MODE !== 'false')
-const TEST_OTP = '123456'
 
 /**
  * @swagger
- * /auth/customer/otp/register-test:
+ * /auth/customer/otp/pre-register-test:
  *   post:
  *     tags:
  *       - OTP Auth (Test)
- *     summary: Register new customer with OTP (TEST MODE)
+ *     summary: Pre-register process for new customer (TEST MODE)
  *     description: |
- *       Тестовый метод для регистрации нового клиента с OTP.
- *       В тестовом режиме принимается фиксированный OTP код '123456' для тестирования интерфейса.
+ *       Тестовый метод для предварительной регистрации нового клиента.
+ *       В тестовом режиме имитирует отправку SMS без реальной отправки.
  *       🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ И ТЕСТИРОВАНИЯ! Доступен только когда SMS_TEST_MODE=true.
- *     operationId: postAuthCustomerOtpRegisterTest
+ *     operationId: postAuthCustomerOtpPreRegisterTest
  *     requestBody:
  *       required: true
  *       content:
@@ -24,34 +23,33 @@ const TEST_OTP = '123456'
  *             type: object
  *             required:
  *               - identifier
- *               - otp
  *             properties:
  *               identifier:
  *                 type: string
  *                 description: Customer's phone number
  *                 example: '+79991234567'
- *               otp:
- *                 type: string
- *                 description: Test OTP code (must be '123456' in test mode)
- *                 example: '123456'
  *     responses:
  *       '200':
- *         description: Registration token issued (TEST MODE)
+ *         description: Pre-registration OTP simulated (TEST MODE)
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 registration_token:
+ *                 message:
  *                   type: string
- *                   description: Registration token for creating customer
- *                   example: 'test-registration-token-abc123'
+ *                   description: Success message
+ *                   example: 'Pre-registration OTP simulated in test mode'
  *                 test_mode:
  *                   type: boolean
  *                   description: Indicates test mode is active
  *                   example: true
+ *                 test_otp:
+ *                   type: string
+ *                   description: The test OTP code to use
+ *                   example: '123456'
  *       '400':
- *         description: Invalid OTP
+ *         description: Invalid identifier
  *         content:
  *           application/json:
  *             schema:
@@ -59,7 +57,7 @@ const TEST_OTP = '123456'
  *               properties:
  *                 error:
  *                   type: string
- *                   example: 'Invalid OTP'
+ *                   example: 'Invalid identifier'
  *       '404':
  *         description: Test endpoint not available in production
  *         content:
@@ -80,26 +78,26 @@ export async function POST(
   }
 
   try {
-    const { identifier, otp } = req.body as { identifier: string; otp: string }
+    const { identifier } = req.body as { identifier: string }
 
-    console.log(`[Test OTP Register] Received: identifier=${identifier}, otp=${otp}`)
+    console.log(`[Test OTP Pre-Register] Simulating pre-registration for: ${identifier}`)
     
-    if (otp !== TEST_OTP) {
-      console.log(`[Test OTP Register] Invalid test OTP provided: ${otp}, expected: ${TEST_OTP}`)
-      return res.status(400).json({ error: "Invalid OTP" })
+    if (!identifier) {
+      return res.status(400).json({ error: "Invalid identifier" })
     }
 
-    // Генерируем фиктивный registration_token для тестирования
-    const testRegistrationToken = `test-reg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
-    console.log(`[Test OTP Register] Generated test registration token: ${testRegistrationToken}`)
+    // Имитируем успешную предварительную регистрацию
+    console.log(`[Test OTP Pre-Register] Simulated pre-registration for identifier: ${identifier}`)
+    console.log(`[Test OTP Pre-Register] Use test OTP: 123456`)
     
     return res.json({
-      registration_token: testRegistrationToken,
-      test_mode: true
+      message: "Pre-registration OTP simulated in test mode",
+      test_mode: true,
+      test_otp: "123456",
+      identifier: identifier
     })
   } catch (error) {
-    console.error("[Test OTP Register] Error:", error)
+    console.error("[Test OTP Pre-Register] Error:", error)
     return res.status(500).json({ error: "Internal server error" })
   }
-}
+} 

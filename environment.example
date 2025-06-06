@@ -1,0 +1,73 @@
+# 🔧 Пример переменных окружения для production сервера Ugodo
+# Скопируйте этот файл в .env и заполните своими значениями
+
+# ===== БАЗЫ ДАННЫХ =====
+DATABASE_URL=postgresql://ugodo_user:secure_password@localhost:5432/ugodo_db
+REDIS_URL=redis://localhost:6379
+
+# ===== MEDUSA BACKEND =====
+MEDUSA_BACKEND_URL=https://api.ugodo.ru
+MEDUSA_URL=https://api.ugodo.ru
+PORT_BACKEND=9000
+
+# ===== NEXT.JS FRONTEND =====
+NEXT_PUBLIC_MEDUSA_BACKEND_URL=https://api.ugodo.ru
+NEXT_PUBLIC_BASE_URL=https://ugodo.ru
+PORT=8000
+
+# ===== БЕЗОПАСНОСТЬ =====
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars-random-string
+COOKIE_SECRET=your-super-secret-cookie-key-min-32-chars-random-string
+
+# ===== CORS НАСТРОЙКИ =====
+STORE_CORS=https://ugodo.ru,https://www.ugodo.ru,https://api.ugodo.ru
+ADMIN_CORS=https://api.ugodo.ru,https://admin.ugodo.ru
+AUTH_CORS=https://ugodo.ru,https://api.ugodo.ru
+
+# ===== S3/MINIO ХРАНИЛИЩЕ =====
+S3_URL=https://files.ugodo.ru
+S3_ACCESS_KEY_ID=your-minio-access-key
+S3_SECRET_ACCESS_KEY=your-minio-secret-key
+S3_BUCKET=ugodo-files
+S3_ENDPOINT=https://files.ugodo.ru
+
+# ===== DOCKER REGISTRY =====
+DOCKER_USERNAME=your-docker-username
+DOCKER_PASSWORD=your-docker-password
+
+# ===== SSH/СЕРВЕР =====
+SERVER_HOST=your-server-ip-address
+SERVER_USERNAME=root
+SSH_PRIVATE_KEY="-----BEGIN OPENSSH PRIVATE KEY-----\nyour-ssh-private-key-content\n-----END OPENSSH PRIVATE KEY-----"
+SSH_PORT=22
+
+# ===== SMS/OTP НАСТРОЙКИ =====
+# Настройки для @perseidesjs/auth-otp
+OTP_DIGITS=6
+OTP_TTL=300
+SMS_PROVIDER=smsc
+SMS_API_LOGIN=your-smsc-login
+SMS_API_PASSWORD=your-smsc-password
+
+# ===== УВЕДОМЛЕНИЯ/МОНИТОРИНГ =====
+# Slack Webhook URL для уведомлений о деплое
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+
+# Email для уведомлений
+ADMIN_EMAIL=admin@ugodo.ru
+
+# ===== ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ =====
+NODE_ENV=production
+NEXT_TELEMETRY_DISABLED=1
+
+# ===== ЛОКАЛЬНАЯ РАЗРАБОТКА =====
+# Раскомментируйте для локальной разработки
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ugodo_dev
+# MEDUSA_BACKEND_URL=http://localhost:9000
+# NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
+# NEXT_PUBLIC_BASE_URL=http://localhost:8000
+# S3_URL=http://localhost:9100
+# S3_ENDPOINT=http://localhost:9100
+# STORE_CORS=http://localhost:8000,http://localhost:8001,http://localhost:9000
+# ADMIN_CORS=http://localhost:9000,http://localhost:7000,http://localhost:8000
+# AUTH_CORS=http://localhost:8000,http://localhost:9000 

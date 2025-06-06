@@ -257,6 +257,8 @@ const getStorefrontSwaggerSpec = () => {
             path.join(rootDir, 'src/modules/**/api/routes/store/**/*.ts'),
             // Добавляем новые пути для OTP API
             path.join(rootDir, 'src/api/routes/store/auth/customer/otp/*.ts'),
+            // Добавляем тестовые OTP методы
+            path.join(rootDir, 'src/api/auth/customer/otp/**/*.ts'),
             // Оставляем пути к плагину OTP
             path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.js'),
             path.join(rootDir, '../node_modules/@perseidesjs/auth-otp/dist/api/routes/customer/**/*.ts'),

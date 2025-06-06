@@ -5,6 +5,72 @@ const TEST_MODE = process.env.SMS_TEST_MODE === 'true' ||
                  (process.env.NODE_ENV === 'development' && process.env.SMS_TEST_MODE !== 'false')
 const TEST_OTP = '123456'
 
+/**
+ * @swagger
+ * /auth/customer/otp/verify-test:
+ *   post:
+ *     tags:
+ *       - OTP Auth (Test)
+ *     summary: Verify OTP for existing customer (TEST MODE)
+ *     description: |
+ *       Тестовый метод для верификации OTP существующего клиента.
+ *       В тестовом режиме принимается фиксированный OTP код '123456' для тестирования интерфейса.
+ *       🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ И ТЕСТИРОВАНИЯ! Доступен только когда SMS_TEST_MODE=true.
+ *     operationId: postAuthCustomerOtpVerifyTest
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identifier
+ *               - otp
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 description: Customer's phone number
+ *                 example: '+79991234567'
+ *               otp:
+ *                 type: string
+ *                 description: Test OTP code (must be '123456' in test mode)
+ *                 example: '123456'
+ *     responses:
+ *       '200':
+ *         description: OTP verified successfully (TEST MODE)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT authentication token
+ *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ *                 auth_identity:
+ *                   type: object
+ *                   description: Auth identity details
+ *       '400':
+ *         description: Invalid OTP or identifier
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: 'Invalid OTP'
+ *       '404':
+ *         description: Test endpoint not available in production
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: 'Test endpoint not available in production'
+ */
 export async function POST(
   req: MedusaRequest,
   res: MedusaResponse

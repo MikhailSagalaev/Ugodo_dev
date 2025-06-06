@@ -3,6 +3,13 @@ info:
   title: PerseidesJS Auth-OTP API
   version: 1.0.0
   description: Документация по всем методам SMS OTP авторизации через PerseidesJS Auth-OTP
+servers:
+  - url: http://localhost:9000
+    description: Локальный сервер разработки
+  - url: https://api.ugodo.ru
+    description: Продакшн API сервер Ugodo
+  - url: https://api.medusajs.com
+    description: Demo Medusa сервер
 paths:
   /auth/customer/otp/generate:
     post:
@@ -79,6 +86,51 @@ paths:
         '400':
           description: Invalid OTP or identifier
 
+  /auth/customer/otp/verify-test:
+    post:
+      tags:
+        - OTP Auth (Test)
+      summary: Verify OTP for existing customer (TEST MODE)
+      description: |
+        Тестовый метод для верификации OTP существующего клиента.
+        В тестовом режиме принимается любой OTP код для тестирования интерфейса.
+        🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ И ТЕСТИРОВАНИЯ!
+      operationId: postAuthCustomerOtpVerifyTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: Any OTP code (test mode accepts any value)
+                  example: '0000'
+      responses:
+        '200':
+          description: OTP verified successfully (TEST MODE)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 'test-token-abc123'
+                  test_mode:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid request format
+
   /auth/customer/otp/pre-register:
     post:
       tags:
@@ -154,6 +206,51 @@ paths:
         '400':
           description: Invalid OTP or identifier
 
+  /auth/customer/otp/register-test:
+    post:
+      tags:
+        - OTP Auth (Test)
+      summary: Register new customer with OTP (TEST MODE)
+      description: |
+        Тестовый метод для регистрации нового клиента с OTP.
+        В тестовом режиме принимается любой OTP код для тестирования интерфейса.
+        🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ И ТЕСТИРОВАНИЯ!
+      operationId: postAuthCustomerOtpRegisterTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: Any OTP code (test mode accepts any value)
+                  example: '0000'
+      responses:
+        '200':
+          description: Registration token issued (TEST MODE)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registration_token:
+                    type: string
+                    example: 'test-registration-token-abc123'
+                  test_mode:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid request format
+
   /auth/customer/otp/authenticate:
     post:
       tags:
@@ -191,4 +288,102 @@ paths:
                     type: string
                     example: 'access-token-xyz456'
         '400':
-          description: Invalid OTP or identifier 
+          description: Invalid OTP or identifier
+
+  /auth/customer/otp/authenticate-test:
+    post:
+      tags:
+        - OTP Auth (Test)
+      summary: Authenticate customer with OTP after registration (TEST MODE)
+      description: |
+        Тестовый метод для аутентификации клиента с OTP после регистрации.
+        В тестовом режиме принимается любой OTP код для тестирования интерфейса.
+        🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ И ТЕСТИРОВАНИЯ!
+      operationId: postAuthCustomerOtpAuthenticateTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - otp
+              properties:
+                identifier:
+                  type: string
+                  description: Customer's phone number
+                  example: '+79991234567'
+                otp:
+                  type: string
+                  description: Any OTP code (test mode accepts any value)
+                  example: '0000'
+      responses:
+        '200':
+          description: Access token issued (TEST MODE)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 'test-access-token-xyz456'
+                  test_mode:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid request format
+
+tags:
+  - name: OTP Auth
+    description: Основные методы SMS OTP авторизации через PerseidesJS
+  - name: OTP Auth (Test)
+    description: Тестовые методы SMS OTP авторизации для разработки и отладки интерфейса
+
+components:
+  schemas:
+    OTPRequest:
+      type: object
+      required:
+        - identifier
+        - otp
+      properties:
+        identifier:
+          type: string
+          description: Customer's phone number in international format
+          example: '+79991234567'
+        otp:
+          type: string
+          description: One-time password code
+          example: '1234'
+    
+    GenerateOTPRequest:
+      type: object
+      required:
+        - identifier
+      properties:
+        identifier:
+          type: string
+          description: Customer's phone number in international format
+          example: '+79991234567'
+    
+    OTPSuccessResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Authentication or registration token
+        test_mode:
+          type: boolean
+          description: Indicates if test mode is active
+          
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error description
+        code:
+          type: string
+          description: Error code 

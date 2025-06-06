@@ -59,6 +59,8 @@ const options = {
           path.join(rootDir, 'src/modules/*/api/routes/*.ts'),
           path.join(rootDir, 'src/modules/*/models/*.ts'), // Добавим модели для схем
           path.join(rootDir, 'src/api/**/*.ts'),
+          // Добавляем тестовые OTP методы
+          path.join(rootDir, 'src/api/auth/customer/otp/**/*.ts'),
            // Пути из примеров могут вызвать дублирование или ошибки, если не настроены правильно
            // path.join(rootDir, '../examples/**/api/**/*.ts'), // Осторожно с этим
         ],
