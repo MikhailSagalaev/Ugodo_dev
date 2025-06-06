@@ -34,7 +34,7 @@ export const POST = async (req: MedusaRequest<UploadVideoBody>, res: MedusaRespo
         files: [{
           filename: file.originalname,
           mimeType: file.mimetype,
-          content: file.buffer.toString("binary"),
+          content: file.buffer,
           access: "public",
         }],
       },

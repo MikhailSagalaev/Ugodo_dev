@@ -6,20 +6,20 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:8001,http://localhost:9000",
-      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:7000,http://localhost:8000",
-      authCors: process.env.AUTH_CORS || "http://localhost:8000,http://localhost:9000",
+      storeCors: process.env.STORE_CORS || "https://ugodo.ru,https://www.ugodo.ru,https://api.ugodo.ru,http://localhost:8000",
+      adminCors: process.env.ADMIN_CORS || "https://api.ugodo.ru,https://ugodo.ru,http://localhost:9000",
+      authCors: process.env.AUTH_CORS || "https://ugodo.ru,https://api.ugodo.ru,http://localhost:8000",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
     redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
   },
   admin: {
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "https://api.ugodo.ru",
     vite: () => {
       return {
         server: {
-          allowedHosts: ["ugodo.ru"],
+          allowedHosts: ["ugodo.ru", "api.ugodo.ru", "www.ugodo.ru"],
         },
       }
     },
