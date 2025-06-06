@@ -133,13 +133,13 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
   return (
     <div className="flex flex-col w-[320px] group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative aspect-[3/4] w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden aspect-[3/4]">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
             size="full"
             isFeatured={isFeatured}
-            className="absolute inset-0 size-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
+            className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
           {/* Флажок NEW */}
           {badgeType === "new" && (

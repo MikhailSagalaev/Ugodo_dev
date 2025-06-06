@@ -126,13 +126,13 @@ export default function ProductCard({
         onMouseLeave={handleMouseLeave}
       >
         <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-          <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-100">
+          <div className="relative w-full overflow-hidden aspect-[3/4]">
             <Thumbnail
               thumbnail={product.thumbnail}
               images={product.images}
               size="full"
               isFeatured={isFeatured}
-              className={`absolute inset-0 size-full object-cover transition-transform duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
+              className={`transition-transform duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
             />
 
             <div className="absolute top-3 left-3 flex gap-1 z-10">

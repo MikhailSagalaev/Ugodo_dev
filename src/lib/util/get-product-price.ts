@@ -76,24 +76,24 @@ export const getProductPrice = ({
 
       let percentageDiffValue: number | undefined = undefined;
       if (isSaleType && typeof originalPriceToUse === 'number' && typeof priceToUse === 'number') {
-        percentageDiffValue = getPercentageDiff(originalPriceToUse, priceToUse);
+        const diff = getPercentageDiff(originalPriceToUse, priceToUse);
+        percentageDiffValue = typeof diff === 'number' ? diff : undefined;
       }
 
       return {
         calculated_price: localeFormat(priceToUse),
         original_price: localeFormat(finalOriginalAmount), 
         calculated_amount: priceToUse, 
-        original_amount: finalOriginalAmount, 
+        original_amount: finalOriginalAmount as number | null, 
         price_type: priceType,
         percentage_diff: percentageDiffValue,
-        currency_code: region.currency_code,
+        currency_code: region.currency_code || 'RUB',
       };
     }
     // Если calculated_price невалиден или отсутствует
     return { calculated_price: "Not available in region" };
   };
 
-  // --- Логика поиска самой дешевой и ДОРОГОЙ цены --- 
   let cheapestVariant: HttpTypes.StoreProductVariant | undefined = undefined;
   let minPriceAmount = Infinity;
   let maxPriceAmount = -Infinity;
@@ -120,7 +120,7 @@ export const getProductPrice = ({
 
   const selectedVariant = variantId
     ? product.variants.find((v) => v.id === variantId)
-    : product.variants[0]; 
+    : cheapestVariant;
 
   const variantPrice = selectedVariant
     ? getPriceForVariant(selectedVariant)

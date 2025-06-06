@@ -1,16 +1,18 @@
 import { HttpTypes } from "@medusajs/types"
 import { clx, Text } from "@medusajs/ui"
 import { getProductPrice } from "@lib/util/get-product-price"
+import { getCheapestVariantPerUnit } from "@lib/util/get-cheapest-per-unit"
+import { getSingleUnitVariant } from "@lib/util/get-single-unit-variant"
 import { Region } from "@medusajs/medusa"
 
-// Определяем тип пропсов для ProductPrice
 type ProductPriceProps = {
   product: HttpTypes.StoreProduct
-  variant?: HttpTypes.StoreProductVariant // Вариант опционален
-  region: HttpTypes.StoreRegion | Region // Регион обязателен
+  variant?: HttpTypes.StoreProductVariant
+  region: HttpTypes.StoreRegion | Region
   className?: string
-  quantity?: number // Количество для расчета итоговой цены
-  showTotalPrice?: boolean // Показывать ли итоговую цену
+  quantity?: number
+  showTotalPrice?: boolean
+  useMinPricePerUnit?: boolean
 }
 
 export default function ProductPrice({
@@ -20,7 +22,20 @@ export default function ProductPrice({
   className,
   quantity = 1,
   showTotalPrice = false,
+  useMinPricePerUnit = false,
 }: ProductPriceProps) {
+  const cheapestVariantPerUnit = getCheapestVariantPerUnit(product);
+  const singleUnitVariant = getSingleUnitVariant(product);
+  
+  let targetVariantId: string | undefined;
+  if (variant?.id) {
+    targetVariantId = variant.id;
+  } else if (useMinPricePerUnit) {
+    targetVariantId = cheapestVariantPerUnit?.id;
+  } else {
+    targetVariantId = singleUnitVariant?.id;
+  }
+  
   const {
     cheapestPrice,
     variantPrice,
@@ -28,11 +43,11 @@ export default function ProductPrice({
     maxPriceAmount,
   } = getProductPrice({
     product,
-    variantId: variant?.id, 
+    variantId: targetVariantId, 
     region,
   })
 
-  const selectedPrice = variant ? variantPrice : cheapestPrice
+  const selectedPrice = variant ? variantPrice : (useMinPricePerUnit ? cheapestPrice : variantPrice)
 
   if (!selectedPrice || typeof selectedPrice.calculated_amount === 'undefined') {
     return <div className="block w-32 h-9 bg-gray-100 animate-pulse" />
@@ -43,7 +58,6 @@ export default function ProductPrice({
                          product.variants.length > 1 && 
                          minPriceAmount !== maxPriceAmount;
 
-  // Рассчитываем цену с учетом количества
   const unitPrice = selectedPrice.calculated_amount
   const totalAmount = showTotalPrice ? unitPrice * quantity : unitPrice
   
@@ -66,7 +80,6 @@ export default function ProductPrice({
     ? Math.round(((selectedPrice.original_amount - selectedPrice.calculated_amount) / selectedPrice.original_amount) * 100)
     : 0;
 
-  // Проверяем есть ли опция количества для отображения дополнительной информации
   const hasQuantityOption = product.options?.some(option => 
     option.title?.toLowerCase().includes('количество')
   )
@@ -112,7 +125,6 @@ export default function ProductPrice({
         )}
       </div>
       
-      {/* Показываем дополнительную информацию для товаров с опцией количества */}
       {showTotalPrice && hasQuantityOption && quantity > 1 && (
         <div className="text-[14px] text-gray-500 mt-1">
           {formatPrice(unitPrice)} ₽ за упаковку × {quantity} = {formattedPrice} ₽

@@ -13,6 +13,7 @@ import { HttpTypes } from "@medusajs/types"
 import ProductReviews from "@modules/products/components/product-reviews"
 import Breadcrumbs, { BreadcrumbItem } from "@modules/common/components/breadcrumbs"
 import ProductPrice from "@modules/products/components/product-price"
+import { getSingleUnitVariant } from "@lib/util/get-single-unit-variant"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { addToCart } from "@lib/data/cart"
 import { useParams } from "next/navigation"
@@ -193,9 +194,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     loadReviewCount()
   }, [product.id])
 
-  // Загружаем реальные количества товаров
   useEffect(() => {
-    // Получаем количества из данных продукта, которые уже пришли с сервера
     const quantities: Record<string, number> = {};
     product.variants?.forEach((variant) => {
       quantities[variant.id] = variant.inventory_quantity || 0;
@@ -203,7 +202,21 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     setVariantQuantities(quantities);
   }, [product.id, product.variants])
 
-  // Функция копирования промокода
+  useEffect(() => {
+    if (product.options && Object.keys(selectedOptions).length === 0) {
+      const singleUnitVariant = getSingleUnitVariant(product);
+      if (singleUnitVariant) {
+        const initialOptions: Record<string, string> = {};
+        singleUnitVariant.options?.forEach(optionValue => {
+          if (optionValue.option_id) {
+            initialOptions[optionValue.option_id] = optionValue.value;
+          }
+        });
+        setSelectedOptions(initialOptions);
+      }
+    }
+  }, [product, selectedOptions])
+
   const handlePromoCodeClick = async () => {
     try {
       await navigator.clipboard.writeText('ВМЕСТЕ')
@@ -214,7 +227,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   }
 
-  // Обработчик изменения опций
   const handleOptionChange = (optionId: string, value: string) => {
     setSelectedOptions(prev => ({
       ...prev,
@@ -222,16 +234,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }))
   }
 
-  // Проверяем наличие выбранного варианта
   const getSelectedVariant = () => {
     if (!product.variants || product.variants.length === 0) return null
     
-    // Если нет опций, возвращаем первый вариант
     if (!product.options || product.options.length === 0) {
       return product.variants[0]
     }
     
-    // Ищем вариант который соответствует выбранным опциям
     return product.variants.find(variant => {
       return variant.options?.every(optionValue => {
         const selectedValue = selectedOptions[optionValue.option_id || '']
@@ -250,7 +259,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
   }, [selectedVariant?.id, selectedVariantQuantity]);
 
-  // Обновляем итоговую цену при изменении варианта или количества
   useEffect(() => {
     const newTotalPrice = calculateTotalPrice()
     setTotalPrice(newTotalPrice)
@@ -474,7 +482,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           {option.title}
         </div>
         <div className="flex gap-2 flex-wrap">
-          {sortedValues.map((value) => {
+          {sortedValues.sort((a, b) => {
+            if (isQuantityOption) {
+              return parseInt(a) - parseInt(b)
+            }
+            return a.localeCompare(b)
+          }).map((value) => {
             // Для опции количества показываем цену и скидку
             if (isQuantityOption) {
               const variant = product.variants?.find(v => 
@@ -1494,7 +1507,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                                 alt={`Thumbnail ${actualIndex + 1}`}
                                 fill
                                 sizes="70px"
-                                style={{ objectFit: "cover" }}
+                                style={{ objectFit: "contain" }}
                                 className="absolute inset-0"
                               />
                             </div>
@@ -1556,7 +1569,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                         fill
                         priority
                         sizes="632px"
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: "contain" }}
                       />
                     )}
                     

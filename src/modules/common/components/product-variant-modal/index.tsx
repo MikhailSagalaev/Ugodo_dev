@@ -5,6 +5,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import Image from 'next/image'
 import { HttpTypes } from "@medusajs/types"
 import { getProductPrice } from "@lib/util/get-product-price"
+import { getSingleUnitVariant } from "@lib/util/get-single-unit-variant"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { addToCart } from "@lib/data/cart"
 import { useParams } from "next/navigation"
@@ -34,6 +35,21 @@ export default function ProductVariantModal({
   const [isWished, setIsWished] = useState(false)
   const [isPreorderModalOpen, setIsPreorderModalOpen] = useState(false)
   
+  useEffect(() => {
+    if (isOpen && product.options) {
+      const singleUnitVariant = getSingleUnitVariant(product);
+      if (singleUnitVariant) {
+        const initialOptions: Record<string, string> = {};
+        singleUnitVariant.options?.forEach(optionValue => {
+          if (optionValue.option_id) {
+            initialOptions[optionValue.option_id] = optionValue.value;
+          }
+        });
+        setSelectedOptions(initialOptions);
+      }
+    }
+  }, [isOpen, product])
+  
   const params = useParams()
 
   const { cheapestPrice } = getProductPrice({
@@ -41,7 +57,6 @@ export default function ProductVariantModal({
     region: region,
   })
 
-  // Получаем выбранный вариант
   const getSelectedVariant = () => {
     if (!product.variants || product.variants.length === 0) return null
     
@@ -61,7 +76,6 @@ export default function ProductVariantModal({
   const isInStock = Boolean(selectedVariant && (selectedVariant.inventory_quantity || 0) > 0)
   const isOutOfStock = !isInStock
 
-  // Закрытие по Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -96,7 +110,6 @@ export default function ProductVariantModal({
   const handleAddToCart = async () => {
     if (!selectedVariant) return
     
-    // Для товаров в наличии проверяем количество
     if (isInStock) {
       const maxQuantity = selectedVariant.inventory_quantity || 0
       if (quantity > maxQuantity) return
@@ -105,7 +118,6 @@ export default function ProductVariantModal({
     setIsAddingToCart(true)
     try {
       if (isInStock) {
-        // Обычное добавление в корзину
         await addToCart({
           variantId: selectedVariant.id,
           quantity: quantity,
@@ -113,7 +125,6 @@ export default function ProductVariantModal({
         })
         window.dispatchEvent(new CustomEvent('cartUpdated'))
       } else {
-        // Открываем модалку предзаказа
         setIsOpen(false)
         setIsPreorderModalOpen(true)
         return
@@ -134,7 +145,6 @@ export default function ProductVariantModal({
     setIsWished(!isWished)
   }
 
-  // Рендер селектора опций
   const renderOptionSelector = (option: HttpTypes.StoreProductOption) => {
     const isColorOption = option.title.toLowerCase().includes('цвет') || 
                          option.title.toLowerCase().includes('color')
@@ -172,8 +182,14 @@ export default function ProductVariantModal({
         >
           {option.title}
         </div>
-        <div className="flex gap-2 flex-wrap pt-4" style={{ overflow: "visible" }}>
-          {Array.from(optionValues).map((value) => {
+        <div className="flex gap-2 flex-wrap pt-4" style={{ overflow: "visible", position: "relative" }}>
+          {Array.from(optionValues).sort((a, b) => {
+            const isQuantityOption = option.title?.toLowerCase().includes('количество')
+            if (isQuantityOption) {
+              return parseInt(a) - parseInt(b)
+            }
+            return a.localeCompare(b)
+          }).map((value) => {
             const isQuantityOption = option.title?.toLowerCase().includes('количество')
             
             if (isQuantityOption) {
@@ -187,11 +203,19 @@ export default function ProductVariantModal({
               
               const price = variantForOption?.calculated_price?.calculated_amount || 0
               
-              const basePrice = product.variants?.[0]?.calculated_price?.calculated_amount || 0
+              const baseVariant = product.variants?.find(variant => 
+                variant.options?.some(opt => 
+                  opt.option_id === option.id && opt.value === "1"
+                )
+              )
+              const basePrice = baseVariant?.calculated_price?.calculated_amount || price
+              const basePricePerUnit = basePrice
+              const pricePerUnit = price / quantity
+              
               let discount = 0
-              if (quantity === 2) discount = 5
-              else if (quantity === 3) discount = 10  
-              else if (quantity === 5) discount = 15
+              if (basePricePerUnit > 0 && pricePerUnit < basePricePerUnit) {
+                discount = Math.round(((basePricePerUnit - pricePerUnit) / basePricePerUnit) * 100)
+              }
 
               const formatPrice = (price: number) => {
                 return new Intl.NumberFormat('ru-RU', {
@@ -226,7 +250,7 @@ export default function ProductVariantModal({
                         backgroundColor: '#BAFF29',
                         fontSize: "9px",
                         fontWeight: 600,
-                        zIndex: 9999
+                        zIndex: 50
                       }}
                     >
                       ВЫГОДА {discount}%

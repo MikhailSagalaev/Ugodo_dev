@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { HttpTypes } from "@medusajs/types";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import { getProductPrice } from "@lib/util/get-product-price";
+import { getCheapestPricePerUnit } from "@lib/util/get-cheapest-per-unit-price";
 import Image from "next/image";
 import Thumbnail from "../thumbnail";
 import PreviewPrice from "./price";
@@ -11,6 +12,7 @@ import { addToCart } from "@lib/data/cart";
 import { useParams } from "next/navigation";
 import CartNotification from "@modules/common/components/cart-notification";
 import ProductVariantModal from "@modules/common/components/product-variant-modal";
+import SmartImage from "@modules/common/components/smart-image";
 
 const COLORS = {
   mint: "#C2E7DA",
@@ -49,10 +51,16 @@ export default function ProductPreview({
   badgeType = "none",
   firstInRow = false,
 }: ProductPreviewProps) {
-  const { cheapestPrice } = getProductPrice({
-    product: product,
-    region: region,
-  });
+  const minPricePerUnit = getCheapestPricePerUnit(product);
+  
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: region.currency_code?.toUpperCase() || 'RUB',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount).replace(/[^\d\s]/g, '')
+  }
 
   // Проверяем реальное наличие товара
   const checkProductAvailability = () => {
@@ -244,15 +252,13 @@ export default function ProductPreview({
         
         <div className="block relative w-full overflow-hidden bg-white">
           <LocalizedClientLink href={`/products/${product?.handle}`} className="block">
-            <div className="relative w-full aspect-[3/4] transition-transform duration-300 group-hover:scale-105">
-              <Image
+            <div className="transition-transform duration-300 group-hover:scale-105">
+              <SmartImage
                 src={imageSrc}
                 alt={product.title || "Product image"}
-                fill
                 sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
-                className="object-cover"
-                onError={handleImageError}
-                onLoad={handleImageLoad}
+                containerClassName="w-full aspect-[3/4]"
+                aspectRatio="3/4"
               />
             </div>
           </LocalizedClientLink>
@@ -277,15 +283,15 @@ export default function ProductPreview({
             )}
           </div>
 
-          {badgeType === "discount" && cheapestPrice?.percentage_diff && (
+          {badgeType === "discount" && (
             <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
-              -{cheapestPrice.percentage_diff}%
+              СКИДКА
             </div>
           )}
 
-          {badgeType === "none" && cheapestPrice?.price_type === 'sale' && cheapestPrice.percentage_diff && (
+          {badgeType === "none" && (
             <div className="absolute top-3 left-3 bg-[#FF3998] text-white px-2 py-1 text-xs font-bold z-10 rounded-sm">
-              -{cheapestPrice.percentage_diff}%
+              АКЦИЯ
             </div>
           )}
 
@@ -399,18 +405,13 @@ export default function ProductPreview({
           )}
           
           {/* Кликабельная цена */}
-          {cheapestPrice && (
+          {minPricePerUnit > 0 && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
               <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`}>
                 <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : textAlign === "center" ? "justify-center" : ""}`}>
                   <span className={`text-base sm:text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase hover:text-[#C2E7DA]`}>
-                    {cheapestPrice.calculated_price}
+                    {formatPrice(minPricePerUnit)} ₽
                   </span>
-                  {cheapestPrice.price_type === 'sale' && cheapestPrice.original_price && (
-                    <span className="text-sm text-gray-400 line-through uppercase">
-                      {cheapestPrice.original_price}
-                    </span>
-                  )}
                 </div>
               </div>
             </LocalizedClientLink>
