@@ -172,9 +172,42 @@ graph TD
 - Коммиты: Conventional Commits.
 
 ## 6. Развертывание
-- PM2 (через `ecosystem.config.js`) для Node.js.
+
+### 6.1. Методы развертывания
+- **PM2** (через `ecosystem.config.js`) для Node.js процессов.
+- **Docker Compose** для локальной разработки и production сред.
 - Потенциально Vercel для фронтенда, Medusa Cloud для бэкенда.
-- Все локальные настройки Redis и MinIO должны быть упакованы в Docker для удобства развертывания и масштабирования (см. задачи в tasktracker.md).
+
+### 6.2. Автоматизированные инструменты
+- **`./deploy.sh`** - Скрипт автоматического развертывания с поддержкой Docker и PM2.
+- **`./monitor.sh`** - Мониторинг статуса сервисов и здоровья приложения.
+- **`./fix-git-divergent.sh`** - Решение проблем с Git при обновлении.
+
+### 6.3. Быстрое обновление проекта
+Для обновления кодовой базы с GitHub используйте:
+
+```bash
+# Краткий метод
+git pull origin main && ./deploy.sh auto
+
+# Docker
+docker compose down && docker compose build --no-cache && docker compose up -d
+
+# PM2
+cd medusa && yarn install && yarn build && cd .. && yarn install && yarn build && pm2 restart all
+```
+
+### 6.4. Документация по развертыванию
+- **[QUICK_UPDATE_GUIDE.md](../QUICK_UPDATE_GUIDE.md)** - Краткая инструкция по обновлению
+- **[DEPLOY_GUIDE.md](../DEPLOY_GUIDE.md)** - Полная инструкция по развертыванию
+- **[EMERGENCY.md](../EMERGENCY.md)** - Экстренное восстановление
+
+### 6.5. Мониторинг и поддержка
+- Проверка статуса: `./monitor.sh`
+- Просмотр логов: `pm2 logs` или `docker compose logs -f`
+- Health checks: автоматическая проверка доступности API endpoints
+
+Все локальные настройки Redis и MinIO упакованы в Docker для удобства развертывания и масштабирования.
 
 ## 7. Диаграммы (Mermaid)
 (Основная архитектурная диаграмма приведена выше)
