@@ -10,14 +10,14 @@ export default async function PreviewPrice({ price }: { price: VariantPrice }) {
     <div className="flex flex-col items-end relative">
       {price.price_type === "sale" && (
         <Text
-          className="text-sm line-through opacity-50"
+          className="text-sm line-through-blue opacity-50"
           data-testid="original-price"
         >
           {price.original_price}
         </Text>
       )}
       <Text
-        className="text-base font-semibold"
+        className="text-base font-medium"
         data-testid="price"
       >
         {price.calculated_price}

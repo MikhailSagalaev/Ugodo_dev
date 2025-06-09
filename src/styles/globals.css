@@ -200,3 +200,21 @@
     flex-shrink: 0;
   }
 }
+
+/* Кастомная полоска для перечеркнутых цен */
+.line-through-blue {
+  position: relative;
+  text-decoration: none;
+}
+
+.line-through-blue::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: #BAFF29;
+  transform: translateY(-50%);
+  z-index: 1;
+}

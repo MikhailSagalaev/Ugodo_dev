@@ -96,7 +96,7 @@ export default function ProductPrice({
           </span>
           {hasDiscount && (
             <span 
-              className="text-[#C2E7DA] text-[14px] leading-[1.1] lowercase"
+                                className="text-[#C2E7DA] text-[14px] leading-[1.1] lowercase"
             >
               со скидкой {discountPercentage}%
             </span>
@@ -106,7 +106,7 @@ export default function ProductPrice({
         {hasDiscount && (
           <div className="flex flex-col ml-3">
             <span 
-              className="text-[30px] font-[500] line-through"
+              className="text-[30px] font-[500] line-through-blue"
               style={{
                 color: "#b3b3b3"
               }}

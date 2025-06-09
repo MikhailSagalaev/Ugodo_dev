@@ -109,6 +109,19 @@ export default function ProductCard({
 
   const textAlignClass = textAlign === "right" ? "text-right" : textAlign === "center" ? "text-center" : "text-left";
 
+  // Функция для форматирования цены
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: region.currency_code?.toUpperCase() || 'RUB',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount).replace(/[^\d\s]/g, '')
+  }
+
+  // Получаем тип товара
+  const productType = product.type?.value || product.collection?.title || categoryTitle || "";
+
   return (
     <>
       {/* Уведомление о добавлении в корзину */}
@@ -135,22 +148,16 @@ export default function ProductCard({
               className={`transition-transform duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
             />
 
-            <div className="absolute top-3 left-3 flex gap-1 z-10">
+            <div className="absolute top-0 left-0 flex gap-1 z-10">
               {badgeType === "new" && (
-                <div className="bg-[#BAFF29] text-black px-2 py-1 text-xs font-bold rounded-sm">
+                <div className="bg-[#BAFF29] text-black text-xs font-bold w-8 h-8 flex items-center justify-center uppercase">
                   NEW
                 </div>
               )}
 
               {badgeType === "hit" && (
-                <div className="bg-red-500 text-white px-2 py-1 text-xs font-bold rounded-sm">
+                <div className="text-white text-xs font-bold w-8 h-8 flex items-center justify-center uppercase" style={{ backgroundColor: 'rgb(255, 22, 134)' }}>
                   HIT
-                </div>
-              )}
-
-              {!isInStock && (
-                <div className="text-white px-2 py-1 text-xs font-bold rounded-sm" style={{ backgroundColor: '#6290C3' }}>
-                  ПРЕДЗАКАЗ
                 </div>
               )}
             </div>
@@ -172,8 +179,8 @@ export default function ProductCard({
                 width="24" 
                 height="24" 
                 viewBox="0 0 24 24" 
-                fill={isWished || isHeartHovered ? COLORS.mint : "none"} 
-                stroke={isHeartHovered ? COLORS.mint : COLORS.mint} 
+                fill={isWished || isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : "none"} 
+                stroke={isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : (isHovered ? '#9CA3AF' : '#9CA3AF')} 
                 strokeWidth="2"
                 className="transition-all duration-200"
                 xmlns="http://www.w3.org/2000/svg"
@@ -188,10 +195,10 @@ export default function ProductCard({
                   onClick={handleAddToCart}
                   className={
                     isTabletOrMobile
-                      ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent ${!isInStock ? '' : 'bg-[#1A1341]'}`
-                      : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${!isInStock ? '' : isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'}`
+                      ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent bg-[#1A1341]`
+                      : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${isAddingToCart ? 'bg-gray-400' : 'bg-[#1A1341] hover:bg-gray-400'}`
                   }
-                  style={!isInStock ? { backgroundColor: '#6290C3' } : {}}
+                  style={{}}
                   aria-label={!isInStock ? "Сделать предзаказ" : "Добавить в корзину"}
                   disabled={isAddingToCart}
                 >
@@ -221,30 +228,63 @@ export default function ProductCard({
         </LocalizedClientLink>
 
         <div className={`p-3 ${textAlignClass}`}>
-          <div className="space-y-1">
-            {cheapestPrice && (
-              <PreviewPrice 
-                price={{
-                  calculated_price: cheapestPrice.calculated_price || "0",
-                  original_price: cheapestPrice.original_price || "0",
-                  calculated_price_number: cheapestPrice.calculated_amount || 0,
-                  original_price_number: cheapestPrice.original_amount || 0,
-                  currency_code: cheapestPrice.currency_code || "RUB",
-                  price_type: cheapestPrice.price_type || "default",
-                  percentage_diff: cheapestPrice.percentage_diff?.toString() || "0"
-                }}
-              />
+          <div className="flex flex-col">
+            {/* Плашки между фото и типом */}
+            <div className="flex gap-1 mb-2">
+              {!isInStock && badgeType !== "new" && badgeType !== "hit" && (
+                <div 
+                  className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
+                  style={{ 
+                    width: "90px",
+                    height: "26px",
+                    clipPath: 'polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)',
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    lineHeight: "12.1px"
+                  }}
+                >
+                  ПРЕДЗАКАЗ
+                </div>
+              )}
+            </div>
+            
+            {/* Тип товара с отступом 17px */}
+            {productType && (
+              <div 
+                className={`font-medium uppercase text-xs transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}
+                style={{ marginTop: '17px' }}
+              >
+                {productType}
+              </div>
             )}
             
-            {secondaryTitle && (
-              <p className="text-xs text-gray-500 uppercase tracking-wide">
-                {secondaryTitle}
-              </p>
-            )}
-            
-            <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+            {/* Название товара с отступом 10px */}
+            <h3 
+              className={`font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-900'}`}
+              style={{ 
+                marginTop: '10px',
+                fontSize: '18px'
+              }}
+            >
               {product.title}
             </h3>
+            
+            {/* Цена с отступом 10px */}
+            {cheapestPrice && (
+              <div 
+                className="flex items-baseline gap-2"
+                style={{ marginTop: '10px' }}
+              >
+                <span className={`text-base font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}>
+                  {formatPrice(cheapestPrice.calculated_amount || 0)} ₽
+                </span>
+                {cheapestPrice.price_type === 'sale' && cheapestPrice.original_amount && (
+                  <span className={`text-base font-medium line-through-blue transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-400'}`}>
+                    {formatPrice(cheapestPrice.original_amount)} ₽
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

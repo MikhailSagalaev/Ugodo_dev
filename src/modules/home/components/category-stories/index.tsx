@@ -20,8 +20,8 @@ const stories = [
   {
     id: "spring",
     title: "Весна 2024",
-    color: "#C2E7DA", // мятный
-    bgColor: "bg-[#C2E7DA]",
+    color: "gray-400", // мятный
+    bgColor: "bg-gray-400",
     textColor: "text-black",
     handle: "/collections/spring",
     image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=1770&auto=format&fit=crop",
@@ -70,8 +70,8 @@ const stories = [
   {
     id: "decor",
     title: "Декор",
-    color: "#C2E7DA", // мятный
-    bgColor: "bg-[#C2E7DA]",
+    color: "gray-400", // мятный
+    bgColor: "bg-gray-400",
     textColor: "text-black",
     handle: "/collections/decor",
     image: "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?q=80&w=1770&auto=format&fit=crop",
@@ -318,7 +318,7 @@ const CategoryStories = () => {
             role="button"
             aria-label={`Открыть историю: ${story.title}`}
           >
-            <div className={`w-16 h-16 rounded-full relative overflow-hidden border-2 border-white ring-1 ring-black group-hover:ring-[#C2E7DA] group-hover:border-[#C2E7DA] ${story.bgColor} ${story.textColor} flex items-center justify-center transition-all duration-200`}>
+            <div className={`w-16 h-16 rounded-full relative overflow-hidden border-2 border-white ring-1 ring-black group-hover:ring-gray-400 group-hover:border-gray-400 ${story.bgColor} ${story.textColor} flex items-center justify-center transition-all duration-200`}>
               <span className="font-semibold text-center text-xs uppercase tracking-wider px-1">
                 NEW
               </span>

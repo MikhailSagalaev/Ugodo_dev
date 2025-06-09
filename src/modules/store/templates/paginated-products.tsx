@@ -13,6 +13,7 @@ type PaginatedProductsParams = {
   collection_id?: string[]
   category_id?: string[]
   id?: string[]
+  order?: string
 }
 
 export default function PaginatedProducts({
@@ -73,6 +74,7 @@ export default function PaginatedProducts({
     
     const queryParams: PaginatedProductsParams = {
       limit: limit,
+      order: "-created_at"
     }
 
     if (collectionId) {

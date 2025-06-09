@@ -200,7 +200,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     viewBox="0 0 22 22" 
                     fill="none" 
                     stroke="black"
-                    className="transition-colors duration-200 hover:stroke-[#C2E7DA]"
+                    className="transition-colors duration-200 hover:stroke-gray-400"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M15.3486 1.571289C16.0278 1.571905 16.7011 1.690419 17.3389 1.919922L17.6104 2.02441C18.2373 2.28569 18.8137 2.65363 19.3145 3.11035L19.5244 3.31152L19.5254 3.3125C21.7957 5.59273 21.864 9.09981 19.7402 11.4414L19.5283 11.6641L11 20.1914L2.47266 11.6641L2.25977 11.4414C0.204502 9.17497 0.202891 5.81674 2.25879 3.54004L2.47168 3.31641L2.47266 3.31543C2.95145 2.83254 3.5095 2.43645 4.12207 2.14453L4.3877 2.02637C5.10485 1.727112 5.87428 1.572073 6.65137 1.571289C8.11898 1.570947 9.5332 2.12258 10.6133 3.11621L11 3.47168L11.3877 3.11621C12.4676 2.12276 13.8813 1.571086 15.3486 1.571289Z" strokeWidth="1.14286"/>
@@ -298,7 +298,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     viewBox="0 0 22 22" 
                     fill="none" 
                     stroke={!shouldBeTransparent || isScrolled ? "black" : "white"}
-                    className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
+                    className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-gray-400")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M15.3486 1.571289C16.0278 1.571905 16.7011 1.690419 17.3389 1.919922L17.6104 2.02441C18.2373 2.28569 18.8137 2.65363 19.3145 3.11035L19.5244 3.31152L19.5254 3.3125C21.7957 5.59273 21.864 9.09981 19.7402 11.4414L19.5283 11.6641L11 20.1914L2.47266 11.6641L2.25977 11.4414C0.204502 9.17497 0.202891 5.81674 2.25879 3.54004L2.47168 3.31641L2.47266 3.31543C2.95145 2.83254 3.5095 2.43645 4.12207 2.14453L4.3877 2.02637C5.10485 1.727112 5.87428 1.572073 6.65137 1.571289C8.11898 1.570947 9.5332 2.12258 10.6133 3.11621L11 3.47168L11.3877 3.11621C12.4676 2.12276 13.8813 1.571086 15.3486 1.571289Z" strokeWidth="1.14286"/>
@@ -316,7 +316,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     viewBox="0 0 22 22" 
                     fill="none" 
                     stroke={!shouldBeTransparent || isScrolled ? "black" : "white"}
-                    className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-[#C2E7DA]")}
+                    className={clx("transition-colors duration-200 group-hover:stroke-black hover:stroke-gray-400")}
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
@@ -369,8 +369,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -384,8 +384,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -398,8 +398,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -413,8 +413,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -427,8 +427,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -442,8 +442,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -456,8 +456,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                     className={clx(
                       "text-[16px] font-normal transition-colors duration-200 relative hover:after:w-full after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-200",
                       {
-                        "text-white group-hover:text-black hover:text-[#C2E7DA] group-hover:hover:text-[#C2E7DA] after:bg-[#C2E7DA] group-hover:after:bg-[#C2E7DA]": shouldBeTransparent && !isScrolled,
-                        "text-black hover:text-[#C2E7DA] after:bg-[#C2E7DA]": isScrolled || !shouldBeTransparent
+                        "text-white group-hover:text-black hover:text-gray-400 group-hover:hover:text-gray-400 after:bg-gray-400 group-hover:after:bg-gray-400": shouldBeTransparent && !isScrolled,
+                        "text-black hover:text-gray-400 after:bg-gray-400": isScrolled || !shouldBeTransparent
                       }
                     )}
                   >
@@ -477,7 +477,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
         />
         
         {!isHome && !isStorePage && (
-          <div className="bg-[#BAFF29] h-[45px] flex items-center justify-center transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer">
+          <div className="bg-[#BAFF29] h-[45px] flex items-center justify-center transition-colors duration-200 hover:text-gray-400 cursor-pointer">
             <div className="flex items-center justify-center w-full">
               <span 
                 className="text-black transition-colors duration-200"

@@ -131,7 +131,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                       {hasChildren ? (
                         <button
                           onClick={() => handleCategoryClick(category)}
-                          className="flex items-center justify-between w-full text-left text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-left text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -145,7 +145,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                       ) : (
                         <LocalizedClientLink
                           href={`/categories/${category.handle}`}
-                          className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -163,7 +163,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
               <div className="mt-8">
                 <LocalizedClientLink
                   href="/store"
-                  className="inline-flex items-center px-6 py-3 bg-[#BAFF29] hover:bg-[#C2E7DA] text-black font-medium rounded-md transition-colors text-sm w-full justify-center"
+                                      className="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black font-medium rounded-md transition-colors text-xs w-full justify-center"
                   onClick={onClose}
                 >
                   Смотреть весь каталог
@@ -218,7 +218,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                       {hasChildren ? (
                         <button
                           onClick={() => handleSubcategoryClick(subcategory)}
-                          className="flex items-center justify-between w-full text-left text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-left text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -232,7 +232,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                       ) : (
                         <LocalizedClientLink
                           href={`/categories/${subcategory.handle}`}
-                          className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -291,7 +291,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                   <LocalizedClientLink
                     key={subsubcategory.id}
                     href={`/categories/${subsubcategory.handle}`}
-                    className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                    className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -355,7 +355,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                       >
                         <LocalizedClientLink
                           href={`/categories/${category.handle}`}
-                          className="flex items-center justify-between text-black hover:text-[#C2E7DA] transition-colors text-sm font-medium"
+                          className="flex items-center justify-between text-black hover:text-gray-400 transition-colors text-sm font-medium"
                           style={{ 
                             padding: "6px 12px",
                             height: "32px"
@@ -376,7 +376,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                   <div className="mt-6 pt-4 border-t border-gray-200">
                     <LocalizedClientLink
                       href="/store"
-                      className="inline-flex items-center px-6 py-3 bg-[#BAFF29] hover:bg-[#C2E7DA] text-black font-medium rounded-md transition-colors text-sm"
+                      className="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black font-medium rounded-md transition-colors text-xs"
                       onClick={onClose}
                     >
                       Смотреть весь каталог
@@ -408,7 +408,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                                 >
                                   <LocalizedClientLink
                                     href={`/categories/${child.handle}`}
-                                    className="flex items-center justify-between text-black hover:text-[#C2E7DA] transition-colors text-sm font-medium"
+                                    className="flex items-center justify-between text-black hover:text-gray-400 transition-colors text-sm font-medium"
                                     style={{ 
                                       padding: "6px 12px",
                                       height: "32px"
@@ -449,7 +449,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
                               <LocalizedClientLink
                                 key={grandchild.id}
                                 href={`/categories/${grandchild.handle}`}
-                                className="block text-black hover:text-[#C2E7DA] transition-colors text-sm font-medium"
+                                className="block text-black hover:text-gray-400 transition-colors text-sm font-medium"
                                 style={{ 
                                   padding: "6px 12px",
                                   height: "32px",

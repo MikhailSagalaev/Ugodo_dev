@@ -442,7 +442,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               {expandedSections[key] ? '−' : '+'}
             </span>
             <span 
-              className="font-medium text-gray-900 lowercase tracking-wide group-hover:text-[#C2E7DA] transition-colors"
+              className="font-medium text-gray-900 lowercase tracking-wide group-hover:text-gray-400 transition-colors"
               style={{ fontSize: '20px', fontWeight: 500 }}
             >
               {title}
@@ -777,7 +777,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           setLocalFilters(filters)
           setIsOpen(true)
         }}
-        className="flex items-center justify-center gap-2 bg-white focus:outline-none focus:ring-0 hover:text-[#C2E7DA] transition-colors"
+        className="flex items-center justify-center gap-2 bg-white focus:outline-none focus:ring-0 hover:text-gray-400 transition-colors"
         style={{
           fontSize: isMobile ? "16px" : "16px",
           fontWeight: 500,
@@ -911,7 +911,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <div className="flex items-center justify-between p-6">
               <button 
                 onClick={() => setActiveSubModal(null)}
-                className="flex items-center hover:text-[#C2E7DA] transition-colors"
+                className="flex items-center hover:text-gray-400 transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />

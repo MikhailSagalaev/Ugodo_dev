@@ -870,7 +870,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 }}
               >
                 <span 
-                  className="text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                  className="text-black transition-colors duration-200 group-hover:text-gray-400"
                   style={{
                     fontSize: "11px",
                     fontWeight: 500,
@@ -882,7 +882,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 </span>
               </div>
               <span 
-                className="ml-2 text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                className="ml-2 text-black transition-colors duration-200 group-hover:text-gray-400"
                 style={{
                   fontSize: "14px",
                   lineHeight: 1.1,
@@ -892,13 +892,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               >
                 {promoCodeCopied ? 'скопировано' : 'по промокоду'}
               </span>
-              <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
             
             {!customer && (
-              <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+              <div className="flex items-center mb-6 transition-colors duration-200 hover:text-gray-400 cursor-pointer" style={{ fontSize: "14px" }}>
                 <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
                   <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
                 </div>
@@ -1243,7 +1243,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   }}
                 >
                   <span 
-                    className="text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                    className="text-black transition-colors duration-200 group-hover:text-gray-400"
                     style={{
                       fontSize: "11px",
                       fontWeight: 500,
@@ -1255,7 +1255,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   </span>
                 </div>
                 <span 
-                  className="ml-2 text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                  className="ml-2 text-black transition-colors duration-200 group-hover:text-gray-400"
                   style={{
                     fontSize: "14px",
                     lineHeight: 1.1,
@@ -1265,13 +1265,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 >
                   {promoCodeCopied ? 'скопировано' : 'по промокоду'}
                 </span>
-                <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
 
               {!customer && (
-                <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+                <div className="flex items-center mb-6 transition-colors duration-200 hover:text-gray-400 cursor-pointer" style={{ fontSize: "14px" }}>
                   <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
                     <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
                   </div>
@@ -1714,7 +1714,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       }}
                     >
                       <span 
-                        className="text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                        className="text-black transition-colors duration-200 group-hover:text-gray-400"
                         style={{
                           fontSize: "11px",
                           fontWeight: 500,
@@ -1726,7 +1726,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       </span>
                     </div>
                     <span 
-                      className="ml-2 text-black transition-colors duration-200 group-hover:text-[#C2E7DA]"
+                      className="ml-2 text-black transition-colors duration-200 group-hover:text-gray-400"
                       style={{
                         fontSize: "14px",
                         lineHeight: 1.1,
@@ -1736,13 +1736,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     >
                       {promoCodeCopied ? 'скопировано' : 'по промокоду'}
                     </span>
-                    <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-[#C2E7DA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="ml-2 w-4 h-4 transition-colors duration-200 group-hover:stroke-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                   
                   {!customer && (
-                    <div className="flex items-center mb-6 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer" style={{ fontSize: "14px" }}>
+                    <div className="flex items-center mb-6 transition-colors duration-200 hover:text-gray-400 cursor-pointer" style={{ fontSize: "14px" }}>
                       <div className="rounded-full w-5 h-5 border border-gray-300 flex items-center justify-center mr-2">
                         <span style={{ fontSize: "12px", fontWeight: "bold" }}>i</span>
                       </div>
@@ -1753,7 +1753,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                   
                   <div className="flex mb-6 gap-2">
                     <button 
-                      className={`${addSuccess ? 'bg-[#C2E7DA]' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+                      className={`${addSuccess ? 'bg-gray-400' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-gray-400 hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
                       style={{
                         width: "305px",
                         height: "50px",
@@ -1769,7 +1769,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       {isAddingToCart ? (isInStock ? 'Добавление...' : 'Оформление...') : addSuccess ? (isInStock ? 'Добавлено ✓' : 'Предзаказ оформлен ✓') : !isInStock ? 'Сделать предзаказ' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
                     </button>
                     <button 
-                      className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
+                      className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-gray-400"
                       style={{
                         width: "55px",
                         height: "50px"
@@ -2085,7 +2085,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
           <div className="flex gap-2">
             <button 
-              className={`flex-1 ${addSuccess ? 'bg-[#C2E7DA]' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-[#C2E7DA] hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
+              className={`flex-1 ${addSuccess ? 'bg-gray-400' : !isInStock ? 'bg-cyan-600 hover:bg-cyan-700' : isInStock && quantity <= selectedVariantQuantity ? 'bg-black hover:bg-gray-400 hover:text-black' : 'bg-gray-400 cursor-not-allowed'} text-white uppercase font-medium transition-colors duration-200`}
               style={{
                 height: "50px",
                 fontSize: "11px",
@@ -2100,7 +2100,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               {isAddingToCart ? (isInStock ? 'Добавление...' : 'Оформление...') : addSuccess ? (isInStock ? 'Добавлено ✓' : 'Предзаказ оформлен ✓') : !isInStock ? 'Сделать предзаказ' : quantity > selectedVariantQuantity ? 'Превышен лимит' : 'Добавить в корзину'}
             </button>
             <button 
-              className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-[#C2E7DA]"
+              className="bg-black border border-gray-300 flex items-center justify-center transition-colors duration-200 hover:bg-gray-400"
               style={{
                 width: "55px",
                 height: "50px"

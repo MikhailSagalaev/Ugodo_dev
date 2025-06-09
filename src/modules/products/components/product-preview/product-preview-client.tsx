@@ -55,6 +55,7 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
   const [wishlistItemId, setWishlistItemId] = React.useState<string | null>(null);
   const [isLoadingWishlist, setIsLoadingWishlist] = React.useState(false);
   const [isLoadingCustomer, setIsLoadingCustomer] = React.useState(true);
+  const [isHovered, setIsHovered] = React.useState(false);
 
   React.useEffect(() => {
     setIsLoadingCustomer(true);
@@ -131,7 +132,11 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
   const cartIconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.66699 8.5H21.3337L20.3595 19.2112C20.3068 19.7909 20.0393 20.33 19.6096 20.7226C19.1798 21.1153 18.6188 21.3331 18.0367 21.3333H5.96399C5.38187 21.3331 4.82086 21.1153 4.39109 20.7226C3.96132 20.33 3.69384 19.7909 3.64116 19.2112L2.66699 8.5Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"></path> <path d="M7.33398 10.834V7.33402C7.33398 6.09635 7.82565 4.90936 8.70082 4.03419C9.57599 3.15902 10.763 2.66736 12.0007 2.66736C13.2383 2.66736 14.4253 3.15902 15.3005 4.03419C16.1757 4.90936 16.6673 6.09635 16.6673 7.33402V10.834" stroke="white" stroke-width="1.5" stroke-linecap="round"></path> </svg>`;
 
   return (
-    <div className="flex flex-col w-[320px] group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden">
+    <div 
+      className="flex flex-col w-[320px] group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
         <div className="relative w-full overflow-hidden aspect-[3/4]">
           <Thumbnail
@@ -141,18 +146,21 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
             isFeatured={isFeatured}
             className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
           />
-          {/* Флажок NEW */}
-          {badgeType === "new" && (
-            <div className="absolute top-2 left-2 bg-[#BAFF29] text-black px-2 py-1 text-xs font-bold z-10 select-none">
-              NEW
-            </div>
-          )}
-          {/* Флажок HIT */}
-          {badgeType === "hit" && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs font-bold z-10 select-none">
-              HIT
-            </div>
-          )}
+
+          <div className="absolute top-0 left-0 flex gap-1 z-10">
+            {badgeType === "new" && (
+              <div className="bg-[#BAFF29] text-black text-xs font-bold w-8 h-8 flex items-center justify-center uppercase">
+                NEW
+              </div>
+            )}
+
+            {badgeType === "hit" && (
+              <div className="text-white text-xs font-bold w-8 h-8 flex items-center justify-center uppercase" style={{ backgroundColor: 'rgb(255, 22, 134)' }}>
+                HIT
+              </div>
+            )}
+          </div>
+
           {/* СКИДКА - показываем только если нет флажка NEW или HIT */}
           {badgeType !== "new" && badgeType !== "hit" && discountBadge && (
             <div className="absolute top-2 left-2 bg-[#CBF401] text-black px-2 py-1 text-xs font-bold z-10 select-none">
@@ -202,20 +210,49 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
           )}
         </div>
         {/* Блок с ценой, категорией и названием */}
-        <div className="flex flex-col gap-1 px-2 sm:px-4 pt-2 pb-4 text-left">
-          {/* ЦЕНА и СТАРАЯ ЦЕНА */}
+        <div className="flex flex-col px-2 sm:px-4 pt-2 pb-4 text-left">
+          {/* Плашки между фото и типом */}
+          <div className="flex gap-1 mb-2">
+            {!product.isInStock && badgeType !== "new" && badgeType !== "hit" && (
+              <div 
+                className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
+                style={{ 
+                  width: "90px",
+                  height: "26px",
+                  clipPath: 'polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)',
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  lineHeight: "12.1px"
+                }}
+              >
+                ПРЕДЗАКАЗ
+              </div>
+            )}
+          </div>
+          
+          {/* КАТЕГОРИЯ с отступом 17px */}
+          <div 
+            className={`text-sm truncate uppercase transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-500'}`}
+            style={{ marginTop: '17px' }}
+          >
+            {product.category}
+          </div>
+          
+          {/* НАЗВАНИЕ с отступом 10px */}
+          <div className={`font-medium leading-tight transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-800'}`} style={{ fontSize: '18px', marginTop: '10px' }}>{product.title}</div>
+          
+          {/* ЦЕНА и СТАРАЯ ЦЕНА с отступом 10px */}
           {price && (
-            <div className="flex items-end gap-2">
-              <span className="text-xl font-semibold text-black">{price.calculated_price}</span>
+            <div 
+              className="flex items-end gap-2"
+              style={{ marginTop: '10px' }}
+            >
+              <span className={`text-xl font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}>{price.calculated_price}</span>
               {price.price_type === 'sale' && price.original_price && (
-                <span className="text-base text-gray-400 line-through">{price.original_price}</span>
+                <span className={`text-xl font-medium line-through-blue transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-400'}`}>{price.original_price}</span>
               )}
             </div>
           )}
-          {/* КАТЕГОРИЯ */}
-          <div className="text-sm text-zinc-500 truncate">{product.category}</div>
-          {/* НАЗВАНИЕ */}
-          <div className="text-base font-medium text-zinc-800 leading-tight line-clamp-2 min-h-[2.5em]">{product.title}</div>
         </div>
       </LocalizedClientLink>
     </div>

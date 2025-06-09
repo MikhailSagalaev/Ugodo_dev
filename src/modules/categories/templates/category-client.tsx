@@ -11,7 +11,7 @@ import SupportButton from "@modules/common/components/support-button"
 
 const categoryColors = [
   "bg-[#F1FFE2]",
-  "bg-[#C2E7DA]", 
+  "bg-gray-400", 
   "bg-[#6290C3]",
   "bg-[#1A1341]",
   "bg-[#BAFF29]",
@@ -251,7 +251,7 @@ export default function CategoryClient({
             <div className="flex items-center space-x-2 text-white text-sm">
               <button 
                 onClick={() => window.history.back()}
-                className="flex items-center hover:text-[#C2E7DA] transition-colors"
+                className="flex items-center hover:text-gray-400 transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />
@@ -273,7 +273,7 @@ export default function CategoryClient({
                   ) : (
                     <Link 
                       href={crumb.path} 
-                      className="hover:text-[#C2E7DA] transition-colors"
+                      className="hover:text-gray-400 transition-colors"
                     >
                       {crumb.name}
                     </Link>
@@ -310,11 +310,7 @@ export default function CategoryClient({
                   <Link
                     key={subcat.id}
                     href={`/categories/${subcat.handle}`}
-                    className={`
-                      flex-shrink-0 px-3 rounded-lg font-medium transition-all duration-200 min-w-[80px] text-center text-sm flex items-center justify-center
-                      ${categoryColors[index % categoryColors.length]}
-                      ${index % 8 === 0 || index % 8 === 1 || index % 8 === 4 ? 'text-black' : 'text-white'}
-                    `}
+                    className="flex-shrink-0 px-2 rounded-lg font-medium transition-all duration-200 min-w-[70px] text-center text-xs flex items-center justify-center bg-gray-300 hover:bg-gray-400 text-black"
                     style={{ height: '60px' }}
                   >
                     {subcat.name}
@@ -328,11 +324,7 @@ export default function CategoryClient({
                     <Link
                       key={subcat.id}
                       href={`/categories/${subcat.handle}`}
-                      className={`
-                        flex-shrink-0 px-6 py-4 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-[120px] text-center
-                        ${categoryColors[index % categoryColors.length]}
-                        ${index % 8 === 0 || index % 8 === 1 || index % 8 === 4 ? 'text-black' : 'text-white'}
-                      `}
+                      className="flex-shrink-0 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-[100px] text-center bg-gray-300 hover:bg-gray-400 text-black text-sm"
                     >
                       {subcat.name}
                     </Link>
@@ -380,7 +372,7 @@ export default function CategoryClient({
                 <div className="relative sort-dropdown">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center justify-between bg-white focus:outline-none focus:ring-0 hover:text-[#C2E7DA] transition-colors text-base font-medium py-2 px-3 pr-8 border-none min-w-[200px]"
+                    className="flex items-center justify-between bg-white focus:outline-none focus:ring-0 hover:text-gray-400 transition-colors text-base font-medium py-2 px-3 pr-8 border-none min-w-[200px]"
                   >
                     <span>{sortOptions.find(opt => opt.value === sortBy)?.label}</span>
                     <svg 
@@ -400,7 +392,7 @@ export default function CategoryClient({
                           {sortOptions.map((option) => (
                             <li key={option.value}>
                               <button
-                                className={`w-full text-left px-4 py-2 text-sm hover:text-[#C2E7DA] transition-colors ${
+                                className={`w-full text-left px-4 py-2 text-sm hover:text-gray-400 transition-colors ${
                                   sortBy === option.value ? 'font-medium' : ''
                                 }`}
                                 onClick={() => handleSortChange(option.value as SortOption)}
