@@ -937,7 +937,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                           {productTitle}
                         </h3>
                         <div className="text-sm mb-4">
-                          <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                          <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {selectedVariant?.sku || product.handle || product.id}</p>
                         </div>
                         {content.split('\n\n').map((paragraph, idx) => (
                           <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
@@ -1351,7 +1351,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                               {productTitle}
                             </h3>
                             <div className="text-sm mb-4">
-                              <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                              <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {selectedVariant?.sku || product.handle || product.id}</p>
                             </div>
                             {content.split('\\n\\n').map((paragraph, idx) => (
                               <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
@@ -1839,7 +1839,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                       {productTitle}
                     </h3>
                     <div className="text-sm mb-6" style={{ fontSize: "16px", lineHeight: 1.5 }}>
-                      <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {(product.variants && product.variants[0]?.sku) || product.handle || product.id}</p>
+                      <p className="mb-2" style={{ fontSize: "14px", color: "#7f7f7f" }}>SKU: {selectedVariant?.sku || product.handle || product.id}</p>
                     </div>
                     {tabContent[selectedTab].split('\n\n').map((paragraph, idx) => (
                       <p key={idx} style={{ fontSize: "14px" }} className="mb-4">
