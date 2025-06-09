@@ -407,7 +407,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                   </LocalizedClientLink>
                 </li>
                 
-                <li>
+                {/* <li>
                   <LocalizedClientLink
                     href="/promotions"
                     className={clx(
@@ -420,8 +420,8 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                   >
                     акции
                   </LocalizedClientLink>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <LocalizedClientLink
                     href="/brands"
                     className={clx(
@@ -434,7 +434,7 @@ const Nav = ({ isHome = false, isTransparent }: { isHome?: boolean; isTransparen
                   >
                     бренды
                   </LocalizedClientLink>
-                </li>
+                </li> */}
                 
                 <li>
                   <LocalizedClientLink

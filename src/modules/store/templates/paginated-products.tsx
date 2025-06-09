@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Button } from "@medusajs/ui"
 import { listProductsWithInventory } from "@lib/data/products"
-import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { HttpTypes } from "@medusajs/types"
 
@@ -44,6 +43,7 @@ export default function PaginatedProducts({
   
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
+  const [isMidTablet, setIsMidTablet] = useState(false)
   
   useEffect(() => {
     setProducts(initialProducts)
@@ -54,8 +54,9 @@ export default function PaginatedProducts({
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsTabletOrMobile(width < 824);
-      setIsTablet(width >= 824 && width < 1024);
+      setIsTabletOrMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1118);
+      setIsMidTablet(width >= 1118 && width < 1233);
     };
     
     handleResize();
@@ -110,19 +111,20 @@ export default function PaginatedProducts({
     }
   }
 
-  return (
-    <div className="w-full max-w-[1360px] mx-auto px-0">
-      <div className="overflow-hidden">
-        {products.length > 0 && (
-          <div className={`
-            grid
-            ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px]' : 
-              isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px]' : 
-              'grid-cols-4 px-0'}
-            w-full
+      return (
+      <div className="w-full">
+        <div className={`overflow-hidden flex justify-center ${!isTabletOrMobile ? 'px-4' : ''}`}>
+          {products.length > 0 && (
+            <div className={`
+              grid 
+              ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px] max-w-[500px]' : 
+                isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px] px-4 max-w-[750px]' : 
+                isMidTablet ? 'grid-cols-4 gap-x-[15px] gap-y-[80px]' :
+                'grid-cols-4 px-0'}
+              ${isTabletOrMobile || isTablet ? '' : isMidTablet ? 'max-w-[980px]' : 'w-full'}
             justify-center
           `}
-          style={!isTabletOrMobile && !isTablet ? { gap: 'clamp(18px, 2.5vw, 30px)' } : {}}
+          style={!isTabletOrMobile && !isTablet && !isMidTablet ? { gap: 'clamp(18px, 2.5vw, 30px)' } : {}}
           >
             {products.map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
@@ -138,6 +140,7 @@ export default function PaginatedProducts({
                       firstInRow={
                         isTabletOrMobile ? index % 2 === 0 : 
                         isTablet ? index % 3 === 0 : 
+                        isMidTablet ? index % 4 === 0 :
                         false
                       }
                       textAlign="left"

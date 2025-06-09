@@ -17,7 +17,7 @@ const StoreTemplate = async ({
   const { response: { products, count: totalCount } } = await listProductsWithInventory({
     regionId: region.id,
     queryParams: {
-      limit: 16,
+      limit: 999999,
     },
   }).catch(err => {
     console.error("Ошибка при загрузке товаров:", err)
