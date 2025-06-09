@@ -1,0 +1,11 @@
+<script>
+    function applyBonus() { 
+        $('.t-btn__bonus').hide();
+        var maxBonus = Math.min(window.tcart.amount * 0.99, 4127);
+        var promo={promocode: 'BONUS', discountsum: maxBonus};
+        t_input_promocode__addPromocode(promo);
+    }
+    $(document).ready(function () {
+            $("<div onclick='applyBonus();' class='t-btn t-btn__bonus' style='border: 1px solid !important;border-radius: 10px !important;padding: 20px !important;width: 100%;margin-bottom:5px;'>Списать бонусы (доступно 4127)</div>").insertAfter('.t-input-group_pc');
+    });
+</script>
