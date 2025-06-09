@@ -142,7 +142,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
         {/* Subtitle как дополнительная информация */}
         {product.subtitle && (
           <Text
-            className="text-medium text-ui-fg-muted"
+            className="text-medium text-ui-fg-muted lowercase"
             data-testid="product-subtitle"
           >
             {product.subtitle}

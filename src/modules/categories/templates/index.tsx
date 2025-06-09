@@ -4,6 +4,7 @@ import { listProductsWithInventory } from "@lib/data/products"
 import { listCategories } from "@lib/data/categories"
 import { HttpTypes } from "@medusajs/types"
 import CategoryClient from "./category-client"
+import SupportButton from "@modules/common/components/support-button"
 
 // Рекурсивная функция для получения всех подкатегорий
 function getAllSubcategories(
@@ -98,15 +99,18 @@ export default async function CategoryTemplate({
   const totalCount = products.length
 
   return (
-    <CategoryClient
-      category={category}
-      countryCode={countryCode}
-      products={products}
-      totalCount={totalCount}
-      subcategories={directSubcategories}
-      region={region}
-      categoryIds={categoryIds}
-      allCategories={allCategories}
-    />
+    <>
+      <CategoryClient
+        category={category}
+        countryCode={countryCode}
+        products={products}
+        totalCount={totalCount}
+        subcategories={directSubcategories}
+        region={region}
+        categoryIds={categoryIds}
+        allCategories={allCategories}
+      />
+      <SupportButton />
+    </>
   )
 }

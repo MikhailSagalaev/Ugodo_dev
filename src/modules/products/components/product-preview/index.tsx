@@ -62,6 +62,30 @@ export default function ProductPreview({
     }).format(amount).replace(/[^\d\s]/g, '')
   }
 
+  const getDiscountPercentage = () => {
+    if (!product.variants?.length) return 0;
+    
+    let maxDiscount = 0;
+    
+    for (const variant of product.variants) {
+      const calculatedPrice = variant.calculated_price;
+      if (calculatedPrice && 
+          typeof calculatedPrice.calculated_amount === 'number' && 
+          typeof calculatedPrice.original_amount === 'number' &&
+          calculatedPrice.original_amount > calculatedPrice.calculated_amount) {
+        
+        const discount = Math.round(((calculatedPrice.original_amount - calculatedPrice.calculated_amount) / calculatedPrice.original_amount) * 100);
+        if (discount > maxDiscount) {
+          maxDiscount = discount;
+        }
+      }
+    }
+    
+    return maxDiscount;
+  }
+
+  const discountPercentage = getDiscountPercentage();
+
   // Проверяем реальное наличие товара
   const checkProductAvailability = () => {
     if (!product.variants || product.variants.length === 0) return false;
@@ -86,13 +110,18 @@ export default function ProductPreview({
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isMidTablet, setIsMidTablet] = useState(false);
   const [showCartNotification, setShowCartNotification] = useState(false);
 
   const params = useParams();
 
   useEffect(() => {
     const handleResize = () => {
-      setIsTabletOrMobile(window.innerWidth < 1024);
+      const width = window.innerWidth;
+      setIsTabletOrMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1118);
+      setIsMidTablet(width >= 1118 && width < 1233);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -245,7 +274,7 @@ export default function ProductPreview({
       />
 
       <div 
-        className={`group relative flex flex-col w-full sm:max-w-none max-w-[225px] ${isTabletOrMobile ? 'pb-6' : ''}`}
+        className={`group relative flex flex-col w-full ${isTabletOrMobile ? 'max-w-[225px] pb-6' : isMidTablet ? 'max-w-[230px]' : 'sm:max-w-none'}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -256,7 +285,7 @@ export default function ProductPreview({
               <SmartImage
                 src={imageSrc}
                 alt={product.title || "Product image"}
-                sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
+                sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1118px) 220px, (max-width: 1233px) 230px, 320px"
                 containerClassName="w-full aspect-[3/4]"
                 aspectRatio="3/4"
               />
@@ -376,7 +405,12 @@ export default function ProductPreview({
           {/* Кликабельная категория/тип */}
           {productType && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div className={`text-[11px] sm:text-[11px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-[#C2E7DA]`}>
+              <div 
+                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-[#C2E7DA]`}
+                style={{
+                  fontSize: isTablet || isMidTablet ? '9px' : '11px'
+                }}
+              >
                 {productType}
               </div>
             </LocalizedClientLink>
@@ -384,7 +418,12 @@ export default function ProductPreview({
           
           {/* Кликабельное название */}
           <LocalizedClientLink href={`/products/${product?.handle}`}>
-            <h3 className={`text-base sm:text-[20px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-[#C2E7DA]`}>
+            <h3 
+              className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-[#C2E7DA]`}
+              style={{
+                fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
+              }}
+            >
               {product.title}
             </h3>
           </LocalizedClientLink>
@@ -392,7 +431,12 @@ export default function ProductPreview({
           {/* Подзаголовок */}
           {product.subtitle && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div className={`text-[18px] font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-gray-500'} transition-colors duration-200 lowercase cursor-pointer hover:text-[#C2E7DA]`}>
+              <div 
+                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-gray-500'} transition-colors duration-200 lowercase cursor-pointer hover:text-[#C2E7DA]`}
+                style={{
+                  fontSize: isTablet || isMidTablet ? '16px' : '18px'
+                }}
+              >
                 {product.subtitle}
               </div>
             </LocalizedClientLink>
@@ -403,7 +447,12 @@ export default function ProductPreview({
             <LocalizedClientLink href={`/products/${product?.handle}`}>
               <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`}>
                 <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : textAlign === "center" ? "justify-center" : ""}`}>
-                  <span className={`text-base sm:text-[20px] font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase hover:text-[#C2E7DA]`}>
+                  <span 
+                    className={`font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase hover:text-[#C2E7DA]`}
+                    style={{
+                      fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
+                    }}
+                  >
                     {formatPrice(minPricePerUnit)} ₽
                   </span>
                 </div>

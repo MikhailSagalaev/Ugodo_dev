@@ -23,6 +23,9 @@ type ProductFiltersProps = {
   onFiltersChange: (filters: FilterState) => void
   className?: string
   currentCategory?: HttpTypes.StoreProductCategory
+  isMobile?: boolean
+  sortBy?: string
+  onSortChange?: (sortBy: string) => void
 }
 
 export type FilterState = {
@@ -44,7 +47,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   products,
   onFiltersChange,
   className = '',
-  currentCategory
+  currentCategory,
+  isMobile = false,
+  sortBy = 'newest',
+  onSortChange
 }) => {
   const emptyFilters: FilterState = {
     colors: [],
@@ -66,6 +72,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [isInitialized, setIsInitialized] = useState(false)
 
   const [isOpen, setIsOpen] = useState(false)
+  const [activeSubModal, setActiveSubModal] = useState<string | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     color: false,
     size: false,
@@ -402,6 +409,28 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     const hasMore = options.length > 5 && !showAllOptions[key]
     const searchTerm = searchTerms[key] || ''
 
+    if (isMobile) {
+      return (
+        <div key={key}>
+          <button
+            onClick={() => setActiveSubModal(key)}
+            className="flex items-center justify-between w-full text-left"
+            style={{ height: '50px' }}
+          >
+            <span 
+              className="font-medium text-gray-900 lowercase tracking-wide"
+              style={{ fontSize: '16px', fontWeight: 500 }}
+            >
+              {title}
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      )
+    }
+
     return (
       <div key={key} className="mb-8">
         <button
@@ -446,7 +475,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     checked={isSelected}
                     disabled={!isAvailable && !isSelected}
                     onChange={() => handleLocalFilterChange(filterKey, option.value)}
-                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black focus:ring-2 disabled:opacity-50"
+                    className="w-4 h-4 border-gray-300 rounded focus:ring-[#1a1341] focus:ring-2 disabled:opacity-50"
+                    style={{ accentColor: '#1a1341' }}
                   />
                   <span 
                     className={`ml-3 transition-colors ${
@@ -613,6 +643,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             height: 20px !important;
             width: 20px !important;
           }
+
         `}</style>
       </div>
     )
@@ -748,7 +779,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         }}
         className="flex items-center justify-center gap-2 bg-white focus:outline-none focus:ring-0 hover:text-[#C2E7DA] transition-colors"
         style={{
-          fontSize: "16px",
+          fontSize: isMobile ? "16px" : "16px",
           fontWeight: 500,
           lineHeight: 1.4,
           padding: "8px 12px",
@@ -758,7 +789,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
         </svg>
-        Фильтры
+        {!isMobile && "Фильтры"}
         {activeFiltersCount > 0 && (
           <span className="bg-black text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center">
             {activeFiltersCount}
@@ -769,12 +800,16 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       {isOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[480px] bg-white overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between p-6" style={{ paddingLeft: '80px', paddingBottom: '40px' }}>
+          <div className={`absolute ${isMobile ? 'inset-0' : 'left-0 top-0 h-full w-[480px]'} bg-white overflow-y-auto shadow-2xl`}>
+            <div className="flex items-center justify-between p-6" style={{ 
+              paddingLeft: isMobile ? '20px' : '80px', 
+              paddingRight: isMobile ? '20px' : '24px',
+              paddingBottom: '40px' 
+            }}>
               <h3 
                 className="text-gray-900 tracking-wide"
                 style={{ 
-                  fontSize: '30px', 
+                  fontSize: isMobile ? '24px' : '30px', 
                   fontWeight: 500, 
                   letterSpacing: '0.4px',
                   lineHeight: 1.1
@@ -802,7 +837,27 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               </div>
             </div>
             
-            <div style={{ padding: '0 50px 0 50px' }}>
+            <div style={{ padding: isMobile ? '0 20px 0 20px' : '0 50px 0 50px' }}>
+              {isMobile && onSortChange && (
+                <div className="mb-8">
+                  <button
+                    onClick={() => setActiveSubModal('sort')}
+                    className="flex items-center justify-between w-full text-left"
+                    style={{ height: '50px' }}
+                  >
+                    <span 
+                      className="font-medium text-gray-900 lowercase tracking-wide"
+                      style={{ fontSize: '16px', fontWeight: 500 }}
+                    >
+                      сортировка
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              
               <div className="space-y-6 mb-8">
                 <ToggleSwitch
                   checked={localFilters.hasDiscount}
@@ -831,13 +886,130 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               </div>
             </div>
             
-            <div className="fixed bottom-0 left-0 w-[480px] bg-white border-t border-gray-100" style={{ padding: '20px 50px' }}>
+            <div className={`fixed bottom-0 left-0 ${isMobile ? 'w-full' : 'w-[480px]'} bg-white`} style={{ 
+              padding: isMobile ? '20px 20px' : '20px 50px' 
+            }}>
               <Button 
                 onClick={applyFilters} 
-                className="w-full bg-black text-white py-4 rounded-none hover:bg-gray-800 transition-colors uppercase tracking-wide font-medium"
+                className="w-full text-white py-4 rounded-none transition-colors uppercase tracking-wide font-medium"
+                style={{ backgroundColor: '#1a1341' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0f0a2a'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1a1341'}
               >
                 Показать {getFilteredProductsCount()} товаров
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Подмодалки для мобильной версии */}
+      {isMobile && activeSubModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setActiveSubModal(null)} />
+          <div className="absolute inset-0 bg-white overflow-y-auto">
+            <div className="flex items-center justify-between p-6">
+              <button 
+                onClick={() => setActiveSubModal(null)}
+                className="flex items-center hover:text-[#C2E7DA] transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <h3 
+                className="text-gray-900 text-center flex-1"
+                style={{ 
+                  fontSize: '16px', 
+                  fontWeight: 500
+                }}
+              >
+                {activeSubModal === 'color' && 'цвет'}
+                {activeSubModal === 'size' && 'размер'}
+                {activeSubModal === 'brand' && 'бренд'}
+                {activeSubModal === 'material' && 'материал'}
+                {activeSubModal === 'gender' && 'пол'}
+                {activeSubModal === 'season' && 'сезон'}
+                {activeSubModal === 'skinType' && 'тип кожи'}
+                {activeSubModal === 'purpose' && 'назначение'}
+                {activeSubModal === 'sort' && 'сортировка'}
+              </h3>
+              <div className="w-5"></div>
+            </div>
+            
+            <div className="p-6">
+              {activeSubModal === 'sort' && onSortChange ? (
+                <div className="space-y-4">
+                  {[
+                    { value: 'newest', label: 'сначала новые' },
+                    { value: 'oldest', label: 'сначала старые' },
+                    { value: 'price_asc', label: 'по возрастанию цены' },
+                    { value: 'price_desc', label: 'по убыванию цены' },
+                    { value: 'rating', label: 'по рейтингу' }
+                  ].map(option => (
+                    <label key={option.value} className="flex items-center cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="sort"
+                        checked={sortBy === option.value}
+                        onChange={() => {
+                          onSortChange(option.value)
+                          setActiveSubModal(null)
+                        }}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black focus:ring-2"
+                      />
+                      <span 
+                        className="ml-3 text-gray-700 group-hover:text-black transition-colors"
+                        style={{ fontSize: '16px' }}
+                      >
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {(() => {
+                    const filterKeyMap: Record<string, keyof FilterState> = {
+                      'color': 'colors',
+                      'size': 'sizes', 
+                      'brand': 'brands',
+                      'material': 'materials',
+                      'gender': 'gender',
+                      'season': 'season',
+                      'skinType': 'skinType',
+                      'purpose': 'purpose'
+                    }
+                    const filterKey = filterKeyMap[activeSubModal!] || activeSubModal as keyof FilterState
+                    const options = filterOptions[`${activeSubModal}s` as keyof typeof filterOptions] || 
+                                   filterOptions[activeSubModal as keyof typeof filterOptions] || []
+                    const availableValues = getAvailableOptions(filterKey)
+                    
+                    return (options as FilterOption[]).map(option => {
+                      const isAvailable = availableValues.includes(option.value)
+                      const isSelected = ((localFilters[filterKey] as string[]) || []).includes(option.value)
+                      
+                      return (
+                        <label key={option.value} className="flex items-center cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleLocalFilterChange(filterKey, option.value)}
+                            className="w-4 h-4 border-gray-300 rounded focus:ring-[#1a1341] focus:ring-2"
+                            style={{ accentColor: '#1a1341' }}
+                          />
+                          <span 
+                            className="ml-3 text-gray-700 group-hover:text-black transition-colors"
+                            style={{ fontSize: '16px' }}
+                          >
+                            {option.label}
+                          </span>
+                        </label>
+                      )
+                    })
+                  })()}
+                </div>
+              )}
             </div>
           </div>
         </div>
