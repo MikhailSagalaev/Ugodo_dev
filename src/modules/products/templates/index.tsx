@@ -41,10 +41,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   countryCode,
 }) => {
   console.log('Полный объект product:', product)
-  console.log('Product metadata:', product.metadata)
-  console.log('Product variants:', product.variants)
-  console.log('Bulk discount check:', product.metadata?.bulk_discount)
-
+ 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
   const [customer, setCustomer] = useState<HttpTypes.StoreCustomer | null>(null);
@@ -1969,7 +1966,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     fontSize: isMobile ? "20px" : "50px",
                     fontWeight: 500,
                     letterSpacing: "-0.2px",
-                    lineHeight: 1.1
+                    lineHeight: 1.1,
+                    textTransform: "lowercase"
                   }}>
                     {productSubtitle}
                   </div>

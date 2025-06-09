@@ -336,6 +336,11 @@ export default function ProductVariantModal({
                             onClick={() => setIsOpen(false)}
                           >
                             {product.title}
+                            {product.subtitle && (
+                              <div className="text-[35px] font-medium leading-tight lowercase">
+                                {product.subtitle}
+                              </div>
+                            )}
                           </h2>
                         </LocalizedClientLink>
                       </div>
@@ -362,7 +367,7 @@ export default function ProductVariantModal({
                               src={product.images[0].url}
                               alt={product.title || "Product"}
                               fill
-                              className="object-cover"
+                              className="object-contain"
                               sizes="765px"
                             />
                           </div>
