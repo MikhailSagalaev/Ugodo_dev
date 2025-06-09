@@ -73,6 +73,7 @@ export default async function Home({ params }: { params: { countryCode: string }
     regionId: region.id,
     queryParams: {
       limit: 16,
+      order: "-created_at"
     },
   }).catch(err => {
     console.error("Ошибка при загрузке каталога товаров:", err)

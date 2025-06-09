@@ -15,7 +15,7 @@ import ProductVariantModal from "@modules/common/components/product-variant-moda
 import SmartImage from "@modules/common/components/smart-image";
 
 const COLORS = {
-  mint: "#C2E7DA",
+  mint: "gray-400",
   darkBlue: "#1A1341",
   blue: "#6290C3",
   cream: "#F1FFE2",
@@ -183,72 +183,6 @@ export default function ProductPreview({
   // Получаем реальный тип из базы данных
   const productType = product.type?.value || product.collection?.title || categoryTitle || "";
 
-  // Цветовые варианты для отображения
-  const colorOptions = product.options?.find(option => 
-    option.title.toLowerCase().includes('цвет') || 
-    option.title.toLowerCase().includes('color')
-  );
-
-  // Получаем уникальные цвета из вариантов
-  const colors: string[] = []
-  if (colorOptions) {
-    const colorSet = new Set<string>()
-    product.variants?.forEach(variant => {
-      variant.options?.forEach(optionValue => {
-        if (optionValue.option_id === colorOptions.id) {
-          colorSet.add(optionValue.value)
-        }
-      })
-    })
-    colors.push(...Array.from(colorSet))
-  }
-
-  const hasColors = colors.length > 0;
-
-  // Функция для преобразования названия цвета в CSS цвет
-  const getColorValue = (colorName: string): string => {
-    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(colorName)) {
-      return colorName;
-    }
-    
-    if (/^rgba?\(/.test(colorName)) {
-      return colorName;
-    }
-    
-    const colorMap: {[key: string]: string} = {
-      'черный': '#000000',
-      'белый': '#FFFFFF',
-      'красный': '#FF0000',
-      'зеленый': '#008000',
-      'синий': '#0000FF',
-      'желтый': '#FFFF00',
-      'оранжевый': '#FFA500',
-      'фиолетовый': '#800080',
-      'розовый': '#FFC0CB',
-      'серый': '#808080',
-      'коричневый': '#A52A2A',
-      'голубой': '#00BFFF',
-      
-      'black': '#000000',
-      'white': '#FFFFFF',
-      'red': '#FF0000',
-      'green': '#008000',
-      'yellow': '#FFFF00',
-      'orange': '#FFA500',
-      'purple': '#800080',
-      'pink': '#FFC0CB',
-      'gray': '#808080',
-      'grey': '#808080',
-      'brown': '#A52A2A',
-      'cyan': '#00FFFF',
-      
-      ...COLORS
-    };
-    
-    const lowerColorName = colorName.toLowerCase();
-    return colorMap[lowerColorName] || colorName;
-  };
-
   const textAlignClass = textAlign === "right" ? "text-right" : textAlign === "center" ? "text-center" : "text-left";
 
   const handleImageError = () => {
@@ -261,6 +195,88 @@ export default function ProductPreview({
 
   const shouldShowPlaceholder = !product.thumbnail || imageError;
   const imageSrc = shouldShowPlaceholder ? PLACEHOLDER_IMAGE : (product.thumbnail as string);
+
+  // Получаем информацию о ценах с учетом скидок
+  const getPriceInfo = () => {
+    if (!product.variants?.length) return { currentPrice: 0, originalPrice: null, hasDiscount: false, pricePerUnit: null, hasQuantityDiscount: false };
+
+    let minCurrentPrice = Infinity;
+    let minOriginalPrice = null;
+    let hasDiscount = false;
+    let pricePerUnit = null;
+    let hasQuantityDiscount = false;
+
+    const quantityOption = product.options?.find(option => 
+      option.title?.toLowerCase().includes('количество')
+    );
+
+    // Если есть опция количества, проверяем выгоду
+    if (quantityOption) {
+      // Находим цену за 1 штуку
+      const singleUnitVariant = product.variants.find(v => 
+        v.options?.some(opt => 
+          opt.option_id === quantityOption.id && opt.value === "1"
+        )
+      );
+      
+      if (singleUnitVariant?.calculated_price?.calculated_amount) {
+        const singleUnitPrice = singleUnitVariant.calculated_price.calculated_amount;
+        
+        // Находим самый выгодный вариант
+        for (const variant of product.variants) {
+          const calculatedPrice = variant.calculated_price;
+          if (calculatedPrice && typeof calculatedPrice.calculated_amount === 'number') {
+            let quantity = 1;
+            
+            const quantityValue = variant.options?.find(opt => opt.option_id === quantityOption.id)?.value;
+            if (quantityValue) {
+              quantity = parseInt(quantityValue) || 1;
+            }
+            
+            const pricePerUnitForVariant = calculatedPrice.calculated_amount / quantity;
+            
+            if (pricePerUnitForVariant < minCurrentPrice) {
+              minCurrentPrice = pricePerUnitForVariant;
+              
+              // Если цена за единицу меньше цены при покупке по 1 шт, есть выгода
+              if (pricePerUnitForVariant < singleUnitPrice) {
+                hasQuantityDiscount = true;
+                pricePerUnit = singleUnitPrice; // Цена за 1 шт как "старая цена"
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Обычная логика для товаров без опции количества или если нет выгоды
+    if (!hasQuantityDiscount) {
+      for (const variant of product.variants) {
+        const calculatedPrice = variant.calculated_price;
+        if (calculatedPrice && typeof calculatedPrice.calculated_amount === 'number') {
+          if (calculatedPrice.calculated_amount < minCurrentPrice) {
+            minCurrentPrice = calculatedPrice.calculated_amount;
+            
+            // Проверяем обычную скидку
+            if (calculatedPrice.original_amount && calculatedPrice.original_amount > calculatedPrice.calculated_amount) {
+              hasDiscount = true;
+              minOriginalPrice = calculatedPrice.original_amount;
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      currentPrice: minCurrentPrice === Infinity ? 0 : minCurrentPrice,
+      originalPrice: hasQuantityDiscount ? pricePerUnit : minOriginalPrice,
+      hasDiscount: hasDiscount || hasQuantityDiscount,
+      pricePerUnit,
+      hasQuantityDiscount
+    };
+  };
+
+  const priceInfo = getPriceInfo();
 
   return (
     <>
@@ -292,31 +308,21 @@ export default function ProductPreview({
             </div>
           </LocalizedClientLink>
 
-          <div className="absolute top-3 left-3 flex gap-1 z-10">
-            {!isInStock && (
-              <div className="text-white text-xs font-bold px-2 py-1 uppercase rounded-sm" style={{ backgroundColor: '#6290C3' }}>
-                ПРЕДЗАКАЗ
-              </div>
-            )}
-            
+          <div className="absolute top-0 left-0 flex gap-1 z-10">
             {isInStock && badgeType === "new" && (
-              <div className="bg-[#BAFF29] text-black text-xs font-bold px-2 py-1 uppercase rounded-sm">
+              <div className="bg-[#BAFF29] text-black text-xs font-bold w-8 h-8 flex items-center justify-center uppercase">
                 NEW
               </div>
             )}
 
             {isInStock && badgeType === "hit" && (
-              <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase rounded-sm">
+              <div className="text-white text-xs font-bold w-8 h-8 flex items-center justify-center uppercase" style={{ backgroundColor: 'rgb(255, 22, 134)' }}>
                 HIT
               </div>
             )}
-
-            {isInStock && badgeType === "discount" && (
-              <div className="bg-[#FF3998] text-white px-2 py-1 text-xs font-bold rounded-sm">
-                СКИДКА
-              </div>
-            )}
           </div>
+
+
 
           <button
             onClick={toggleWishlist}
@@ -329,8 +335,8 @@ export default function ProductPreview({
               width="24" 
               height="24" 
               viewBox="0 0 24 24" 
-              fill={isWished || isHeartHovered ? COLORS.mint : "none"} 
-              stroke={isHeartHovered ? COLORS.mint : COLORS.mint} 
+              fill={isWished || isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : "none"} 
+              stroke={isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : (isHovered ? '#9CA3AF' : '#9CA3AF')} 
               strokeWidth="2"
               className="transition-all duration-200"
               xmlns="http://www.w3.org/2000/svg"
@@ -345,10 +351,10 @@ export default function ProductPreview({
                 onClick={handleAddToCart}
                 className={
                   isTabletOrMobile
-                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent ${!isInStock ? '' : 'bg-[#1A1341]'}`
-                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${!isInStock ? '' : isAddingToCart ? 'bg-[#C2E7DA]' : 'bg-[#1A1341] hover:bg-[#C2E7DA]'}`
+                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent bg-[#1A1341]`
+                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${isAddingToCart ? 'bg-gray-400' : 'bg-[#1A1341] hover:bg-gray-400'}`
                 }
-                style={!isInStock ? { backgroundColor: '#6290C3' } : {}}
+                style={{}}
                 aria-label={!isInStock ? "Сделать предзаказ" : "Добавить в корзину"}
                 disabled={isAddingToCart}
               >
@@ -376,39 +382,41 @@ export default function ProductPreview({
           )}
         </div>
 
-        {hasColors && (
-          <div className="flex flex-nowrap overflow-x-auto py-1 mt-2 px-2 justify-end w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {colors.slice(0, 3).map((color, idx) => {
-              const colorValue = getColorValue(color);
-              return (
-                <div
-                  key={idx}
-                  className="w-4 sm:w-5 h-4 sm:h-5 rounded-full border border-gray-300 flex-shrink-0 shadow-sm mr-1.5"
-                  style={{
-                    backgroundColor: colorValue,
-                    boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                  }}
-                  title={color}
-                />
-              );
-            })}
-            {colors.length > 3 && (
-              <div className="text-xs text-gray-500 flex items-center font-medium">
-                +{colors.length - 3}
+        <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
+          
+          {/* Плашки между фото и типом */}
+          <div className="flex gap-1 mb-2">
+            {!isInStock && badgeType !== "new" && badgeType !== "hit" && (
+              <div 
+                className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
+                style={{ 
+                  width: "90px",
+                  height: "26px",
+                  clipPath: 'polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)',
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  lineHeight: "12.1px"
+                }}
+              >
+                ПРЕДЗАКАЗ
+              </div>
+            )}
+
+            {isInStock && badgeType === "discount" && (
+              <div className="bg-[#FF3998] text-white px-2 py-1 text-xs font-bold">
+                СКИДКА
               </div>
             )}
           </div>
-        )}
-
-        <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
           
-          {/* Кликабельная категория/тип */}
+          {/* Кликабельная категория/тип с отступом 17px */}
           {productType && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
               <div 
-                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-[#C2E7DA]`}
+                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-gray-400`}
                 style={{
-                  fontSize: isTablet || isMidTablet ? '9px' : '11px'
+                  fontSize: isTablet || isMidTablet ? '9px' : '11px',
+                  marginTop: '17px'
                 }}
               >
                 {productType}
@@ -416,45 +424,42 @@ export default function ProductPreview({
             </LocalizedClientLink>
           )}
           
-          {/* Кликабельное название */}
+          {/* Кликабельное название с отступом 10px */}
           <LocalizedClientLink href={`/products/${product?.handle}`}>
             <h3 
-              className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight line-clamp-2 mb-1 ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-[#C2E7DA]`}
+              className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-gray-400`}
               style={{
-                fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
+                fontSize: '18px',
+                marginTop: '10px'
               }}
             >
               {product.title}
             </h3>
           </LocalizedClientLink>
           
-          {/* Подзаголовок */}
-          {product.subtitle && (
+          {/* Кликабельная цена с отступом 10px и старой ценой */}
+          {priceInfo.currentPrice > 0 && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div 
-                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 mb-2 ${isHovered ? 'text-[#C2E7DA]' : 'text-gray-500'} transition-colors duration-200 lowercase cursor-pointer hover:text-[#C2E7DA]`}
-                style={{
-                  fontSize: isTablet || isMidTablet ? '16px' : '18px'
-                }}
-              >
-                {product.subtitle}
-              </div>
-            </LocalizedClientLink>
-          )}
-          
-          {/* Кликабельная цена */}
-          {minPricePerUnit > 0 && (
-            <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`}>
+              <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`} style={{ marginTop: '10px' }}>
                 <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : textAlign === "center" ? "justify-center" : ""}`}>
                   <span 
-                    className={`font-bold ${isHovered ? 'text-[#C2E7DA]' : 'text-black'} transition-colors duration-200 uppercase hover:text-[#C2E7DA]`}
+                    className={`font-medium ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase hover:text-gray-400`}
                     style={{
                       fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
                     }}
                   >
-                    {formatPrice(minPricePerUnit)} ₽
+                    {formatPrice(priceInfo.currentPrice)} ₽
                   </span>
+                  {priceInfo.hasDiscount && priceInfo.originalPrice && (
+                    <span 
+                      className={`font-medium line-through-blue transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-400`}
+                      style={{
+                        fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
+                      }}
+                    >
+                      {formatPrice(priceInfo.originalPrice)} ₽
+                    </span>
+                  )}
                 </div>
               </div>
             </LocalizedClientLink>

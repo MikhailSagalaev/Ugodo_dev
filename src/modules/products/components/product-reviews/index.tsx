@@ -150,7 +150,7 @@ export default function ProductReviews({ productId, product }: ProductReviewsPro
           
           {hasReviews && (
             <button 
-              className="flex items-center gap-2 transition-colors duration-200 hover:text-[#C2E7DA] cursor-pointer"
+              className="flex items-center gap-2 transition-colors duration-200 hover:text-gray-400 cursor-pointer"
               style={{
                 fontSize: "11px",
                 fontWeight: 500,

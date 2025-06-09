@@ -118,7 +118,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
             <div className="relative flex-1">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between w-full bg-white transition-colors duration-200 hover:text-[#C2E7DA]"
+                className="flex items-center justify-between w-full bg-white transition-colors duration-200 hover:text-gray-400"
               >
                 <div className="flex items-center">
                   <div 
@@ -159,7 +159,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
                         onOptionChange(colorOption.id, colorValue)
                         setIsOpen(false)
                       }}
-                      className="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-left transition-colors duration-200 hover:text-[#C2E7DA]"
+                      className="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-left transition-colors duration-200 hover:text-gray-400"
                     >
                       <div 
                         className="w-4 h-4 mr-3 rounded-full"

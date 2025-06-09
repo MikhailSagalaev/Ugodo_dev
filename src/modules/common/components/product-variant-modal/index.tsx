@@ -497,7 +497,7 @@ export default function ProductVariantModal({
                               {/* Кнопка подробнее */}
                               <LocalizedClientLink href={`/products/${product.handle}`}>
                                 <div 
-                                  className="flex items-center text-black hover:text-[#C2E7DA] transition-colors cursor-pointer mb-6"
+                                  className="flex items-center text-black hover:text-gray-400 transition-colors cursor-pointer mb-6"
                                   onClick={() => setIsOpen(false)}
                                   style={{
                                     fontSize: "10px",
@@ -575,7 +575,7 @@ export default function ProductVariantModal({
                               
                               {/* Название товара */}
                               <LocalizedClientLink href={`/products/${product.handle}`}>
-                                <h2 className="text-black cursor-pointer hover:text-[#C2E7DA] transition-colors text-[35px] font-medium leading-tight uppercase"
+                                <h2 className="text-black cursor-pointer hover:text-gray-400 transition-colors text-[35px] font-medium leading-tight uppercase"
                                   onClick={() => setIsOpen(false)}
                                 >
                                   {product.title}
@@ -742,7 +742,7 @@ export default function ProductVariantModal({
                               {/* Кнопка подробнее */}
                               <LocalizedClientLink href={`/products/${product.handle}`}>
                                 <div 
-                                  className="flex items-center text-black hover:text-[#C2E7DA] transition-colors cursor-pointer"
+                                  className="flex items-center text-black hover:text-gray-400 transition-colors cursor-pointer"
                                   onClick={() => setIsOpen(false)}
                                   style={{
                                     fontSize: "11px",

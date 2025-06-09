@@ -119,7 +119,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                 <div>
                   <LocalizedClientLink 
                     href="/" 
-                    className="flex items-center gap-3 text-base font-medium hover:text-[#C2E7DA] transition-colors"
+                    className="flex items-center gap-3 text-base font-medium hover:text-gray-400 transition-colors"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -136,7 +136,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                 <div>
                   <button
                     onClick={handleCatalogClick}
-                    className="flex items-center justify-between w-full text-left text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                    className="flex items-center justify-between w-full text-left text-black hover:text-gray-400 transition-colors text-base font-medium"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -157,7 +157,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                 <div>
                   <LocalizedClientLink 
                     href="/search" 
-                    className="flex items-center gap-3 text-base font-medium hover:text-[#C2E7DA] transition-colors"
+                    className="flex items-center gap-3 text-base font-medium hover:text-gray-400 transition-colors"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -174,7 +174,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                 <div>
                   <LocalizedClientLink 
                     href="/wishlist" 
-                    className="flex items-center gap-3 text-base font-medium hover:text-[#C2E7DA] transition-colors"
+                    className="flex items-center gap-3 text-base font-medium hover:text-gray-400 transition-colors"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -191,7 +191,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                 <div>
                   <LocalizedClientLink 
                     href="/account" 
-                    className="flex items-center gap-3 text-base font-medium hover:text-[#C2E7DA] transition-colors"
+                    className="flex items-center gap-3 text-base font-medium hover:text-gray-400 transition-colors"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
@@ -209,7 +209,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
             
             <div className="p-4 border-t border-gray-200">
               <Button 
-                className="w-full bg-[#BAFF29] hover:bg-[#C2E7DA] text-black" 
+                className="w-full bg-[#BAFF29] hover:bg-gray-400 text-black" 
                 size="large"
                 onClick={handleClose}
               >
@@ -258,7 +258,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                         {hasChildren ? (
                           <button
                             onClick={() => handleCategoryClick(category)}
-                            className="flex items-center justify-between w-full text-left text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                            className="flex items-center justify-between w-full text-left text-black hover:text-gray-400 transition-colors text-base font-medium"
                             style={{ 
                               padding: "12px 16px",
                               height: "50px"
@@ -272,7 +272,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                         ) : (
                           <LocalizedClientLink
                             href={`/categories/${category.handle}`}
-                            className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                            className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                             style={{ 
                               padding: "12px 16px",
                               height: "50px"
@@ -289,7 +289,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                   <div className="mt-8">
                     <LocalizedClientLink
                       href="/store"
-                      className="inline-flex items-center px-6 py-3 bg-[#BAFF29] hover:bg-[#C2E7DA] text-black font-medium rounded-md transition-colors text-sm w-full justify-center"
+                      className="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black font-medium rounded-md transition-colors text-xs w-full justify-center"
                       onClick={handleClose}
                     >
                       Смотреть весь каталог
@@ -344,7 +344,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                       {hasChildren ? (
                         <button
                           onClick={() => handleSubcategoryClick(subcategory)}
-                          className="flex items-center justify-between w-full text-left text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-left text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -358,7 +358,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                       ) : (
                         <LocalizedClientLink
                           href={`/categories/${subcategory.handle}`}
-                          className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                          className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                           style={{ 
                             padding: "12px 16px",
                             height: "50px"
@@ -415,7 +415,7 @@ const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
                   <LocalizedClientLink
                     key={subsubcategory.id}
                     href={`/categories/${subsubcategory.handle}`}
-                    className="flex items-center justify-between w-full text-black hover:text-[#C2E7DA] transition-colors text-base font-medium"
+                    className="flex items-center justify-between w-full text-black hover:text-gray-400 transition-colors text-base font-medium"
                     style={{ 
                       padding: "12px 16px",
                       height: "50px"
