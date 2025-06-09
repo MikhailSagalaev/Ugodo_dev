@@ -50,11 +50,11 @@ export default function MarketplaceBestsellers({
     <section className="py-12 relative">
       <div className="content-container md:px-8 relative px-0">
         <div className="w-full max-w-[1360px] mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title.toLowerCase()}</h2>
-          
           <div className="w-full mb-6">
             <LocalizedClientLink href="/bestsellers" className="relative block overflow-hidden rounded-md group h-full">
-              <div className="relative w-full" style={{ height: '395px' }}>
+              <div className="relative w-full mx-auto aspect-video" style={{ 
+                maxWidth: isTabletOrMobile ? '100%' : '1260px'
+              }}>
                 {isClient && (
                   <div className="w-full h-full relative overflow-hidden">
                     <video
@@ -64,7 +64,7 @@ export default function MarketplaceBestsellers({
                       playsInline
                       preload="metadata"
                       disablePictureInPicture
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"
                       style={{
                         minWidth: '100%',
                         minHeight: '100%',
@@ -93,83 +93,6 @@ export default function MarketplaceBestsellers({
               </div>
             </LocalizedClientLink>
           </div>
-          
-          {isTabletOrMobile ? (
-            <div className="w-full flex flex-row overflow-x-auto pl-[10px] pr-[20px] scrollbar-hide" style={{ gap: 'clamp(24px, 3vw, 60px)' }}>
-              {products.map((product, index) => {
-                const categoryTitle = product.type?.value || 
-                  (product.categories && product.categories.length > 0 ? 
-                    product.categories[0].name : undefined);
-                return (
-                  <div key={product.id} className="flex-shrink-0 product-card-featured">
-                    <div className="aspect-[3/4] w-full">
-                      <ProductPreview 
-                        product={product} 
-                        region={region} 
-                        categoryTitle={categoryTitle}
-                        badgeType="hit"
-                        textAlign="left"
-                        firstInRow={index === 0}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="relative">
-              <button 
-                onClick={() => emblaApi?.scrollPrev()}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
-                aria-label="Предыдущие товары"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              
-              <button 
-                onClick={() => emblaApi?.scrollNext()}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center transition-colors hover:text-gray-500"
-                aria-label="Следующие товары"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {productGroups.map((group, groupIndex) => (
-                    <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                      <div className="flex justify-center px-0" style={{ gap: 'clamp(18px, 2.5vw, 30px)' }}>
-                        {group.map((product) => {
-                          const categoryTitle = product.type?.value || 
-                            (product.categories && product.categories.length > 0 ? 
-                              product.categories[0].name : undefined);
-                          
-                          return (
-                            <div 
-                              key={product.id} 
-                              className="flex justify-center product-card-featured"
-                            >
-                              <ProductPreview 
-                                product={product} 
-                                region={region} 
-                                categoryTitle={categoryTitle}
-                                badgeType="hit"
-                                textAlign="left"
-                              />
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>
