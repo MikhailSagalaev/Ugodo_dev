@@ -65,7 +65,7 @@ pm2 status
 
 # Ручная проверка
 curl http://localhost:8000    # Frontend
-curl http://localhost:9000    # Backend API
+curl http://localhost:9000/store/products    # Backend API
 ```
 
 ## 🔧 Решение проблем

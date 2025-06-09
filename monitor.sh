@@ -166,7 +166,7 @@ monitor() {
     status_info "🌐 Проверка веб-сервисов:"
     check_port 8000 "Frontend (Next.js)"
     check_port 9000 "Backend (Medusa)"
-    check_port 9100 "MinIO (Storage)"
+    check_port 9105 "MinIO (Storage)"
     echo
     
     status_info "🔌 Проверка API endpoints:"

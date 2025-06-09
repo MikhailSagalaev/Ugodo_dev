@@ -94,7 +94,7 @@ cp environment.example .env
 
 Проект включает готовую конфигурацию Docker Compose с сервисами:
 - Redis (порт 6379)
-- MinIO (порты 9100, 9101)
+- MinIO (порты 9105, 9106)
 
 ### PM2 конфигурация
 
@@ -109,7 +109,7 @@ cp environment.example .env
 - **Frontend**: http://localhost:8000
 - **Backend API**: http://localhost:9000
 - **Admin панель**: http://localhost:9000/app
-- **MinIO Console**: http://localhost:9101
+- **MinIO Console**: http://localhost:9106
 - **API документация**: http://localhost:9000/doc/storefront
 
 ## 📊 Мониторинг
