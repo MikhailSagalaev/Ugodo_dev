@@ -952,12 +952,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                             </h3>
                             <div className="space-y-3">
                               {productSpecs.map((spec, index) => (
-                                <div key={index} className="flex items-center pb-2">
-                                  <div className="text-gray-500 text-sm flex-shrink-0">
+                                <div key={index} className="flex flex-col sm:flex-row sm:items-start pb-2 gap-1 sm:gap-0">
+                                  <div className="text-gray-500 text-sm sm:flex-shrink-0 sm:min-w-0 break-words sm:w-1/3">
                                     {spec.name}
                                   </div>
-                                  <div className="flex-1 mx-2 border-b border-dotted border-gray-300"></div>
-                                  <div className="text-sm flex-shrink-0">
+                                  <div className="hidden sm:block flex-1 mx-2 border-b border-dotted border-gray-300 mt-2"></div>
+                                  <div className="text-sm break-words sm:flex-shrink-0 sm:min-w-0 sm:text-right sm:w-1/3">
                                     {spec.value}
                                   </div>
                                 </div>
