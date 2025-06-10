@@ -30,12 +30,12 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
         "relative overflow-hidden p-4 shadow-elevation-card-rest rounded-large group-hover:shadow-elevation-card-hover transition-shadow ease-in-out duration-150",
         className,
         {
-          "aspect-[3/4]": true, // Всегда используем соотношение 3:4
+          "aspect-[3/4]": size !== "square",
           "w-[180px]": size === "small",
           "w-[290px]": size === "medium", 
           "w-[440px]": size === "large",
           "w-full": size === "full",
-          "aspect-[1/1]": size === "square", // Только для квадратных
+          "aspect-[1/1]": size === "square",
         }
       )}
       data-testid={dataTestid}

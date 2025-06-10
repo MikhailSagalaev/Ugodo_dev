@@ -133,12 +133,12 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
 
   return (
     <div 
-      className="flex flex-col w-[320px] group relative border border-transparent hover:border-gray-200 hover:shadow-md transition-all rounded-md overflow-hidden"
+      className="flex flex-col w-[320px] group relative product-card-styled transition-all"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-        <div className="relative w-full overflow-hidden aspect-[3/4]">
+        <div className="relative w-full overflow-hidden product-card-compact product-card-image">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
@@ -210,9 +210,9 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
           )}
         </div>
         {/* Блок с ценой, категорией и названием */}
-        <div className="flex flex-col px-2 sm:px-4 pt-2 pb-4 text-left">
+        <div className="flex flex-col px-2 sm:px-4 product-card-content-compact text-left flex-1">
           {/* Плашки между фото и типом */}
-          <div className="flex gap-1 mb-2">
+          <div className="flex gap-1 mb-1">
             {!product.isInStock && badgeType !== "new" && badgeType !== "hit" && (
               <div 
                 className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
@@ -230,22 +230,20 @@ function ProductPreviewCard({ product, isFeatured, badgeType = "new" }: ProductP
             )}
           </div>
           
-          {/* КАТЕГОРИЯ с отступом 17px */}
+          {/* КАТЕГОРИЯ с компактным отступом */}
           <div 
-            className={`text-sm truncate uppercase transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-500'}`}
-            style={{ marginTop: '17px' }}
+            className={`product-type text-sm truncate uppercase transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-500'}`}
           >
             {product.category}
           </div>
           
-          {/* НАЗВАНИЕ с отступом 10px */}
-          <div className={`font-medium leading-tight transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-800'}`} style={{ fontSize: '18px', marginTop: '10px' }}>{product.title}</div>
+          {/* НАЗВАНИЕ с компактным отступом */}
+          <div className={`product-title font-medium leading-tight transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-zinc-800'}`} style={{ fontSize: '18px' }}>{product.title}</div>
           
-          {/* ЦЕНА и СТАРАЯ ЦЕНА с отступом 10px */}
+          {/* ЦЕНА и СТАРАЯ ЦЕНА с компактным отступом */}
           {price && (
             <div 
-              className="flex items-end gap-2"
-              style={{ marginTop: '10px' }}
+              className="product-price flex items-end gap-2"
             >
               <span className={`text-xl font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}>{price.calculated_price}</span>
               {price.price_type === 'sale' && price.original_price && (

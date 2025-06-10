@@ -152,7 +152,7 @@ export default async function CollectionProductsDisplay({
         {products.map((p, idx) => (
           <li key={p.id} className="flex justify-center">
             <div 
-              className="w-full aspect-[3/4] product-card-container"
+              className="w-full product-card-compact product-card-container"
             >
               <ProductPreview 
                 product={p} 

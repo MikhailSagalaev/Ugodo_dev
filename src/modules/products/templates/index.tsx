@@ -1116,7 +1116,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                     )}
                   </div>
                   
-                  <div className="relative w-full aspect-[3/4] overflow-hidden" ref={emblaRef}>
+                  <div className="relative w-full product-card-compact overflow-hidden" ref={emblaRef}>
                     <div className="flex h-full">
                       {product.images?.map((image, index) => (
                         <div key={image.id} className="flex-[0_0_100%] min-w-0 relative h-full">

@@ -130,13 +130,14 @@ const Hero = () => {
   }, [emblaApi, onInit, onSelect])
 
   return (
-    <div className="w-full relative overflow-hidden embla"> 
+    <div className="w-full relative overflow-hidden embla max-w-[1415px] mx-auto" style={{ borderRadius: '48px', height: '433px' }}> 
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex"> 
           {slides.map((slide) => (
             <div 
               key={slide.id} 
-              className="flex-[0_0_100%] min-w-0 relative h-[80vh]" 
+              className="flex-[0_0_100%] min-w-0 relative" 
+              style={{ height: '433px' }}
             >
               <div className="absolute inset-0 w-full h-full -z-10">
                 {(slide.videoDesktop || slide.videoMobile) && isClient ? (

@@ -38,7 +38,7 @@ export default function ProductSlider({
   const badgeType = getBadgeType();
 
   // Определяем количество карточек в группе в зависимости от размера экрана
-  const [itemsPerGroup, setItemsPerGroup] = useState(4);
+  const [itemsPerGroup, setItemsPerGroup] = useState(6);
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
   
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function ProductSlider({
       const tabletOrMobile = window.innerWidth <= 1119;
       setIsTabletOrMobile(tabletOrMobile);
       
-      setItemsPerGroup(4); // Всегда 4 карточки в группе для десктопа
+      setItemsPerGroup(6);
     };
     
     handleResize();
@@ -64,8 +64,9 @@ export default function ProductSlider({
   }
 
   return (
-    <section className="py-6 md:py-8">
-      <div className="content-container px-0 sm:px-4 md:px-8 relative">
+    <div style={{ backgroundColor: '#f3f4f6' }}>
+      <section style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+        <div className="content-container px-0 sm:px-4 md:px-8 relative" style={{ backgroundColor: '#f8f9fa', borderRadius: '32px', paddingTop: '24px', paddingBottom: '24px' }}>
         <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
           <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
           
@@ -94,7 +95,7 @@ export default function ProductSlider({
         </div>
 
         {isTabletOrMobile ? (
-          <div className="w-full flex flex-row gap-5 overflow-x-auto pl-[10px] pr-[20px] scrollbar-hide">
+          <div className="w-full flex flex-row gap-[12px] overflow-x-auto pl-[10px] pr-[20px] scrollbar-hide product-slider-mobile">
             {products.map((product, index) => {
               const categoryTitle = product.type?.value || 
                 (product.categories && product.categories.length > 0 ? 
@@ -105,7 +106,7 @@ export default function ProductSlider({
                   key={product.id} 
                   className="flex-shrink-0 w-[200px]"
                 >
-                  <div className="aspect-[3/4] w-full">
+                  <div className="product-card-compact w-full">
                     <ProductPreview 
                       product={product} 
                       region={region} 
@@ -124,7 +125,14 @@ export default function ProductSlider({
             <div className="flex">
               {productGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="flex-[0_0_100%] min-w-0">
-                  <div className="flex justify-center px-0" style={{ gap: 'clamp(18px, 2.5vw, 30px)' }}>
+                  <div 
+                    className="w-full px-4"
+                    style={{ 
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(6, 1fr)',
+                      gap: '12px'
+                    }}
+                  >
                     {group.map((product) => {
                       const categoryTitle = product.type?.value || 
                         (product.categories && product.categories.length > 0 ? 
@@ -133,7 +141,7 @@ export default function ProductSlider({
                       return (
                         <div 
                           key={product.id} 
-                          className="flex justify-center product-card-featured"
+                          className="product-card-featured"
                         >
                           <ProductPreview 
                             product={product} 
@@ -151,7 +159,8 @@ export default function ProductSlider({
             </div>
           </div>
         )}
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   )
 } 

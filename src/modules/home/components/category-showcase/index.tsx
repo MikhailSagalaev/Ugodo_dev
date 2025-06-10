@@ -49,14 +49,13 @@ export default function CategoryShowcase({
   }
 
   return (
-    <section className="py-12 relative">
-      <div className="content-container md:px-8 relative px-0">
+    <div style={{ backgroundColor: '#f3f4f6' }}>
+      <section style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+        <div className="content-container md:px-8 relative px-0" style={{ backgroundColor: '#fdfdfd', borderRadius: '32px' }}>
         <div className="w-full max-w-[1360px] mx-auto">
           <div className="w-full mb-6">
-            <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden rounded-md group h-full">
-              <div className="relative w-full mx-auto aspect-video" style={{ 
-                maxWidth: isTabletOrMobile ? '100%' : '1260px'
-              }}>
+            <LocalizedClientLink href="/collections/home-garden" className="relative block overflow-hidden group h-full max-w-[1415px] mx-auto" style={{ borderRadius: '48px', height: '433px' }}>
+              <div className="relative w-full h-full">
                 {isClient && (
                   <div className="w-full h-full relative overflow-hidden">
                     <video
@@ -76,27 +75,29 @@ export default function CategoryShowcase({
                     >
                       <source src={isTabletOrMobile ? "/video/banners/2-mobile.mp4" : "/video/banners/2-pc.mp4"} type="video/mp4" />
                     </video>
-                  </div>
-                )}
-                <div className="absolute inset-0  z-0"></div>
-                <div className={`absolute inset-0 z-10 flex flex-col justify-center items-start ${isTabletOrMobile ? 'p-6' : 'p-8'}`}>
-                  <div className="max-w-lg text-white">
-                    <h3 className={`${isTabletOrMobile ? 'text-2xl sm:text-3xl' : 'text-5xl'} font-bold mb-2 leading-tight`}>
-                      Дом и сад
-                    </h3>
-                    <p className={`mb-4 text-white/90 ${isTabletOrMobile ? 'text-sm' : 'text-lg'}`}>
-                      {isTabletOrMobile ? 'Создайте уютное пространство для жизни с нашей коллекцией' : 'Создайте уютное пространство для жизни с нашей коллекцией товаров для дома и сада'}
-                    </p>
-                    <div className={`inline-block bg-white hover:bg-gray-100 text-black ${isTabletOrMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'} rounded-md font-medium transition-colors`}>
-                      Смотреть коллекцию
+                    <div className="absolute inset-0 z-0"></div>
+                    <div className={`absolute inset-0 z-10 flex flex-col justify-center items-start ${isTabletOrMobile ? 'p-6' : 'p-8'}`}>
+                      <div className="max-w-lg text-white">
+                        <h3 className={`${isTabletOrMobile ? 'text-2xl sm:text-3xl' : 'text-5xl'} font-bold mb-2 leading-tight`}>
+                          Дом и сад
+                        </h3>
+                        <p className={`mb-4 text-white/90 ${isTabletOrMobile ? 'text-sm' : 'text-lg'}`}>
+                          {isTabletOrMobile ? 'Создайте уютное пространство для жизни с нашей коллекцией' : 'Создайте уютное пространство для жизни с нашей коллекцией товаров для дома и сада'}
+                        </p>
+                        <div className={`inline-block bg-white hover:bg-gray-100 text-black ${isTabletOrMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'} rounded-md font-medium transition-colors`}>
+                          Смотреть все товары
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
               </div>
             </LocalizedClientLink>
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   )
 } 

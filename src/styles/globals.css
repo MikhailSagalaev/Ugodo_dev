@@ -126,6 +126,12 @@
   }
 }
 
+/* Предотвращение горизонтального скролла */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
 /* Скрытие полосы прокрутки */
 .hide-scrollbar {
   -ms-overflow-style: none;  /* IE и Edge */
@@ -150,7 +156,28 @@
   box-shadow: none !important;
 }
 
+/* Убираем все тени у карточек товаров */
+.product-card-styled,
+.product-card-styled:hover,
+.product-card-styled:focus,
+.group:hover .product-card-styled,
+.group .product-card-styled:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Убираем тени у всех элементов внутри карточек */
+.product-card-styled * {
+  box-shadow: none !important;
+}
+
 /* Стили для карточек товаров */
+/* Убираем падинги у блока с shadow-elevation-card-rest */
+div[class*="shadow-elevation-card-rest"][class*="bg-ui-bg-base"][class*="w-full"][class*="rounded-lg"][class*="px-6"] {
+  padding: 0 !important;
+  background-color: #f3f4f6 !important;
+}
+
 @media (max-width: 640px) {
   /* Убираем горизонтальные отступы в мобильной версии */
   div[class*="shadow-elevation-card-rest"][class*="bg-ui-bg-base"][class*="w-full"][class*="rounded-lg"][class*="px-6"] {
@@ -179,26 +206,164 @@
 
 /* Стили для карточек в новинках и популярном */
 .product-card-featured {
-  width: clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px);
+  flex-shrink: 0;
 }
 
 @media (min-width: 1024px) {
   .product-card-featured {
-    width: clamp(186px, calc(186px + (269 - 186) * ((100vw - 1120px) / (1920 - 1120))), 269px);
+    flex-shrink: 0;
   }
 }
 
 /* Стили для карточек в каталоге */
 .product-card-catalog {
-  width: 180px;
   flex-shrink: 0;
+  width: 257px !important;
+}
+
+.product-card-catalog .product-card-compact {
+  width: 257px !important;
+  height: auto !important;
 }
 
 @media (min-width: 1024px) {
   .product-card-catalog {
-    width: 312px;
     flex-shrink: 0;
+    width: 257px !important;
   }
+  
+  .product-card-catalog .product-card-compact {
+    width: 257px !important;
+    height: auto !important;
+  }
+}
+
+.product-card-compact {
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.product-card-catalog {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.catalog-grid {
+  display: grid !important;
+  grid-auto-rows: 1fr !important;
+}
+
+.catalog-grid .product-card-compact {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.catalog-grid .product-card-styled {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Для мобильных устройств делаем еще более компактными */
+@media (max-width: 768px) {
+  .product-card-compact {
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Уменьшаем отступы в карточках для экономии места */
+.product-card-content-compact {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex: 1;
+  height: auto;
+  min-height: fit-content;
+}
+
+.product-card-content-compact .product-type {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.product-card-content-compact .product-title {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  flex: 1;
+}
+
+.product-card-content-compact .product-price {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+/* Стили для карточек товаров с белым фоном и скругленными краями */
+.product-card-styled {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  min-height: fit-content;
+}
+
+/* Фото в карточках должно занимать большую часть */
+.product-card-styled .product-card-image {
+  flex: 0 0 auto;
+}
+
+/* Текстовая часть фиксированной высоты */
+.product-card-styled .product-card-content-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.product-card-styled:hover {
+  box-shadow: none;
+}
+
+/* Скругленные края для изображений в карточках */
+.product-card-image {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Убираем скругление у изображений внутри карточек, чтобы они не конфликтовали */
+.product-card-styled img {
+  border-radius: 0;
+}
+
+/* Скругление только для верхней части изображения */
+.product-card-image img {
+  border-radius: 12px;
+}
+
+/* Серый фон для всех секций */
+.section-gray-bg {
+  background-color: #f9fafb !important;
+  width: 100% !important;
+  padding: 20px 0 !important;
+}
+
+/* Обеспечиваем одинаковую высоту карточек */
+.product-cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 20px !important;
+}
+
+.product-cards-grid > * {
+  height: 100% !important;
 }
 
 /* Кастомная полоска для перечеркнутых цен */
@@ -217,4 +382,26 @@
   background-color: #BAFF29;
   transform: translateY(-50%);
   z-index: 1;
+}
+
+/* Контейнеры карточек должны иметь одинаковую высоту */
+.product-card-featured,
+.product-card-catalog {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100% !important;
+}
+
+.product-card-styled .product-card-image img {
+  height: 100% ;
+  object-fit: contain !important;
+  width: 100% ;
+  max-height: 100% !;
+  max-width: 100% ;
+  border: none !important;
+  outline: none !important;
+}
+
+.rounded-large {
+  border-radius: 12px !important;
 }
