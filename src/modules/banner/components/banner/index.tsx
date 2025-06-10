@@ -40,7 +40,7 @@ const Banner = ({ position, className = '' }: BannerProps) => {
 
   if (loading) {
     return (
-      <div className={`w-full h-[300px] bg-gray-100 animate-pulse rounded-lg ${className}`}>
+      <div className={`w-full max-w-[1415px] mx-auto bg-gray-100 animate-pulse ${className}`} style={{ borderRadius: '48px', height: '433px' }}>
         <div className="flex items-center justify-center h-full">
           <div className="text-gray-400">Загрузка баннера...</div>
         </div>
@@ -53,9 +53,9 @@ const Banner = ({ position, className = '' }: BannerProps) => {
   }
 
   return (
-    <div className={`relative w-full overflow-hidden rounded-lg ${className}`}>
+    <div className={`relative w-full max-w-[1415px] mx-auto overflow-hidden ${className}`} style={{ borderRadius: '48px', height: '433px' }}>
       {banner.image_url ? (
-        <div className="relative w-full h-[300px]">
+        <div className="relative w-full h-full">
           <SafeImage
             src={banner.image_url}
             alt={banner.title}
@@ -65,47 +65,10 @@ const Banner = ({ position, className = '' }: BannerProps) => {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
           />
           
-          <div className="absolute inset-0 bg-black/30 p-6 flex flex-col justify-center text-white">
-            <Heading level="h2" className="text-2xl md:text-3xl font-bold mb-2">
-              {banner.title}
-            </Heading>
-          
-            {banner.subtitle && (
-              <Text className="text-sm md:text-base mb-4">
-                {banner.subtitle}
-              </Text>
-            )}
-          
-            <div>
-              <Button 
-                variant="secondary"
-                className="mt-4 bg-white text-black hover:bg-gray-100"
-              >
-                Подробнее
-              </Button>
-            </div>
-          </div>
+
         </div>
       ) : (
-        <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center">
-          <div className="text-center p-6">
-            <Heading level="h2" className="text-2xl md:text-3xl font-bold mb-2">
-              {banner.title}
-            </Heading>
-            
-            {banner.subtitle && (
-              <Text className="text-sm md:text-base mb-4">
-                {banner.subtitle}
-              </Text>
-            )}
-            
-            <Button 
-              variant="secondary"
-              className="mt-4"
-            >
-              Подробнее
-            </Button>
-          </div>
+        <div className="w-full h-full bg-gray-200">
         </div>
       )}
     </div>

@@ -304,7 +304,8 @@ const CategoryStories = () => {
     <div className="pt-0">
       <div 
         ref={containerRef}
-        className="ugodo-stories-scroll flex overflow-x-auto flex-nowrap w-full px-4 py-4 space-x-4 scrollbar-hide md:justify-center md:overflow-x-visible md:flex-wrap"
+        className="ugodo-stories-scroll flex overflow-x-auto flex-nowrap w-full px-4 py-4 space-x-4 scrollbar-hide md:justify-center md:overflow-x-visible md:flex-wrap mx-4 md:mx-0"
+        style={{ backgroundColor: 'white', borderRadius: '20px' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

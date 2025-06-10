@@ -161,7 +161,7 @@ export default function RelatedProducts({
               
               return (
                 <div key={product.id} className="flex-shrink-0" style={{ width: 'clamp(180px, calc(180px + (260 - 180) * ((100vw - 1120px) / (1920 - 1120))), 260px)' }}>
-                  <div className="aspect-[3/4] w-full">
+                  <div className="product-card-compact w-full">
                     <ProductPreview 
                       product={product} 
                       region={region} 

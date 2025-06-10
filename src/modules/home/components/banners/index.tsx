@@ -5,7 +5,7 @@ import { Text } from '@medusajs/ui';
 
 function HomeBanners() { // Переименуем для ясности
   return (
-    <div className="relative flex items-end w-full overflow-hidden text-black min-h-[500px] md:min-h-[600px] lg:min-h-[700px] mt-6 md:mt-10 rounded-md"> {/* Убрал pt-96, используем items-end и pb, добавил отступы */} 
+    <div className="relative flex items-end w-full overflow-hidden text-black max-w-[1415px] mx-auto mt-6 md:mt-10" style={{ borderRadius: '48px', height: '433px' }}> 
       {/* Фоновое изображение с использованием next/image */}
       <Image
         // src="https://cdn.builder.io/api/v1/image/assets/TEMP/d069fa88fc3e1573e7e76d636cc32c3f8d20a919?placeholderIfAbsent=true&apiKey=61ffe663603f4de3aa93a6286a9db479"
@@ -19,17 +19,7 @@ function HomeBanners() { // Переименуем для ясности
         className="absolute inset-0 size-full -z-10" // Добавляем z-index, чтобы текст был поверх
         alt="Экспресс доставка баннер фон"
       />
-      {/* Контейнер для текста с отступами */} 
-      <div className="relative z-10 p-6 md:p-10 lg:p-16 max-w-full md:max-w-lg lg:max-w-xl"> {/* Добавил отступы и ограничение ширины */}
-        <div className="text-lg md:text-xl lg:text-2xl leading-tight text-gray-800 mb-1 md:mb-2">
-          в течении одного часа
-        </div>
-        <div className="text-4xl md:text-5xl lg:text-6xl tracking-tight font-semibold leading-tight text-black">
-          Экспресс доставка
-        </div>
-        {/* Можно добавить кнопку */}
-        {/* <button className="mt-4 md:mt-6 px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 transition-colors">Подробнее</button> */}
-      </div>
+
     </div>
   );
 }

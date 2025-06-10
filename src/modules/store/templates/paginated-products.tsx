@@ -6,7 +6,7 @@ import { listProductsWithInventory } from "@lib/data/products"
 import ProductPreview from "@modules/products/components/product-preview"
 import { HttpTypes } from "@medusajs/types"
 
-const PRODUCT_LIMIT = 16
+const PRODUCT_LIMIT = 15
 
 type PaginatedProductsParams = {
   limit: number
@@ -39,7 +39,7 @@ export default function PaginatedProducts({
   const [isLoading, setIsLoading] = useState(false)
   const [page, setPage] = useState(1)
   
-  const limit = categoryIds || categoryId ? 32 : PRODUCT_LIMIT
+  const limit = 15
   const [hasMore, setHasMore] = useState(totalCount > limit)
   
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
@@ -113,47 +113,63 @@ export default function PaginatedProducts({
     }
   }
 
-      return (
-      <div className="w-full">
-        <div className={`overflow-hidden flex justify-center ${!isTabletOrMobile ? 'px-4' : ''}`}>
-          {products.length > 0 && (
-            <div className={`
-              grid 
-              ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px] max-w-[500px]' : 
-                isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px] px-4 max-w-[750px]' : 
-                isMidTablet ? 'grid-cols-4 gap-x-[15px] gap-y-[80px]' :
-                'grid-cols-4 px-0'}
-              ${isTabletOrMobile || isTablet ? '' : isMidTablet ? 'max-w-[980px]' : 'w-full'}
-            justify-center
-          `}
-          style={!isTabletOrMobile && !isTablet && !isMidTablet ? { gap: 'clamp(18px, 2.5vw, 30px)' } : {}}
-          >
-            {products.map((p, index) => {
-              const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
-              return (
-                <div key={p.id} className="flex justify-center">
-                  <div 
-                    className={`w-full aspect-[3/4] ${!isTabletOrMobile && !isTablet ? 'product-card-catalog' : ''}`}
-                  >
-                    <ProductPreview 
-                      product={p} 
-                      region={region} 
-                      categoryTitle={categoryTitle}
-                      firstInRow={
-                        isTabletOrMobile ? index % 2 === 0 : 
-                        isTablet ? index % 3 === 0 : 
-                        isMidTablet ? index % 4 === 0 :
-                        false
-                      }
-                      textAlign="left"
-                    />
-                  </div>
+  return (
+    <div className="w-full">
+      {isTabletOrMobile ? (
+        <div className="w-full grid grid-cols-2 gap-x-[5px] gap-y-[20px] px-4">
+          {products.map((product, index) => {
+            const categoryTitle = product.type?.value || 
+              (product.categories && product.categories.length > 0 ? 
+                product.categories[0].name : undefined);
+            
+            return (
+              <div 
+                key={product.id} 
+                className="w-full h-full"
+              >
+                <div className="product-card-compact w-full h-full">
+                  <ProductPreview 
+                    product={product} 
+                    region={region} 
+                    categoryTitle={categoryTitle}
+                    textAlign="left"
+                    firstInRow={index % 2 === 0}
+                  />
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div 
+          className="w-full px-4"
+          style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: '12px'
+          }}
+        >
+          {products.map((product, index) => {
+            const categoryTitle = product.type?.value || 
+              (product.categories && product.categories.length > 0 ? 
+                product.categories[0].name : undefined);
+            
+            return (
+              <div 
+                key={product.id} 
+                className="product-card-catalog"
+              >
+                <ProductPreview 
+                  product={product} 
+                  region={region} 
+                  categoryTitle={categoryTitle}
+                  textAlign="left"
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
       
       {hasMore && (
         <div className="flex justify-center mt-16">

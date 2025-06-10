@@ -134,12 +134,12 @@ export default function ProductCard({
       />
 
       <div 
-        className="group relative bg-white transition-all duration-300"
+        className="group relative product-card-styled transition-all duration-300"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <LocalizedClientLink href={`/products/${product.handle}`} className="block">
-          <div className="relative w-full overflow-hidden aspect-[3/4]">
+          <div className="relative w-full overflow-hidden product-card-compact product-card-image">
             <Thumbnail
               thumbnail={product.thumbnail}
               images={product.images}
@@ -227,10 +227,10 @@ export default function ProductCard({
           </div>
         </LocalizedClientLink>
 
-        <div className={`p-3 ${textAlignClass}`}>
-          <div className="flex flex-col">
+        <div className={`p-2 ${textAlignClass}`}>
+          <div className="flex flex-col product-card-content-compact flex-1">
             {/* Плашки между фото и типом */}
-            <div className="flex gap-1 mb-2">
+            <div className="flex gap-1 mb-1">
               {!isInStock && badgeType !== "new" && badgeType !== "hit" && (
                 <div 
                   className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
@@ -248,32 +248,29 @@ export default function ProductCard({
               )}
             </div>
             
-            {/* Тип товара с отступом 17px */}
+            {/* Тип товара с компактным отступом */}
             {productType && (
               <div 
-                className={`font-medium uppercase text-xs transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}
-                style={{ marginTop: '17px' }}
+                className={`product-type font-medium uppercase text-xs transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}
               >
                 {productType}
               </div>
             )}
             
-            {/* Название товара с отступом 10px */}
+            {/* Название товара с компактным отступом */}
             <h3 
-              className={`font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-900'}`}
+              className={`product-title font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-900'}`}
               style={{ 
-                marginTop: '10px',
                 fontSize: '18px'
               }}
             >
               {product.title}
             </h3>
             
-            {/* Цена с отступом 10px */}
+            {/* Цена с компактным отступом */}
             {cheapestPrice && (
               <div 
-                className="flex items-baseline gap-2"
-                style={{ marginTop: '10px' }}
+                className="product-price flex items-baseline gap-2"
               >
                 <span className={`text-base font-medium transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-black'}`}>
                   {formatPrice(cheapestPrice.calculated_amount || 0)} ₽

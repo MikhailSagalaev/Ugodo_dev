@@ -336,95 +336,101 @@ export default function CategoryClient({
         </div>
       )}
 
-      <div className={`content-container py-8 pb-20 ${isMobile ? 'px-4' : ''}`}>
-        <div className="mb-6 flex justify-between items-center">
-          {isMobile ? (
-            <>
-              <div className="flex items-center gap-4">
-                <ProductFilters
-                  products={products}
-                  onFiltersChange={handleFiltersChange}
-                  isMobile={true}
-                  sortBy={sortBy}
-                  onSortChange={(newSort) => handleSortChange(newSort as SortOption)}
-                />
-              </div>
-              
-              <div className="flex-1 text-center">
-                <span 
-                  className="text-gray-900 font-medium"
-                  style={{ fontSize: "15px" }}
-                >
-                  {filteredProducts.length} товаров
-                </span>
-              </div>
-              
-              <div></div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-4">
-                <ProductFilters
-                  products={products}
-                  onFiltersChange={handleFiltersChange}
-                />
-                
-                <div className="relative sort-dropdown">
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center justify-between bg-white focus:outline-none focus:ring-0 hover:text-gray-400 transition-colors text-base font-medium py-2 px-3 pr-8 border-none min-w-[200px]"
-                  >
-                    <span>{sortOptions.find(opt => opt.value === sortBy)?.label}</span>
-                    <svg 
-                      className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {isDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-[200px] left-0 top-full">
-                      <div className="bg-white border border-gray-200 rounded-md shadow-lg">
-                        <ul className="py-1">
-                          {sortOptions.map((option) => (
-                            <li key={option.value}>
-                              <button
-                                className={`w-full text-left px-4 py-2 text-sm hover:text-gray-400 transition-colors ${
-                                  sortBy === option.value ? 'font-medium' : ''
-                                }`}
-                                onClick={() => handleSortChange(option.value as SortOption)}
-                              >
-                                {option.label}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
+      <div style={{ backgroundColor: '#f3f4f6' }}>
+        <section style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+          <div className="content-container px-0 sm:px-4 md:px-8 relative" style={{ backgroundColor: '#f8f9fa', borderRadius: '32px' }}>
+            <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-0" style={{ paddingTop: '24px', paddingBottom: '24px' }}>
+              <div className="mb-6 flex justify-between items-center">
+                {isMobile ? (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <ProductFilters
+                        products={products}
+                        onFiltersChange={handleFiltersChange}
+                        isMobile={true}
+                        sortBy={sortBy}
+                        onSortChange={(newSort) => handleSortChange(newSort as SortOption)}
+                      />
+                    </div>
+                    
+                    <div className="flex-1 text-center">
+                      <span 
+                        className="text-gray-900 font-medium"
+                        style={{ fontSize: "15px" }}
+                      >
+                        {filteredProducts.length} товаров
+                      </span>
+                    </div>
+                    
+                    <div></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <ProductFilters
+                        products={products}
+                        onFiltersChange={handleFiltersChange}
+                      />
+                      
+                      <div className="relative sort-dropdown">
+                        <button
+                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                          className="flex items-center justify-between bg-white focus:outline-none focus:ring-0 hover:text-gray-400 transition-colors text-base font-medium py-2 px-3 pr-8 border-none min-w-[200px]"
+                        >
+                          <span>{sortOptions.find(opt => opt.value === sortBy)?.label}</span>
+                          <svg 
+                            className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        
+                        {isDropdownOpen && (
+                          <div className="absolute z-50 mt-1 w-[200px] left-0 top-full">
+                            <div className="bg-white border border-gray-200 rounded-md shadow-lg">
+                              <ul className="py-1">
+                                {sortOptions.map((option) => (
+                                  <li key={option.value}>
+                                    <button
+                                      className={`w-full text-left px-4 py-2 text-sm hover:text-gray-400 transition-colors ${
+                                        sortBy === option.value ? 'font-medium' : ''
+                                      }`}
+                                      onClick={() => handleSortChange(option.value as SortOption)}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                    
+                    <div className="absolute left-1/2 transform -translate-x-1/2">
+                      <span className="text-gray-900 text-base font-medium">
+                        {filteredProducts.length} товаров
+                      </span>
+                    </div>
+                    
+                    <div></div>
+                  </>
+                )}
               </div>
               
-              <div className="absolute left-1/2 transform -translate-x-1/2">
-                <span className="text-gray-900 text-base font-medium">
-                  {filteredProducts.length} товаров
-                </span>
-              </div>
-              
-              <div></div>
-            </>
-          )}
-        </div>
-        
-        <Suspense fallback={<SkeletonProductGrid />}>
-          <AllProductsDisplay
-            products={filteredProducts}
-            region={region}
-          />
-        </Suspense>
+              <Suspense fallback={<SkeletonProductGrid />}>
+                <AllProductsDisplay
+                  products={filteredProducts}
+                  region={region}
+                />
+              </Suspense>
+            </div>
+          </div>
+        </section>
       </div>
       
       <div className="fixed bottom-0 left-0 right-0 bg-[#BAFF29] h-[45px] flex items-center justify-center z-40">

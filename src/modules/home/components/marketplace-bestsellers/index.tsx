@@ -47,14 +47,13 @@ export default function MarketplaceBestsellers({
   }
 
   return (
-    <section className="py-12 relative">
-      <div className="content-container md:px-8 relative px-0">
+    <div style={{ backgroundColor: '#f3f4f6' }}>
+      <section style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+        <div className="content-container md:px-8 relative px-0" style={{ backgroundColor: '#fdfdfd', borderRadius: '32px' }}>
         <div className="w-full max-w-[1360px] mx-auto">
           <div className="w-full mb-6">
-            <LocalizedClientLink href="/bestsellers" className="relative block overflow-hidden rounded-md group h-full">
-              <div className="relative w-full mx-auto aspect-video" style={{ 
-                maxWidth: isTabletOrMobile ? '100%' : '1260px'
-              }}>
+            <LocalizedClientLink href="/bestsellers" className="relative block overflow-hidden group h-full max-w-[1415px] mx-auto" style={{ borderRadius: '48px', height: '433px' }}>
+              <div className="relative w-full h-full">
                 {isClient && (
                   <div className="w-full h-full relative overflow-hidden">
                     <video
@@ -94,7 +93,8 @@ export default function MarketplaceBestsellers({
             </LocalizedClientLink>
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   )
 } 

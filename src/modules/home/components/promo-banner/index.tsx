@@ -48,8 +48,8 @@ const PromoBanner = ({
 
   return (
     <div 
-      className={`relative w-full h-[400px] md:h-[500px] overflow-hidden ${className}`}
-      style={{ backgroundColor }}
+      className={`relative w-full max-w-[1415px] mx-auto overflow-hidden ${className}`}
+      style={{ backgroundColor, borderRadius: '48px', height: '433px' }}
     >
       {imageUrl && (
         <SafeImage

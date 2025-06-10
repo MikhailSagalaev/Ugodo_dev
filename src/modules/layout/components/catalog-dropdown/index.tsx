@@ -323,7 +323,7 @@ const CatalogDropdown = ({ isVisible, onClose, onMouseEnter, onMouseLeave }: Cat
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-[134px] left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-[100]"
+      className="absolute top-[80px] left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-[100]"
       onMouseEnter={onMouseEnter}
       onMouseLeave={() => {
         setHoveredCategory(null)

@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import ProductPreview from "@modules/products/components/product-preview"
 
-const INITIAL_LOAD = 20
-const LOAD_MORE_COUNT = 20
+const INITIAL_LOAD_DESKTOP = 15
+const INITIAL_LOAD_MOBILE = 10
+const LOAD_MORE_COUNT_DESKTOP = 15
+const LOAD_MORE_COUNT_MOBILE = 10
 
 export default function AllProductsDisplay({
   products,
@@ -16,7 +18,7 @@ export default function AllProductsDisplay({
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
   const [isMidTablet, setIsMidTablet] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD)
+  const [visibleCount, setVisibleCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   
   useEffect(() => {
@@ -36,8 +38,9 @@ export default function AllProductsDisplay({
   }, []);
 
   useEffect(() => {
-    setVisibleCount(INITIAL_LOAD)
-  }, [products]);
+    const initialLoad = isTabletOrMobile ? INITIAL_LOAD_MOBILE : INITIAL_LOAD_DESKTOP
+    setVisibleCount(initialLoad)
+  }, [products, isTabletOrMobile]);
 
   const memoizedProducts = useMemo(() => products, [products]);
   const visibleProducts = useMemo(() => 
@@ -48,12 +51,13 @@ export default function AllProductsDisplay({
   const loadMore = useCallback(() => {
     if (isLoading || visibleCount >= memoizedProducts.length) return;
     
+    const loadMoreCount = isTabletOrMobile ? LOAD_MORE_COUNT_MOBILE : LOAD_MORE_COUNT_DESKTOP
     setIsLoading(true);
     setTimeout(() => {
-      setVisibleCount(prev => Math.min(prev + LOAD_MORE_COUNT, memoizedProducts.length));
+      setVisibleCount((prev: number) => Math.min(prev + loadMoreCount, memoizedProducts.length));
       setIsLoading(false);
     }, 100);
-  }, [isLoading, visibleCount, memoizedProducts.length]);
+  }, [isLoading, visibleCount, memoizedProducts.length, isTabletOrMobile]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,33 +81,23 @@ export default function AllProductsDisplay({
         <div className={`overflow-hidden flex justify-center ${!isTabletOrMobile ? 'px-4' : ''}`}>
           {visibleProducts.length > 0 && (
             <div className={`
-              grid 
-              ${isTabletOrMobile ? 'grid-cols-2 gap-x-[30px] gap-y-[80px] max-w-[500px]' : 
-                isTablet ? 'grid-cols-3 gap-x-[25px] gap-y-[70px] px-4 max-w-[750px]' : 
-                isMidTablet ? 'grid-cols-4 gap-x-[15px] gap-y-[80px]' :
-                'grid-cols-4 px-0'}
-              ${isTabletOrMobile || isTablet ? '' : isMidTablet ? 'max-w-[980px]' : 'w-full'}
-            justify-center
+              catalog-grid
+              ${isTabletOrMobile ? 'w-full grid grid-cols-2 gap-x-[5px] gap-y-[20px] px-4' : 
+                'w-full px-4 grid grid-cols-5 gap-[12px]'}
           `}
-          style={!isTabletOrMobile && !isTablet && !isMidTablet ? { gap: 'clamp(18px, 2.5vw, 30px)' } : {}}
           >
             {visibleProducts.map((p, index) => {
               const categoryTitle = p.type?.value || (p.categories && p.categories.length > 0 ? p.categories[0].name : undefined);
               return (
-                <div key={p.id} className="flex justify-center">
+                <div key={p.id} className="w-full h-full">
                   <div 
-                    className={`w-full aspect-[3/4] ${!isTabletOrMobile && !isTablet ? 'product-card-catalog' : ''}`}
+                    className={`w-full h-full product-card-compact ${!isTabletOrMobile ? 'product-card-catalog' : ''}`}
                   >
                     <ProductPreview 
                       product={p} 
                       region={region} 
                       categoryTitle={categoryTitle}
-                      firstInRow={
-                        isTabletOrMobile ? index % 2 === 0 : 
-                        isTablet ? index % 3 === 0 : 
-                        isMidTablet ? index % 4 === 0 :
-                        false
-                      }
+                      firstInRow={isTabletOrMobile ? index % 2 === 0 : index % 5 === 0}
                       textAlign="left"
                     />
                   </div>

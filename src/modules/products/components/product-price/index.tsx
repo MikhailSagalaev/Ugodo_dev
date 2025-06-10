@@ -96,7 +96,7 @@ export default function ProductPrice({
           </span>
           {hasDiscount && (
             <span 
-                                className="text-[#C2E7DA] text-[14px] leading-[1.1] lowercase"
+              className="text-[#C2E7DA] text-[14px] leading-[1.1] lowercase"
             >
               со скидкой {discountPercentage}%
             </span>

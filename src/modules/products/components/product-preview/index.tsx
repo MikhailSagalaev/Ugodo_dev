@@ -107,6 +107,7 @@ export default function ProductPreview({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isHeartHovered, setIsHeartHovered] = useState(false);
+  const [isCartHovered, setIsCartHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false);
@@ -179,6 +180,9 @@ export default function ProductPreview({
   
   const handleHeartMouseEnter = () => setIsHeartHovered(true);
   const handleHeartMouseLeave = () => setIsHeartHovered(false);
+  
+  const handleCartMouseEnter = () => setIsCartHovered(true);
+  const handleCartMouseLeave = () => setIsCartHovered(false);
 
   // Получаем реальный тип из базы данных
   const productType = product.type?.value || product.collection?.title || categoryTitle || "";
@@ -198,13 +202,14 @@ export default function ProductPreview({
 
   // Получаем информацию о ценах с учетом скидок
   const getPriceInfo = () => {
-    if (!product.variants?.length) return { currentPrice: 0, originalPrice: null, hasDiscount: false, pricePerUnit: null, hasQuantityDiscount: false };
+    if (!product.variants?.length) return { currentPrice: 0, originalPrice: null, hasDiscount: false, pricePerUnit: null, hasQuantityDiscount: false, hasMultipleVariants: false };
 
     let minCurrentPrice = Infinity;
     let minOriginalPrice = null;
     let hasDiscount = false;
     let pricePerUnit = null;
     let hasQuantityDiscount = false;
+    let hasMultipleVariants = false;
 
     const quantityOption = product.options?.find(option => 
       option.title?.toLowerCase().includes('количество')
@@ -267,12 +272,15 @@ export default function ProductPreview({
       }
     }
 
+    hasMultipleVariants = product.variants && product.variants.length > 1;
+
     return {
       currentPrice: minCurrentPrice === Infinity ? 0 : minCurrentPrice,
       originalPrice: hasQuantityDiscount ? pricePerUnit : minOriginalPrice,
       hasDiscount: hasDiscount || hasQuantityDiscount,
       pricePerUnit,
-      hasQuantityDiscount
+      hasQuantityDiscount,
+      hasMultipleVariants
     };
   };
 
@@ -290,39 +298,70 @@ export default function ProductPreview({
       />
 
       <div 
-        className={`group relative flex flex-col w-full ${isTabletOrMobile ? 'max-w-[225px] pb-6' : isMidTablet ? 'max-w-[230px]' : 'sm:max-w-none'}`}
+        className={`group relative flex flex-col w-full product-card-styled`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        style={{ borderRadius: '12px' }}
       >
         
-        <div className="block relative w-full overflow-hidden bg-white">
-          <LocalizedClientLink href={`/products/${product?.handle}`} className="block">
-            <div className="transition-transform duration-300 group-hover:scale-105">
-              <SmartImage
-                src={imageSrc}
-                alt={product.title || "Product image"}
-                sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1118px) 220px, (max-width: 1233px) 230px, 320px"
-                containerClassName="w-full aspect-[3/4]"
-                aspectRatio="3/4"
-              />
-            </div>
-          </LocalizedClientLink>
-
-          <div className="absolute top-0 left-0 flex gap-1 z-10">
-            {isInStock && badgeType === "new" && (
-              <div className="bg-[#BAFF29] text-black text-xs font-bold w-8 h-8 flex items-center justify-center uppercase">
-                NEW
+        <div className="block relative w-full overflow-hidden product-card-image" style={{ backgroundColor: '#fff', boxSizing: 'border-box', display: 'block', lineHeight: 0, margin: '0 auto', overflow: 'hidden', position: 'relative', width: '100%', zIndex: 3 }}>
+          <div style={{ content: '', display: 'block', paddingTop: '133.24%' }}></div>
+          <div style={{ alignContent: 'center', alignItems: 'center', bottom: 0, display: 'flex', justifyContent: 'center', overflow: 'hidden', right: 0, borderRadius: '12px', left: 0, position: 'absolute', top: 0 }}>
+            <LocalizedClientLink href={`/products/${product?.handle}`} className="block w-full h-full">
+              <div className="transition-transform duration-300 group-hover:scale-105 w-full h-full">
+                <SmartImage
+                  src={imageSrc}
+                  alt={product.title || "Product image"}
+                  sizes="(max-width: 640px) 225px, (max-width: 768px) 240px, (max-width: 1118px) 220px, (max-width: 1233px) 230px, 320px"
+                  containerClassName="w-full h-full"
+                  aspectRatio="contain"
+                />
               </div>
-            )}
-
-            {isInStock && badgeType === "hit" && (
-              <div className="text-white text-xs font-bold w-8 h-8 flex items-center justify-center uppercase" style={{ backgroundColor: 'rgb(255, 22, 134)' }}>
-                HIT
-              </div>
-            )}
+            </LocalizedClientLink>
           </div>
 
+          <div className="absolute top-0 left-0 flex gap-1 z-10">
+          </div>
 
+          <div style={{
+            alignItems: 'start',
+            bottom: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'end',
+            left: '6px',
+            pointerEvents: 'none',
+            position: 'absolute',
+            right: '6px',
+            width: '100%',
+            zIndex: 5
+          }}>
+            <div style={{
+              background: '#6290C3',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0px',
+              padding: '2px',
+              borderRadius: '8px',
+              width: '118px',
+              height: '23px'
+            }}>
+              <img 
+                src="/images/logo/logo2.png" 
+                alt="Logo" 
+                style={{ width: '30px', height: '30px' }}
+              />
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                letterSpacing: 0,
+                lineHeight: '20px',
+                color: 'white'
+              }}>
+                Выгодно
+              </span>
+            </div>
+          </div>
 
           <button
             onClick={toggleWishlist}
@@ -335,8 +374,8 @@ export default function ProductPreview({
               width="24" 
               height="24" 
               viewBox="0 0 24 24" 
-              fill={isWished || isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : "none"} 
-              stroke={isHeartHovered ? (isHovered ? '#9CA3AF' : COLORS.mint) : (isHovered ? '#9CA3AF' : '#9CA3AF')} 
+              fill={isWished ? '#f1117e' : (isHeartHovered ? 'white' : "none")} 
+              stroke={isWished ? '#f1117e' : (isHeartHovered ? 'white' : '#9CA3AF')} 
               strokeWidth="2"
               className="transition-all duration-200"
               xmlns="http://www.w3.org/2000/svg"
@@ -349,10 +388,12 @@ export default function ProductPreview({
             <div className={isTabletOrMobile ? "absolute right-3 bottom-3 z-10" : "absolute bottom-5 right-5 z-10"}>
               <button
                 onClick={handleAddToCart}
+                onMouseEnter={handleCartMouseEnter}
+                onMouseLeave={handleCartMouseLeave}
                 className={
                   isTabletOrMobile
-                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-md border border-transparent bg-[#1A1341]`
-                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-md ${isAddingToCart ? 'bg-gray-400' : 'bg-[#1A1341] hover:bg-gray-400'}`
+                    ? `w-[35px] h-[35px] flex items-center justify-center transition-colors duration-200 rounded-full border border-transparent bg-gray-400`
+                    : `w-11 h-11 flex items-center justify-center transition-colors duration-200 rounded-full ${isAddingToCart ? 'bg-gray-400' : 'bg-gray-400 hover:bg-gray-400'}`
                 }
                 style={{}}
                 aria-label={!isInStock ? "Сделать предзаказ" : "Добавить в корзину"}
@@ -366,11 +407,12 @@ export default function ProductPreview({
                     height="20"
                     viewBox="0 0 24 24" 
                     fill="none" 
-                    stroke="white" 
+                    stroke={isCartHovered ? "#BAFF29" : "white"} 
                     strokeWidth="2" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
                     xmlns="http://www.w3.org/2000/svg"
+                    className="transition-colors duration-200"
                   >
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -382,88 +424,81 @@ export default function ProductPreview({
           )}
         </div>
 
-        <div className={`pt-2 pb-2 flex flex-col ${textAlignClass} w-full`}>
+        <div className={`product-card-content-compact flex flex-col ${textAlignClass} w-full flex-1`} style={{ alignItems: 'flex-start', color: '#070707', display: 'flex', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
           
-          {/* Плашки между фото и типом */}
-          <div className="flex gap-1 mb-2">
-            {!isInStock && badgeType !== "new" && badgeType !== "hit" && (
-              <div 
-                className="text-black bg-[#BAFF29] flex items-center justify-center uppercase"
-                style={{ 
-                  width: "90px",
-                  height: "26px",
-                  clipPath: 'polygon(0% 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 0% 100%, 8px 50%)',
-                  fontSize: "11px",
-                  fontWeight: 500,
-                  lineHeight: "12.1px"
-                }}
-              >
-                ПРЕДЗАКАЗ
-              </div>
-            )}
-
-            {isInStock && badgeType === "discount" && (
-              <div className="bg-[#FF3998] text-white px-2 py-1 text-xs font-bold">
-                СКИДКА
-              </div>
-            )}
-          </div>
-          
-          {/* Кликабельная категория/тип с отступом 17px */}
-          {productType && (
-            <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div 
-                className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase sm:leading-normal leading-tight cursor-pointer hover:text-gray-400`}
-                style={{
-                  fontSize: isTablet || isMidTablet ? '9px' : '11px',
-                  marginTop: '17px'
-                }}
-              >
-                {productType}
-              </div>
-            </LocalizedClientLink>
-          )}
-          
-          {/* Кликабельное название с отступом 10px */}
-          <LocalizedClientLink href={`/products/${product?.handle}`}>
-            <h3 
-              className={`font-medium ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase cursor-pointer hover:text-gray-400`}
-              style={{
-                fontSize: '18px',
-                marginTop: '10px'
-              }}
-            >
-              {product.title}
-            </h3>
-          </LocalizedClientLink>
-          
-          {/* Кликабельная цена с отступом 10px и старой ценой */}
+          {/* Цена сразу после фото с отступом 8px */}
           {priceInfo.currentPrice > 0 && (
             <LocalizedClientLink href={`/products/${product?.handle}`}>
-              <div className={`${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`} style={{ marginTop: '10px' }}>
+              <div className={`product-price ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 w-full cursor-pointer`} style={{ marginTop: '8px', marginBottom: '0px' }}>
                 <div className={`flex items-baseline gap-2 ${textAlign === "right" ? "justify-end" : textAlign === "center" ? "justify-center" : ""}`}>
                   <span 
-                    className={`font-medium ${isHovered ? 'text-gray-400' : 'text-black'} transition-colors duration-200 uppercase hover:text-gray-400`}
+                    className={`font-bold transition-colors duration-200 uppercase hover:text-gray-400`}
                     style={{
-                      fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      letterSpacing: 0,
+                      color: '#6290C3'
                     }}
                   >
-                    {formatPrice(priceInfo.currentPrice)} ₽
+                    {formatPrice(priceInfo.currentPrice)}₽
                   </span>
                   {priceInfo.hasDiscount && priceInfo.originalPrice && (
-                    <span 
-                      className={`font-medium line-through-blue transition-colors duration-200 ${isHovered ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-400`}
-                      style={{
-                        fontSize: isTablet || isMidTablet || isTabletOrMobile ? '16px' : '20px'
-                      }}
-                    >
-                      {formatPrice(priceInfo.originalPrice)} ₽
-                    </span>
+                    <>
+                      <span 
+                        className={`font-semibold transition-colors duration-200`}
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          letterSpacing: 0,
+                          lineHeight: '20px',
+                          color: '#99a3ae',
+                          textDecoration: 'line-through'
+                        }}
+                      >
+                        {formatPrice(priceInfo.originalPrice)}₽
+                      </span>
+                      <span 
+                        style={{
+                          color: '#f1117e',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          letterSpacing: 0,
+                          lineHeight: '20px'
+                        }}
+                      >
+                        -{Math.round(((priceInfo.originalPrice - priceInfo.currentPrice) / priceInfo.originalPrice) * 100)}%
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
             </LocalizedClientLink>
           )}
+          
+          {/* Название с отступом 4px от цены */}
+          <LocalizedClientLink href={`/products/${product?.handle}`}>
+            <h3 
+              className={`product-title ${firstInRow && isTabletOrMobile ? 'pl-5' : 'px-2'} sm:px-3 leading-tight cursor-pointer hover:text-gray-400 transition-colors duration-200`}
+              style={{
+                fontSize: '16px',
+                fontWeight: 400,
+                letterSpacing: 0,
+                lineHeight: '24px',
+                color: '#070707',
+                marginTop: '4px',
+                marginBottom: '0px',
+                paddingTop: '0px',
+                paddingBottom: '0px',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              {product.title}
+            </h3>
+          </LocalizedClientLink>
         </div>
 
         {/* Модалка выбора вариантов */}
