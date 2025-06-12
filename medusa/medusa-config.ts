@@ -6,9 +6,9 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "https://ugodo.ru,https://www.ugodo.ru,https://api.ugodo.ru,http://localhost:8000",
-      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,https://api.ugodo.ru,https://ugodo.ru",
-      authCors: process.env.AUTH_CORS || "http://localhost:9000,https://ugodo.ru,https://api.ugodo.ru,http://localhost:8000",
+      storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:3000",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:7000,http://localhost:7001",
+      authCors: process.env.AUTH_CORS || "http://localhost:8000,http://localhost:9000,http://localhost:3000,http://localhost:7000,http://localhost:7001",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
@@ -19,7 +19,14 @@ module.exports = defineConfig({
     vite: () => {
       return {
         server: {
-          allowedHosts: ["ugodo.ru", "api.ugodo.ru", "www.ugodo.ru", "localhost"],
+          host: "localhost",
+          port: 7001,
+          strictPort: true,
+          watch: {
+            usePolling: true,
+            interval: 1000,
+          },
+          allowedHosts: ["localhost"],
         },
       }
     },
