@@ -63,15 +63,37 @@ const ShippingAddress = ({
   }
 
   useEffect(() => {
-    // Ensure cart is not null and has a shipping_address before setting form data
+    // Если корзина уже имеет адрес доставки, используем его
     if (cart && cart.shipping_address) {
       setFormAddress(cart?.shipping_address, cart?.email)
+      return
     }
 
+    // Если у пользователя есть email, но в корзине его нет
     if (cart && !cart.email && customer?.email) {
       setFormAddress(undefined, customer.email)
     }
-  }, [cart]) // Add cart as a dependency
+
+    // Автозаполнение данными пользователя при первом входе
+    if (customer && !cart?.shipping_address) {
+      // Заполняем имя и фамилию из профиля
+      setFormData((prevState: Record<string, any>) => ({
+        ...prevState,
+        "shipping_address.first_name": customer.first_name || "",
+        "shipping_address.last_name": customer.last_name || "",
+        "shipping_address.phone": customer.phone || "",
+        email: customer.email || "",
+      }))
+
+      // Если у пользователя есть адреса по умолчанию, используем первый
+      if (customer.addresses && customer.addresses.length > 0) {
+        const defaultAddress = customer.addresses.find(addr => addr.is_default_shipping) || customer.addresses[0]
+        if (defaultAddress) {
+          setFormAddress(defaultAddress as any, customer.email)
+        }
+      }
+    }
+  }, [cart, customer]) // Добавляем customer в зависимости
 
   const handleChange = (
     e: React.ChangeEvent<

@@ -8,9 +8,10 @@ import SafeImage from "@modules/common/components/safe-image"
 interface BannerProps {
   position: BannerPositionEnum
   className?: string
+  fallback?: React.ReactNode
 }
 
-const Banner = ({ position, className = '' }: BannerProps) => {
+const Banner = ({ position, className = '', fallback }: BannerProps) => {
   const [banner, setBanner] = useState<BannerType | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +40,9 @@ const Banner = ({ position, className = '' }: BannerProps) => {
   }, [position])
 
   if (loading) {
+    if (position === BannerPositionEnum.CATEGORY_TOP) {
+      return fallback || null
+    }
     return (
       <div className={`w-full max-w-[1415px] mx-auto bg-gray-100 animate-pulse ${className}`} style={{ borderRadius: '48px', height: '433px' }}>
         <div className="flex items-center justify-center h-full">
@@ -48,29 +52,27 @@ const Banner = ({ position, className = '' }: BannerProps) => {
     )
   }
 
-  if (error || !banner) {
-    return null
+  if (error || !banner || !banner.image_url) {
+    return fallback || null
   }
 
-  return (
-    <div className={`relative w-full max-w-[1415px] mx-auto overflow-hidden ${className}`} style={{ borderRadius: '48px', height: '433px' }}>
-      {banner.image_url ? (
-        <div className="relative w-full h-full">
-          <SafeImage
-            src={banner.image_url}
-            alt={banner.title}
-            fill
-            style={{ objectFit: "cover" }}
-            priority={position === BannerPositionEnum.HOME_TOP}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
-          />
-          
+  const isCategory = position === BannerPositionEnum.CATEGORY_TOP
+  const bannerStyle = isCategory 
+    ? { width: '100%', height: '100%' }
+    : { borderRadius: '48px', height: '433px' }
 
-        </div>
-      ) : (
-        <div className="w-full h-full bg-gray-200">
-        </div>
-      )}
+  return (
+    <div className={`relative w-full ${isCategory ? 'h-full' : 'max-w-[1415px] mx-auto'} overflow-hidden ${className}`} style={bannerStyle}>
+      <div className="relative w-full h-full">
+        <SafeImage
+          src={banner.image_url}
+          alt={banner.title}
+          fill
+          style={{ objectFit: "cover" }}
+          priority={position === BannerPositionEnum.HOME_TOP}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
+        />
+      </div>
     </div>
   )
 }

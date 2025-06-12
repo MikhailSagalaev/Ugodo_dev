@@ -54,7 +54,7 @@ export default async function MainLayout({
     const regions = await listRegions()
     
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <Suspense>
           <NavWithHome countryCode={countryCode} />
         </Suspense>
@@ -69,36 +69,25 @@ export default async function MainLayout({
             shippingOptions={shippingOptions}
           />
         )}
-        <main className="relative">
+        <main className="relative flex-1">
           <Suspense fallback={<div className="p-8 text-center">Загрузка контента...</div>}>
             {/* <LocalizedProviders> */} {/* Закомментировано временно */}
             {children}
           </Suspense>
         </main>
         <Footer />
-      </>
+      </div>
     )
   } catch (error) {
     console.error("Ошибка при загрузке макета:", error);
     
     // Возвращаем базовый макет с сообщением об ошибке
     return (
-      <div className="p-8">
-        <div className="p-6 max-w-2xl mx-auto my-8 bg-red-50 border border-red-200 rounded-lg text-center">
-          <h1 className="text-2xl font-bold text-red-800 mb-3">Произошла ошибка при загрузке магазина</h1>
-          <p className="text-red-700 mb-4">
-            Мы не смогли загрузить регионы из базы данных. Пожалуйста, попробуйте обновить страницу или вернитесь позже.
-          </p>
-          <div className="text-sm text-red-600 p-3 bg-white rounded border border-red-100">
-            Техническая информация: {(error as Error).message || "Неизвестная ошибка"}
-          </div>
-          <button 
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            onClick={() => window.location.reload()}
-          >
-            Обновить страницу
-          </button>
+      <div className="min-h-screen flex flex-col">
+        <div className="p-8 text-center text-red-500">
+          Произошла ошибка при загрузке страницы. Попробуйте обновить страницу.
         </div>
+        <Footer />
       </div>
     )
   }

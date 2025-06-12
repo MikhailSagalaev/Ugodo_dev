@@ -8,6 +8,7 @@ import ProductFilters, { FilterState } from "@modules/store/components/product-f
 import { filterProducts } from "@lib/util/filter-products"
 import { HttpTypes } from "@medusajs/types"
 import SupportButton from "@modules/common/components/support-button"
+import { CategoryTopBanner } from "@modules/banner/components"
 
 const categoryColors = [
   "bg-[#F1FFE2]",
@@ -237,12 +238,9 @@ export default function CategoryClient({
 
   return (
     <>
-      <div 
-        className={`relative w-full flex items-center justify-center`}
-        style={{
-          height: isMobile ? '165px' : '415px',
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-        }}
+      <CategoryTopBanner 
+        isMobile={isMobile}
+        className="relative w-full"
       >
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
         
@@ -295,7 +293,7 @@ export default function CategoryClient({
         >
           {category.name}
         </h1>
-      </div>
+      </CategoryTopBanner>
 
       {subcategories.length > 0 && (
         <div className="bg-white border-b border-gray-200 py-6">

@@ -5,6 +5,7 @@ import { HttpTypes } from "@medusajs/types"
 import { Heading } from "@medusajs/ui"
 import ProductPreview from "@modules/products/components/product-preview"
 import useEmblaCarousel from 'embla-carousel-react'
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 type ProductSliderProps = {
   title: string
@@ -63,12 +64,29 @@ export default function ProductSlider({
     productGroups.push(products.slice(i, i + itemsPerGroup))
   }
 
+  const getPageLink = () => {
+    const normalizedTitle = title.toLowerCase();
+    if (normalizedTitle.includes('новинки')) {
+      return "/new-arrivals";
+    } else if (normalizedTitle.includes('популярное') || normalizedTitle.includes('хит')) {
+      return "/bestsellers";
+    }
+    return "#";
+  };
+
   return (
     <div style={{ backgroundColor: '#f3f4f6' }}>
       <section style={{ paddingTop: '16px', paddingBottom: '16px' }}>
         <div className="content-container px-0 sm:px-4 md:px-8 relative" style={{ backgroundColor: '#f8f9fa', borderRadius: '32px', paddingTop: '24px', paddingBottom: '24px' }}>
         <div className="flex items-center justify-between mb-8 px-4 sm:px-0">
-          <Heading level="h2" className="text-2xl md:text-3xl font-bold uppercase">{title}</Heading>
+          <LocalizedClientLink href={getPageLink()}>
+            <Heading 
+              level="h2" 
+              className="text-2xl md:text-3xl font-bold uppercase hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              {title}
+            </Heading>
+          </LocalizedClientLink>
           
           {!isTabletOrMobile && (
             <div className="flex items-center space-x-2">
